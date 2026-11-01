@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import AiDesignSettings from './AiDesignSettings';
 import { ExternalLink, FolderCog, Moon, RotateCcw, Save, Sun, Upload, X } from 'lucide-react';
 import {
   FACTORY_PROJECT_DEFAULTS,
@@ -145,21 +146,24 @@ export default function SettingsModal({
         </button>
       </div>
       <nav className="settings-page-nav" aria-label="Settings pages">
-        {['New project defaults', 'Appearance', 'Project library', 'Updates'].map((item) => (
-          <button
-            key={item}
-            type="button"
-            aria-current={page === item ? 'page' : undefined}
-            onClick={() => {
-              setPage(item);
-              setDiscard(false);
-            }}
-          >
-            {item}
-          </button>
-        ))}
+        {['New project defaults', 'Appearance', 'Project library', 'AI design', 'Updates'].map(
+          (item) => (
+            <button
+              key={item}
+              type="button"
+              aria-current={page === item ? 'page' : undefined}
+              onClick={() => {
+                setPage(item);
+                setDiscard(false);
+              }}
+            >
+              {item}
+            </button>
+          ),
+        )}
       </nav>
       <div className="settings-workspace-content">
+        {page === 'AI design' && <AiDesignSettings />}
         <section hidden={page !== 'New project defaults'} aria-label="New project defaults">
           <div className="settings-page-heading">
             <div>

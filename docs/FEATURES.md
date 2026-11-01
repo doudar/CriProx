@@ -8,6 +8,17 @@ Home shows both current drafts, recent local copies, and saved desktop card proj
 
 ![CriProx Home with workspace choices, drafts, and recent projects](assets/criprox-home.png)
 
+## AI design tools with MCP
+
+Desktop **Settings → AI design** enables a local MCP server that can create and edit proxy cards,
+original hero cards, sticker illustrations and sheet layouts in the live editor. Copy its client
+configuration, then use precise layer, text, shape, path, color, image, transform, arrangement,
+project export and Undo/Redo tools. Scryfall search and specific-printing imports are also available.
+Designs support 500 editable layers, and **Edit card design** opens custom card artwork in the shared
+designer. PNG previews let an AI inspect and refine its work. Access starts off and can be stopped.
+The MCP catalogue has no printing, print preparation, cutter connection, scan, movement or cutting
+commands; those remain user-only. See the [MCP setup and drawing guide](AI-DESIGN-MCP.md).
+
 ## Sticker sheets and batches of labels
 
 Choose **Workspace → Stickers** in the main window. Both editors use the same three-panel layout: artwork inputs and selected-item controls on the left, the sheet in the center, and sheet setup on the right. Switch back to **Proxy Card Builder** without closing your sticker draft. Project naming, Open, and Save stay in the shared top bar.

@@ -1,6 +1,7 @@
 import { designOutputBounds } from '../lib/sticker-contours';
 import { createPortal } from 'react-dom';
 import { useWorkspaceHistory } from '../lib/use-workspace-history';
+import { useAiWorkspace } from '../lib/use-ai-design';
 import {
   WorkspaceGrid,
   WorkspacePanel,
@@ -108,6 +109,7 @@ export default function StickerStudio({
   request,
   onDraft,
   onRemember,
+  onAiOpen,
 }: {
   open: boolean;
   printRequest: number;
@@ -116,6 +118,7 @@ export default function StickerStudio({
   request?: { sequence: number; project?: StickerProject };
   onDraft?: (project: StickerProject) => void;
   onRemember?: (project: StickerProject, fresh?: boolean | string) => Promise<void>;
+  onAiOpen?: () => void;
 }) {
   const clipboard = useRef<StickerClipboard | undefined>(undefined);
   const designClipboard = useRef<StickerArtwork | undefined>(undefined);
@@ -155,6 +158,23 @@ export default function StickerStudio({
     [view, setView] = useState<'edit' | 'print'>('edit'),
     [zoom, setZoom] = useState(100);
   const layoutTask = useRef<AbortController | undefined>(undefined);
+  useAiWorkspace('stickers', {
+    read: () => project,
+    write: (next) => {
+      commit(next as StickerProject);
+      setDesigner(undefined);
+      setSelected('');
+      setSelectedSticker(-1);
+      setPage(0);
+    },
+    open: () => {
+      setView('edit');
+      onAiOpen?.();
+    },
+    undo: history.undo,
+    redo: history.redo,
+    busy: () => !loaded || !!busy || !!designer,
+  });
   useEffect(() => () => layoutTask.current?.abort(), []);
   useEffect(() => {
     if (!open) layoutTask.current?.abort();

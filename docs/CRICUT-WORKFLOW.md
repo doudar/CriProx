@@ -8,6 +8,11 @@ Use **Show cuts** above either workspace's sheet to inspect thin dashed pink cut
 
 ## Generate registration marks in CriProx
 
+AI clients can optionally prepare editable card and sticker designs through **Settings → AI design**.
+They can draw detailed layered artwork, create original hero cards, edit cut boundaries and arrange
+sheets. AI cannot open the print workflow or operate printers/cutters through MCP. The user reviews
+the design and performs the print/cut steps below. See [AI design with MCP](AI-DESIGN-MCP.md).
+
 1. Choose the machine and Letter or A4 paper, then arrange cards or stickers. Choose a material in **Print then cut** or sheet setup to fill its pressure and pass count automatically. Use **Manage materials** to search the imported Design Space catalog, create a preset, or edit pressure and passes. Light/Medium/Hard adjusts the selected material; changing **Cut pressure (g)** sets every pass to that value.
 2. Open **Print then cut → Prepare print sheets** in either workspace. Every front page gets four black corner marks and a directional arrow, including partial sheets. Only occupied items become cut contours. Stickers use their editable custom blade paths when provided, otherwise rounded rectangles. Imported artwork edges are not automatically traced.
 3. Inspect the PDF preview and warnings. Use **Preview zoom** to inspect small text at up to 300%. Preview resolution follows the window size and display pixel density; zoom does not change physical dimensions.

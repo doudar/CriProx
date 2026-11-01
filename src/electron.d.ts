@@ -63,10 +63,43 @@ declare global {
 
   interface Window {
     criprox?: {
+      ai?: {
+        status: () => Promise<{
+          running: boolean;
+          url: string;
+          connectionFile: string;
+          scope: string;
+        }>;
+        start: () => Promise<{
+          running: boolean;
+          url: string;
+          connectionFile: string;
+          scope: string;
+        }>;
+        stop: () => Promise<{
+          running: boolean;
+          url: string;
+          connectionFile: string;
+          scope: string;
+        }>;
+        copyConfig: () => Promise<boolean>;
+        onCancel: (callback: () => void) => () => void;
+        onRequest: (
+          callback: (request: {
+            id: string;
+            name: string;
+            args: unknown;
+          }) => Promise<{ value?: unknown; error?: string }>,
+        ) => () => void;
+      };
       platform?: 'darwin' | 'win32' | 'linux';
       printing?: import('./lib/direct-print').PrintApi;
       materials?: {
-        import: () => Promise<{ profiles: import('./lib/cut-settings').MaterialProfile[]; warnings: string[]; files: number }>;
+        import: () => Promise<{
+          profiles: import('./lib/cut-settings').MaterialProfile[];
+          warnings: string[];
+          files: number;
+        }>;
       };
       cutter?: {
         state: () => Promise<import('./lib/cutter').CutterState>;
@@ -79,7 +112,11 @@ declare global {
         disconnect: () => Promise<import('./lib/cutter').CutterState>;
         forgetKey: () => Promise<import('./lib/cutter').CutterState>;
         home: (bladeRemoved: boolean) => Promise<import('./lib/cutter').CutterState>;
-        cutSheet: (job: string, sheetIndex: number, materialReady: boolean) => Promise<import('./lib/cutter').CutterState>;
+        cutSheet: (
+          job: string,
+          sheetIndex: number,
+          materialReady: boolean,
+        ) => Promise<import('./lib/cutter').CutterState>;
         cancel: () => Promise<import('./lib/cutter').CutterState>;
         pause: () => Promise<import('./lib/cutter').CutterState>;
         resume: () => Promise<import('./lib/cutter').CutterState>;

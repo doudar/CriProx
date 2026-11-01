@@ -1,8 +1,11 @@
 import { DEFAULT_CUT_SETTINGS, type CutSettings } from './cut-settings';
+import type { StickerDesign } from './sticker-design';
 export type CardFace = {
   name: string;
   image: string;
   preview: string;
+  /** Editable artwork shared with the sticker designer and AI design tools. */
+  design?: StickerDesign;
   /** Source-specific trim geometry applied before fitting the finished card. */
   trim?: 'mpc';
 };

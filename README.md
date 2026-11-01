@@ -35,6 +35,7 @@ CriProx brings the fiddly parts of a playtest-card workflow into one focused des
 |                              |                                                                                                                                  |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | 🏠 **Start from Home** | Choose Proxy Card Builder or Stickers, continue a draft, create a new project, or reopen recent local projects. |
+| 🎨 **AI design with MCP** | Let an AI create editable proxy cards, original heroes, detailed sticker drawings and sheet layouts; printing and cutting remain user-only. [Setup guide](docs/AI-DESIGN-MCP.md). |
 | 🔒 **Local-first**           | Projects, imported artwork, and autosaves stay on your device. No account or hosted backend.                                     |
 | 📐 **Physical dimensions**   | Millimeter-based geometry, standard 63 × 88 mm cards, matched PNG/SVG output, and 300–1200 DPI export.                           |
 | 🃏 **Flexible artwork**      | Search cards, browse sets, commander precons, or tokens, choose Scryfall printings or MPC Autofill community art, or use local images. |

@@ -23,6 +23,9 @@ import { enableArtboardPanning } from './lib/artboard-pan';
 import { enableProjectDragging, type ProjectDragCallbacks } from './lib/project-drag';
 import RegisteredPrint from './components/RegisteredPrint';
 import StickerStudio from './components/StickerStudio';
+import StickerDesigner from './components/StickerDesigner';
+import { useAiDesignBridge, useAiWorkspace } from './lib/use-ai-design';
+import { type StickerDesign } from './lib/sticker-design';
 import HomeScreen, { type HomeProject } from './components/HomeScreen';
 import { WORKSPACES, type WorkspaceId } from './lib/workspaces';
 import {
@@ -2469,6 +2472,12 @@ function DonationLink() {
 }
 
 export default function App() {
+  useAiDesignBridge();
+  const [cardDesigner, setCardDesigner] = useState<{
+    target: EntryCopy;
+    name: string;
+    design: StickerDesign;
+  }>();
   const [colorTheme, setColorTheme] = useState<ColorTheme>(getInitialColorTheme);
   const {
     value: project,
@@ -2585,6 +2594,26 @@ export default function App() {
       localStorage.getItem('criprox-active-project'),
     );
   const [cardMenu, setCardMenu] = useState<SheetCardMenuTarget | null>(null);
+  useAiWorkspace('cards', {
+    read: () => project,
+    write: (next, fresh) => {
+      if (fresh) {
+        setActiveProjectId(null);
+        localStorage.removeItem('criprox-active-project');
+        setRecentId('cards');
+      }
+      setProject(next as Project);
+      setSelected(null);
+      setPage(0);
+    },
+    open: () => {
+      setModal(null);
+      setWorkspace('cards');
+    },
+    undo: undoCards,
+    redo: redoCards,
+    busy: () => !loaded || uploading || libraryBusy || !!cardDesigner,
+  });
   const [deletingCard, setDeletingCard] = useState<SheetCardMenuTarget | null>(null);
   const deleteCardCancel = useRef<HTMLButtonElement>(null);
   useEffect(() => setDeletingCard(null), [project, page, mode, modal]);
@@ -2931,7 +2960,7 @@ export default function App() {
     `${e.card.name} ${e.card.setName}`.toLowerCase().includes(search.toLowerCase()),
   );
   useEffect(() => {
-    if (workspace !== 'cards' || !loaded || modal || libraryBusy) return;
+    if (workspace !== 'cards' || !loaded || modal || libraryBusy || cardDesigner) return;
     const handler = (event: KeyboardEvent) => {
       const action = workspaceShortcut(event, isTextEditing(event.target));
       if (!action) return;
@@ -3560,7 +3589,7 @@ export default function App() {
           >
             {colorTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          {window.criprox?.projects && (
+          {(window.criprox?.projects || window.criprox?.ai) && (
             <button
               className="icon-button"
               title="Settings"
@@ -3824,6 +3853,20 @@ export default function App() {
                   <div className="section-label">SELECTED CARD</div>
                   <strong>{activeEntry.card.name}</strong>
                   <p>{activeEntry.card.setName}</p>
+                  {activeEntry.card.faces[activeEntry.face].design && (
+                    <button
+                      className="secondary"
+                      onClick={() =>
+                        setCardDesigner({
+                          target: selected,
+                          name: activeEntry.card.name,
+                          design: structuredClone(activeEntry.card.faces[activeEntry.face].design!),
+                        })
+                      }
+                    >
+                      Edit card design
+                    </button>
+                  )}
                   {activeEntry.card.faces.length > 1 && (
                     <>
                       <label>
@@ -4271,7 +4314,52 @@ export default function App() {
         request={stickerRequest}
         onDraft={updateStickerDraft}
         onRemember={recordStickerRecent}
+        onAiOpen={() => {
+          setModal(null);
+          setWorkspace('stickers');
+        }}
       />
+      {cardDesigner && (
+        <Modal
+          title="Edit custom card design"
+          close={() => setCardDesigner(undefined)}
+          wide
+          className="card-design-modal"
+        >
+          <div className="card-design-editor">
+            <StickerDesigner
+              initial={cardDesigner.design}
+              name={cardDesigner.name}
+              active
+              cutRadius={project.settings.radius}
+              saveLabel="Save card design"
+              fixedCanvas
+              onClose={() => setCardDesigner(undefined)}
+              onSave={(name, design, image) => {
+                const entry = project.entries.find((e) => e.id === cardDesigner.target.entryId);
+                if (entry)
+                  editCopy(cardDesigner.target, {
+                    card: {
+                      ...entry.card,
+                      name,
+                      faces: entry.card.faces.map((face, i) =>
+                        i === entry.face
+                          ? {
+                              name,
+                              image,
+                              preview: image,
+                              design: { ...design, cropToCuts: false },
+                            }
+                          : face,
+                      ),
+                    },
+                  });
+                setCardDesigner(undefined);
+              }}
+            />
+          </div>
+        </Modal>
+      )}
       <input
         hidden
         ref={homeInput}
@@ -4325,7 +4413,7 @@ export default function App() {
           newProject={() => setModal('new')}
         />
       )}
-      {modal === 'settings' && window.criprox?.projects && (
+      {modal === 'settings' && (window.criprox?.projects || window.criprox?.ai) && (
         <SettingsModal
           initialPage={settingsPage}
           updateState={updateState}

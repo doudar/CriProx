@@ -4,6 +4,15 @@
 
 The app opens on **Home**. Choose **Proxy Card Builder** for gaming cards or **Stickers** for labels and custom designs. Continue an existing draft, create a new project, or use **Open project** and the recent-project tiles. Opening a project file selects its workspace automatically. Click the CriProx logo to return Home. Recent local snapshots are bounded to eight projects and a 90 MB budget; keep saved project files for permanent storage.
 
+## Optional AI design connection
+
+In the desktop app, open **Settings → AI design → Start AI design access** and **Copy MCP
+configuration**. Add the copied command and arguments to your MCP client and leave CriProx open.
+AI edits and previews cards and stickers; printing and cutter operations remain user-only.
+Access starts off after launch and stops when you close its window or choose **Stop AI design
+access**. Packaged builds include the stdio relay and need no separate Node.js installation.
+See the [MCP guide](AI-DESIGN-MCP.md) for tools, client configuration, examples and limits.
+
 ## Explore 5 connection requirements
 
 The Windows desktop app's **Print then cut → Connect your cutter** requires the inspected

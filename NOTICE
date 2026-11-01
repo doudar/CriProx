@@ -19,3 +19,8 @@ the complete license texts distributed with CriProx.
 
 Desktop release-note formatting uses Marked, sanitize-html, and htmlparser2.
 Their license notices are included in THIRD_PARTY_LICENSES.txt.
+
+The optional MCP design server uses the official Model Context Protocol SDK
+(server, node and core packages) under Apache License 2.0, plus Hono,
+@hono/node-server and Zod under the MIT License. Their complete license notices
+are included in THIRD_PARTY_LICENSES.txt.

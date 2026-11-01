@@ -4,6 +4,26 @@ contextBridge.exposeInMainWorld(
   'criprox',
   Object.freeze({
     platform: process.platform,
+    ai: Object.freeze({
+      status: () => ipcRenderer.invoke('ai-design-status'),
+      start: () => ipcRenderer.invoke('ai-design-start'),
+      stop: () => ipcRenderer.invoke('ai-design-stop'),
+      copyConfig: () => ipcRenderer.invoke('ai-design-copy-config'),
+      onCancel: (callback) => {
+        const listener = () => callback(); ipcRenderer.on('ai-design-cancel', listener);
+        return () => ipcRenderer.removeListener('ai-design-cancel', listener);
+      },
+      onRequest: (callback) => {
+        const listener = async (_event, request) => {
+          let result;
+          try { result = await callback(request); }
+          catch { result = {error:'The design request failed.'}; }
+          await ipcRenderer.invoke('ai-design-response', {id:request.id,...result});
+        };
+        ipcRenderer.on('ai-design-request', listener);
+        return () => ipcRenderer.removeListener('ai-design-request', listener);
+      },
+    }),
     materials: Object.freeze({ import: () => ipcRenderer.invoke('materials-import') }),
     printing: Object.freeze({
       begin: settings => ipcRenderer.invoke('print-begin', settings),

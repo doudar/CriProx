@@ -33,6 +33,8 @@ export default function StickerDesigner({
   fitCutDefaults,
   onSave,
   onClose,
+  saveLabel = 'Save design to sheet',
+  fixedCanvas = false,
 }: {
   initial: StickerDesign;
   name: string;
@@ -41,6 +43,8 @@ export default function StickerDesigner({
   fitCutDefaults?: FitCutOptions;
   onSave: (name: string, design: StickerDesign, image: string) => void;
   onClose: () => void;
+  saveLabel?: string;
+  fixedCanvas?: boolean;
 }) {
   const history = useWorkspaceHistory(() => initial),
     design = history.value;
@@ -111,8 +115,8 @@ export default function StickerDesigner({
   }
   function add(e: DesignElement) {
     e = { ...e, operation: e.operation || operation };
-    if (design.elements.length >= 100) {
-      setError('Use at most 100 elements.');
+    if (design.elements.length >= 500) {
+      setError('Use at most 500 elements.');
       return;
     }
     update({ ...design, elements: [...design.elements, e] });
@@ -296,7 +300,7 @@ export default function StickerDesigner({
     setError('');
     try {
       if (!name.trim()) throw Error('Name the design first.');
-      const clean = validateStickerDesign({ ...design, cropToCuts: true });
+      const clean = validateStickerDesign({ ...design, cropToCuts: !fixedCanvas });
       designCutPaths(clean);
       onSave(name.trim(), clean, await renderStickerDesign(clean));
     } catch (e) {
@@ -349,7 +353,7 @@ export default function StickerDesigner({
   return (
     <section
       className="sticker-designer workspace-editor"
-      aria-label="Sticker designer"
+      aria-label={fixedCanvas ? 'Card designer' : 'Sticker designer'}
       hidden={!active}
     >
       <fieldset disabled={busy} className="designer-controls">
@@ -369,7 +373,9 @@ export default function StickerDesigner({
                   }}
                 >
                   <option value="print">Printed artwork</option>
-                  <option value="cut">Cut paths</option>
+                  <option value="cut" disabled={fixedCanvas}>
+                    Cut paths
+                  </option>
                 </select>
               </label>
               {operation === 'cut' && (
@@ -559,7 +565,9 @@ export default function StickerDesigner({
                         }}
                       >
                         <option value="print">Printed artwork</option>
-                        <option value="cut">Cut path (does not print)</option>
+                        <option value="cut" disabled={fixedCanvas}>
+                          Cut path (does not print)
+                        </option>
                       </select>
                     </label>
                   )}
@@ -765,7 +773,11 @@ export default function StickerDesigner({
               >
                 Redo
               </button>
-              <button className="secondary compact" disabled={busy} onClick={() => void fitCut()}>
+              <button
+                className="secondary compact"
+                disabled={busy || fixedCanvas}
+                onClick={() => void fitCut()}
+              >
                 Fit Cut
               </button>
               <button
@@ -787,7 +799,7 @@ export default function StickerDesigner({
                 }}
                 tabIndex={0}
                 role="img"
-                aria-label="Editable sticker artwork"
+                aria-label={fixedCanvas ? 'Editable card artwork' : 'Editable sticker artwork'}
                 onPointerDown={(e) => {
                   if (tool === 'polygon') {
                     const p = point(e);
@@ -800,7 +812,7 @@ export default function StickerDesigner({
                         },
                       ]);
                   } else if (tool === 'select') setSelected('');
-                  else if (design.elements.length < 100) start(e, tool);
+                  else if (design.elements.length < 500) start(e, tool);
                 }}
                 onPointerMove={move}
                 onPointerUp={end}
@@ -869,7 +881,11 @@ export default function StickerDesigner({
                         <path
                           d={elementPath(e)}
                           fill={
-                            e.operation === 'cut' ? 'none' : e.kind === 'shape' ? e.fill : 'none'
+                            e.operation === 'cut'
+                              ? 'none'
+                              : e.kind === 'shape' || (e.kind === 'draw' && e.closed)
+                                ? e.fill
+                                : 'none'
                           }
                           stroke={e.operation === 'cut' ? '#ec268f' : e.stroke}
                           strokeWidth={e.operation === 'cut' ? 1 : e.strokeWidth}
@@ -942,8 +958,8 @@ export default function StickerDesigner({
                 : tool === 'select'
                   ? 'Select and drag elements. Drag the small corner handle to resize.'
                   : `Drag to draw a ${tool === 'line' ? 'straight line' : 'freehand stroke'}.`}{' '}
-              Artwork outside the sticker is clipped. Pink outlines do not print; check final sizes
-              and cut paths on the sheet.
+              Artwork outside the {fixedCanvas ? 'card' : 'sticker'} is clipped. Pink outlines do
+              not print; check final sizes and cut paths on the sheet.
             </p>
             {error && (
               <p role="alert" className="workflow-error">
@@ -966,6 +982,7 @@ export default function StickerDesigner({
                       type="number"
                       min="10"
                       max="250"
+                      disabled={fixedCanvas}
                       value={design[key]}
                       onChange={(e) => {
                         if (Number.isFinite(e.currentTarget.valueAsNumber))
@@ -983,55 +1000,58 @@ export default function StickerDesigner({
                   onInput={(e) => update({ ...design, background: e.currentTarget.value })}
                 />
               </label>
-              <h3>Fit Cut border</h3>
-              <div className="sticker-dimensions">
+              <div hidden={fixedCanvas}>
+                <h3>Fit Cut border</h3>
+                <div className="sticker-dimensions">
+                  <label>
+                    Border width (mm)
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      step="0.25"
+                      value={fitOptions.borderWidth}
+                      onChange={(e) =>
+                        setFitOptions({ ...fitOptions, borderWidth: Number(e.target.value) })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Border stroke (mm)
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      value={fitOptions.strokeWidth}
+                      onChange={(e) =>
+                        setFitOptions({ ...fitOptions, strokeWidth: Number(e.target.value) })
+                      }
+                    />
+                  </label>
+                </div>
                 <label>
-                  Border width (mm)
+                  Border stroke color
                   <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.25"
-                    value={fitOptions.borderWidth}
-                    onChange={(e) =>
-                      setFitOptions({ ...fitOptions, borderWidth: Number(e.target.value) })
+                    type="color"
+                    value={fitOptions.strokeColor}
+                    onInput={(e) =>
+                      setFitOptions({ ...fitOptions, strokeColor: e.currentTarget.value })
                     }
                   />
                 </label>
-                <label>
-                  Border stroke (mm)
-                  <input
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={fitOptions.strokeWidth}
-                    onChange={(e) =>
-                      setFitOptions({ ...fitOptions, strokeWidth: Number(e.target.value) })
-                    }
-                  />
-                </label>
+                <p className="muted">
+                  Set the border, then choose Fit Cut to enclose visible artwork with one rounded
+                  outline. A stroke of 0 turns the printed border off.
+                </p>
               </div>
-              <label>
-                Border stroke color
-                <input
-                  type="color"
-                  value={fitOptions.strokeColor}
-                  onInput={(e) =>
-                    setFitOptions({ ...fitOptions, strokeColor: e.currentTarget.value })
-                  }
-                />
-              </label>
-              <p className="muted">
-                Set the border, then choose Fit Cut to enclose visible artwork with one rounded
-                outline. A stroke of 0 turns the printed border off.
-              </p>
               <button className="primary" disabled={busy} onClick={() => void save()}>
-                {busy ? 'Saving artwork…' : 'Save design to sheet'}
+                {busy ? 'Saving artwork…' : saveLabel}
               </button>
               <p className="muted">
-                The sheet crops to your outer cut lines; the full canvas stays editable. Changes
-                update every copy while keeping its scale. Use Fill or Auto arrange to nest shapes.
+                {fixedCanvas
+                  ? 'Card artwork keeps the project’s full card dimensions. Its editable layers are saved with the card.'
+                  : 'The sheet crops to your outer cut lines; the full canvas stays editable. Changes update every copy while keeping its scale. Use Fill or Auto arrange to nest shapes.'}
               </p>
               <h3>Layers</h3>
               <p className="muted">Drag layers to reorder them. Top layers print in front.</p>

@@ -71,11 +71,12 @@ export function validateStickerDesign(value: unknown): StickerDesign {
     ![d.width, d.height].every((n) => Number.isFinite(n) && n >= 10 && n <= 250) ||
     !color(d.background) ||
     !Array.isArray(d.elements) ||
-    d.elements.length > 100
+    d.elements.length > 500
   )
-    throw Error('Invalid sticker design. Use 10–250 mm and at most 100 elements.');
+    throw Error('Invalid sticker design. Use 10–250 mm and at most 500 elements.');
   const ids = new Set<string>();
-  let bytes = 0;
+  let bytes = 0,
+    points = 0;
   const elements = d.elements.map((e) => {
     if (
       !e ||
@@ -169,10 +170,12 @@ export function validateStickerDesign(value: unknown): StickerDesign {
       )
         throw Error('Invalid drawn line.');
       base.points = e.points.map((p) => ({ x: p.x, y: p.y }));
+      points += base.points.length;
     }
     return base;
   });
   if (bytes > 40_000_000) throw Error('Use less than 40 MB of embedded design images.');
+  if (points > 100_000) throw Error('Use at most 100,000 points in one design.');
   if (
     d.fitCut &&
     (!Number.isFinite(d.fitCut.borderWidth) ||
@@ -299,7 +302,7 @@ export function designSvg(
           )
           .join('')}</text>`;
       else
-        body = `<path d="${elementPath(e)}" fill="${e.kind === 'shape' ? e.fill : 'none'}" stroke="${e.stroke}" stroke-width="${e.strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;
+        body = `<path d="${elementPath(e)}" fill="${e.kind === 'shape' || (e.kind === 'draw' && e.closed) ? e.fill : 'none'}" stroke="${e.stroke}" stroke-width="${e.strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;
       return `<g transform="${elementTransform(e)}" opacity="${e.opacity}">${body}</g>`;
     })
     .join('');

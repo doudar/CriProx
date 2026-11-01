@@ -73,7 +73,7 @@ test('untrusted saved designs cannot inject markup or remote images and reject i
   assert.throws(() =>
     validateStickerDesign({
       ...d,
-      elements: Array.from({ length: 101 }, () => newElement('text', d)),
+      elements: Array.from({ length: 501 }, () => newElement('text', d)),
     }),
   );
 });

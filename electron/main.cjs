@@ -104,10 +104,11 @@ ipcMain.handle('cutter-cut-sheet', (event, request) => {
 for (const [channel,command] of [['cutter-cancel','cancelCut'],['cutter-pause','pauseCut'],['cutter-resume','resumeCut']])
   ipcMain.handle(channel, event => { checkCutterSender(event); return cutter.command(command); });
 let cutterQuitReady = false;
+let aiDesignBridge;
 app.on('before-quit', (event) => {
   if (cutterQuitReady) return;
   event.preventDefault();
-  void cutter.close().finally(() => {
+  void Promise.allSettled([cutter.close(), aiDesignBridge?.stop()]).finally(() => {
     cutterQuitReady = true;
     app.quit();
   });
@@ -505,6 +506,7 @@ function createWindow() {
   });
   const publishWindowState = () =>
     window.webContents.send('window-maximized-change', window.isMaximized());
+  window.on('closed', () => aiDesignBridge?.windowClosed(window.id));
   window.on('maximize', publishWindowState);
   window.on('unmaximize', publishWindowState);
   window.on('enter-full-screen', publishWindowState);
@@ -523,6 +525,9 @@ function createWindow() {
   window.loadFile(path.join(__dirname, '../dist/index.html'));
 }
 app.whenReady().then(() => {
+  aiDesignBridge = require('./ai-bridge.cjs').installAiBridge({
+    ipcMain, BrowserWindow, clipboard, app, checkSender: checkCutterSender,
+  });
   createWindow();
   app.on('activate', () => {
     if (!BrowserWindow.getAllWindows().length) createWindow();

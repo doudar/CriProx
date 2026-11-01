@@ -1,5 +1,27 @@
 # Software validation — September 20, 2026
 
+## Design-only MCP server — November 1, 2026
+
+- The local HTTP server and bundled-Node stdio relay expose a closed catalogue of 18 design tools.
+  Regression coverage checks authentication, Host/Origin restrictions, main-frame/owner guards,
+  unknown print/cut/IPC commands, editable hero cards, atomic layer edits, project Undo, vector limits,
+  local-only relay targets, and protection against a second app replacing an active connection.
+- A hidden renderer test exercised the actual design engine through MCP HTTP. It created a 182-layer
+  Alpine landscape and a 16-layer original hero card, rendered both PNG previews, transformed sticker
+  copies, exported native project files and rejected a cancelled mutation without changing the project.
+  Neither printer nor cutter services were instantiated by that test.
+- An isolated browser used the actual built React app with simulated native IPC and a real MCP HTTP
+  server. Both projects loaded into the live workspaces, Undo/Redo and layer edits worked, the existing
+  nesting worker arranged stickers, and both drafts retained their layers after reload. The shared
+  card designer saved editable artwork and handled Ctrl+Z without undoing the surrounding card project.
+  Settings start/stop and disabled configuration copying while stopped were checked in the UI.
+- Full app suite: 353 passed, 2 skipped (355 total). Production build, all 17 website tests and the offline documentation build passed.
+  Packaged stdio and archive smoke checks verify protocol initialization, all 18 tools, a design call,
+  rejection of a cut call, SDK loading from app.asar, and clean relay shutdown. The Windows preview is
+  `release/mcp-design-preview/win-unpacked/CriProx.exe`.
+- No printer job, cutter connection, machine movement, registration scan or physical cut was performed
+  for MCP validation. macOS/Linux packaging and external AI-client configuration remain to be tested.
+
 ## Automatic connection from the cut page — November 1, 2026
 
 - Full app suite: 346 tests, 344 passed and 2 skipped. New coverage verifies one saved-key attempt,

@@ -5888,3 +5888,7 @@ html[data-theme='dark'] .print-section.completed .print-section-status {
 .workspace-editor input[type='number'] {
   padding: 0 9px;
 }
+.modal.card-design-modal { width: calc(100vw - 32px); max-width: none; height: calc(100dvh - 32px); max-height: calc(100dvh - 32px); overflow: hidden; }
+.modal.card-design-modal[open] { display: flex; flex-direction: column; }
+.card-design-modal > .modal-heading { flex-shrink: 0; }
+.card-design-editor { flex: 1; min-height: 0; display: flex; }

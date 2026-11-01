@@ -7,6 +7,7 @@ import {
 } from './types';
 import { availableSheetProfiles } from './paper-workflow';
 import { readCutSettings } from './cut-settings';
+import { validateStickerDesign } from './sticker-design';
 const supportedImage = (url: unknown) =>
   typeof url === 'string' &&
   /^(https:\/\/(cards\.scryfall\.io\/|cdn\.mpcautofill\.com\/images\/google_drive\/(full|large)\/)|data:image\/(png|jpeg|webp);base64,)/.test(
@@ -150,6 +151,7 @@ export function validateProject(value: unknown): Project {
       throw new Error('Invalid card entry.');
     ids.add(entry.id);
     for (const face of c.faces) {
+      if (face.design) face.design = validateStickerDesign(face.design);
       if (
         typeof face.name !== 'string' ||
         (face.trim !== undefined && face.trim !== 'mpc') ||
