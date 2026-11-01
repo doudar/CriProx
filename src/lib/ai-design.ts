@@ -30,6 +30,8 @@ import { fitDesignCut } from './sticker-fit-cut';
 import { runStickerLayout } from './sticker-layout-task';
 import { importStickerSvg } from './sticker-svg';
 import { layout } from './layout';
+import { renderStickerSheet, bytesToBase64 } from './sticker-output';
+import { stickerLocalCuts } from './sticker-cuts';
 import { searchCards, resolveCardIds } from './scryfall';
 
 export type AiMode = 'cards' | 'stickers';
@@ -39,7 +41,8 @@ export type AiWorkspace = {
   write: (value: AiProject, fresh?: boolean) => void;
   undo: () => void;
   redo: () => void;
-  open: () => void;
+  open: (fresh?: boolean) => void;
+  beforeReplace?: () => Promise<void>;
   busy: () => boolean;
 };
 const workspaces = new Map<AiMode, AiWorkspace>();
@@ -373,24 +376,26 @@ export async function previewAiProject(mode: AiMode, p: AiProject, args: any): P
     if (!s) throw Error('Sheet not found.');
     w = s.width;
     h = s.height;
-    for (const a of s.placements) {
+    const artwork = await renderStickerSheet(s, p as StickerProject, { maxPixels: args.maxPixels });
+    content = `<image href="data:image/png;base64,${bytesToBase64(artwork)}" width="${w}" height="${h}"/>`;
+    for (const a of args.showCuts ? s.placements : []) {
       const art = (p as StickerProject).artwork.find(
         (v) => v.id === (p as StickerProject).items[a.itemIndex],
       )!;
       const q = a.sticker;
-      const b = art.design ? designOutputBounds(art.design) : undefined;
-      const cuts =
-        art.design && b
-          ? `<svg width="${q.width}" height="${q.height}" viewBox="${b.x} ${b.y} ${b.width} ${b.height}">${designCutPaths(
-              art.design,
+      const cuts = art.design
+        ? stickerLocalCuts(
+            art.design,
+            { ...q, flipX: false, flipY: false },
+            (p as StickerProject).settings.fit,
+          )
+            .map(
+              (cut) =>
+                `<path d="${pathSvg(cut)}" fill="none" stroke="#ec268f" stroke-width=".15" stroke-dasharray=".8 .6"/>`,
             )
-              .map(
-                (path) =>
-                  `<path d="${pathSvg(path)}" fill="none" stroke="#ec268f" stroke-width=".15" stroke-dasharray=".8 .6"/>`,
-              )
-              .join('')}</svg>`
-          : `<rect width="${q.width}" height="${q.height}" rx="${q.radius}" fill="none" stroke="#ec268f" stroke-width=".15" stroke-dasharray=".8 .6"/>`;
-      content += `<g transform="translate(${q.x + q.width / 2} ${q.y + q.height / 2}) rotate(${q.rotation}) scale(${q.flipX ? -1 : 1} ${q.flipY ? -1 : 1}) translate(${-q.width / 2} ${-q.height / 2})"><image href="${xml(art.image)}" width="${q.width}" height="${q.height}"/>${args.showCuts ? cuts : ''}</g>`;
+            .join('')
+        : `<rect width="${q.width}" height="${q.height}" rx="${q.radius}" fill="none" stroke="#ec268f" stroke-width=".15" stroke-dasharray=".8 .6"/>`;
+      content += `<g transform="translate(${q.x + q.width / 2} ${q.y + q.height / 2}) rotate(${q.rotation}) scale(${q.flipX ? -1 : 1} ${q.flipY ? -1 : 1}) translate(${-q.width / 2} ${-q.height / 2})">${cuts}</g>`;
     }
   } else {
     const c = p as Project,
@@ -431,12 +436,22 @@ export async function invokeAiDesign(name: string, input: unknown): Promise<any>
     before = c.read();
   let next = clone(before),
     result: any = {};
-  const save = () => {
+  const assertCurrent = () => {
     if (epoch !== requestEpoch) throw Error('AI design access has stopped.');
-    if (c.read() !== before)
+    if (c.busy()) throw Error('Finish the current editor operation before AI edits.');
+    if (workspaces.get(mode) !== c || c.read() !== before)
       throw Error('The project changed while AI was working. Read the workspace and retry.');
-    c.write(validate(mode, next), ['create_project', 'load_project'].includes(name));
-    c.open();
+  };
+  const save = async () => {
+    assertCurrent();
+    const clean = validate(mode, next);
+    const fresh = ['create_project', 'load_project'].includes(name);
+    if (fresh && c.beforeReplace) {
+      await c.beforeReplace();
+      assertCurrent();
+    }
+    c.write(clean, fresh);
+    c.open(fresh);
     return result;
   };
   if (name === 'search_cards') return searchCards(args.query);
@@ -521,6 +536,7 @@ export async function invokeAiDesign(name: string, input: unknown): Promise<any>
       if (patch.machine) {
         if (patch.machine === 'manual')
           throw Error('Stickers require a registration-capable machine guide.');
+        if (s.machine !== patch.machine) s.capture = undefined;
         s.machine = patch.machine;
         delete patch.machine;
       }
@@ -623,10 +639,12 @@ export async function invokeAiDesign(name: string, input: unknown): Promise<any>
             ? (next as Project).settings.height
             : (next as StickerProject).settings.height,
         );
-    if (!a.design)
+    if (!a.design) {
+      const image = a.image.startsWith('data:') ? a.image : await pngFromImage(a.image, 4096);
       d.elements = [
-        { ...newElement('image', d), x: 0, y: 0, width: d.width, height: d.height, image: a.image },
+        { ...newElement('image', d), x: 0, y: 0, width: d.width, height: d.height, image },
       ];
+    }
     d =
       name === 'fit_design_cut'
         ? await fitDesignCut(d, args)

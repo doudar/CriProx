@@ -118,7 +118,7 @@ export default function StickerStudio({
   request?: { sequence: number; project?: StickerProject };
   onDraft?: (project: StickerProject) => void;
   onRemember?: (project: StickerProject, fresh?: boolean | string) => Promise<void>;
-  onAiOpen?: () => void;
+  onAiOpen?: (fresh?: boolean) => void;
 }) {
   const clipboard = useRef<StickerClipboard | undefined>(undefined);
   const designClipboard = useRef<StickerArtwork | undefined>(undefined);
@@ -160,6 +160,9 @@ export default function StickerStudio({
   const layoutTask = useRef<AbortController | undefined>(undefined);
   useAiWorkspace('stickers', {
     read: () => project,
+    beforeReplace: async () => {
+      if (project.artwork.length) await onRemember?.(project);
+    },
     write: (next) => {
       commit(next as StickerProject);
       setDesigner(undefined);
@@ -167,9 +170,10 @@ export default function StickerStudio({
       setSelectedSticker(-1);
       setPage(0);
     },
-    open: () => {
+    open: (fresh) => {
+      if (fresh) setProfile(undefined);
       setView('edit');
-      onAiOpen?.();
+      onAiOpen?.(fresh);
     },
     undo: history.undo,
     redo: history.redo,

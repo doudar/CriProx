@@ -1,0 +1,66 @@
+const { app, BrowserWindow, session } = require('electron');
+const { buildSync } = require('esbuild');
+const fs = require('node:fs/promises'),
+  path = require('node:path'),
+  os = require('node:os');
+const { createCanvas } = require('@napi-rs/canvas');
+let dir,
+  win,
+  exitCode = 0;
+app.on('window-all-closed', () => {});
+(async () => {
+  dir = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-fixes-'));
+  app.setPath('userData', path.join(dir, 'profile'));
+  await app.whenReady();
+  const c = createCanvas(120, 60),
+    ctx = c.getContext('2d');
+  ctx.fillStyle = 'blue';
+  ctx.fillRect(0, 0, 120, 60);
+  const png = c.toBuffer('image/png');
+  session.defaultSession.protocol.handle('https', (request) => {
+    if (request.url === 'https://cards.scryfall.io/normal/front/test.png')
+      return new Response(png, {
+        headers: { 'Content-Type': 'image/png', 'Access-Control-Allow-Origin': '*' },
+      });
+    return new Response('Unexpected test network request', { status: 403 });
+  });
+  const bundle = buildSync({
+    entryPoints: ['tests/ai-design-fixes.browser.tsx'],
+    bundle: true,
+    write: false,
+    format: 'iife',
+    globalName: 'fixTests',
+    platform: 'browser',
+    target: 'es2022',
+    logLevel: 'error',
+    loader: { '.css': 'empty' },
+    define: {
+      'import.meta.env.DEV': 'false',
+      __APP_VERSION__: JSON.stringify('test'),
+      __APP_CHANGELOG__: '[]',
+    },
+  }).outputFiles[0].text;
+  await fs.writeFile(path.join(dir, 'test.html'), '<!doctype html><div id="root"></div>');
+  win = new BrowserWindow({
+    show: false,
+    webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
+  });
+  await win.loadFile(path.join(dir, 'test.html'));
+  const result = await win.webContents.executeJavaScript(
+    '(async()=>{try{' +
+      bundle +
+      '\nreturn await fixTests.run();}catch(error){return {error:error.stack};}})()',
+  );
+  if (result?.error) throw Error(result.error);
+  console.log(result);
+})()
+  .catch((e) => {
+    console.error(e);
+    exitCode = 1;
+  })
+  .finally(async () => {
+    if (win && !win.isDestroyed()) win.destroy();
+    // Chromium keeps its temporary profile locked until process exit on Windows.
+    if (dir) await fs.rm(path.join(dir, 'test.html'), { force: true });
+    app.exit(exitCode);
+  });

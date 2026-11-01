@@ -541,3 +541,5 @@ mat, but it bypasses optical registration and remains physically unverified.
 - Letter output for the six-, seven-, and eight-card profiles uses experimental Tabloid workflows. The eight-card profile requires a full Tabloid PDF capture and produces a new Letter PDF without scaling.
 
 Always inspect the final contour in Design Space, set both dimensions from the supplied manifest, and avoid Auto-Resize. Complete a measured size-check and test cut before using a full sheet of card stock.
+
+AI design edits preserve the current project in Recents before creating or loading another project. If a human opens an editor while an AI operation is rendering, that AI edit is rejected without closing the editor. Catalog card artwork is embedded before it becomes editable; sticker sheet previews use the same cropping, padding, clipping, and border renderer as printed artwork. Changing the sticker machine clears incompatible captured registration marks.

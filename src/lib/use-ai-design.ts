@@ -20,7 +20,8 @@ export function useAiWorkspace(mode: AiMode, workspace: AiWorkspace) {
           latest.current.write(next, fresh);
         },
         busy: () => latest.current.busy(),
-        open: () => latest.current.open(),
+        open: (fresh) => latest.current.open(fresh),
+        beforeReplace: () => latest.current.beforeReplace?.() ?? Promise.resolve(),
         undo: () => latest.current.undo(),
         redo: () => latest.current.redo(),
       }),

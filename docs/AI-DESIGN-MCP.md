@@ -114,3 +114,5 @@ mat and starts cutting. An AI-generated boundary is a design, not proof of physi
 
 Implementation uses the [official MCP SDK](https://ts.sdk.modelcontextprotocol.io/v2/) with a
 backward-compatible MCP transport for existing stdio clients.
+
+AI design edits preserve the current project in Recents before creating or loading another project. If a human opens an editor while an AI operation is rendering, that AI edit is rejected without closing the editor. Catalog card artwork is embedded before it becomes editable; sticker sheet previews use the same cropping, padding, clipping, and border renderer as printed artwork. Changing the sticker machine clears incompatible captured registration marks.

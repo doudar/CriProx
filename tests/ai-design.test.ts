@@ -12,7 +12,12 @@ import {
   registerAiWorkspace,
 } from '../src/lib/ai-design';
 import { newDesign, newElement, designSvg, validateStickerDesign } from '../src/lib/sticker-design';
-import { newStickerProject, type StickerProject } from '../src/lib/stickers';
+import {
+  newStickerProject,
+  stickerGeometryKey,
+  validateStickerProject,
+  type StickerProject,
+} from '../src/lib/stickers';
 import { validateProject } from '../src/lib/project';
 import { DEFAULT_SETTINGS } from '../src/lib/types';
 const require = createRequire(import.meta.url);
@@ -371,4 +376,94 @@ test('stdio relay validates local-only connection targets and never sends tokens
   await running;
   assert.equal(JSON.parse(text).result.ok, true);
   await rm(directory, { recursive: true, force: true });
+});
+
+test('AI machine changes discard incompatible registration captures and preserve matching ones', async () => {
+  let current = newStickerProject();
+  current.machine = 'explore-5';
+  current.capture = {
+    key: stickerGeometryKey(current.settings, current.machine),
+    name: 'marks.pdf',
+    pdf: btoa('%PDF-1.7'),
+  };
+  current = validateStickerProject(current);
+  const capture = structuredClone(current.capture);
+  const stop = registerAiWorkspace('stickers', {
+    read: () => current,
+    write: (p) => {
+      current = p as StickerProject;
+    },
+    open: () => {},
+    busy: () => false,
+    undo: () => {},
+    redo: () => {},
+  });
+  try {
+    await invokeAiDesign('update_project_settings', {
+      workspace: 'stickers',
+      settings: { machine: 'explore-5' },
+    });
+    assert.deepEqual(current.capture, capture);
+    await invokeAiDesign('update_project_settings', {
+      workspace: 'stickers',
+      settings: { machine: 'maker' },
+    });
+    assert.equal(current.machine, 'maker');
+    assert.equal(current.capture, undefined);
+    assert.doesNotThrow(() => validateStickerProject(current));
+  } finally {
+    stop();
+  }
+});
+
+test('AI replacement preserves the prior snapshot before committing and rejects editor or project changes during persistence', async () => {
+  for (const interruption of ['none', 'busy', 'changed', 'failed'] as const) {
+    let current = newStickerProject(),
+      busy = false,
+      writes = 0,
+      opened: boolean | undefined;
+    const original = current,
+      snapshots: StickerProject[] = [];
+    const stop = registerAiWorkspace('stickers', {
+      read: () => current,
+      busy: () => busy,
+      beforeReplace: async () => {
+        snapshots.push(structuredClone(current));
+        await Promise.resolve();
+        assert.equal(writes, 0);
+        if (interruption === 'busy') busy = true;
+        if (interruption === 'changed') current = { ...current, name: 'Human changes' };
+        if (interruption === 'failed') throw Error('Storage full');
+      },
+      write: (p, fresh) => {
+        assert.equal(fresh, true);
+        current = p as StickerProject;
+        writes++;
+      },
+      open: (fresh) => {
+        opened = fresh;
+      },
+      undo: () => {},
+      redo: () => {},
+    });
+    try {
+      const pending = invokeAiDesign('create_project', {
+        workspace: 'stickers',
+        name: 'New AI project',
+      });
+      if (interruption === 'none') {
+        await pending;
+        assert.equal(writes, 1);
+        assert.equal(opened, true);
+        assert.equal(current.name, 'New AI project');
+      } else {
+        await assert.rejects(pending, /editor operation|project changed|Storage full/);
+        assert.equal(writes, 0);
+        assert.equal(opened, undefined);
+      }
+      assert.deepEqual(snapshots, [original]);
+    } finally {
+      stop();
+    }
+  }
 });

@@ -61,11 +61,17 @@ export async function readStickerArtwork(file: File): Promise<string> {
 export async function renderStickerSheet(
   sheet: Sheet,
   project: StickerProject,
+  options: { maxPixels?: number } = {},
 ): Promise<Uint8Array> {
   const s = project.settings;
   const canvas = document.createElement('canvas');
-  canvas.width = mmToPx(sheet.width, s.dpi);
-  canvas.height = mmToPx(sheet.height, s.dpi);
+  const scale = options.maxPixels
+    ? options.maxPixels / Math.max(sheet.width, sheet.height)
+    : undefined;
+  canvas.width = scale ? Math.max(1, Math.ceil(sheet.width * scale)) : mmToPx(sheet.width, s.dpi);
+  canvas.height = scale
+    ? Math.max(1, Math.ceil(sheet.height * scale))
+    : mmToPx(sheet.height, s.dpi);
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not create the sticker canvas.');
   const images = new Map<string, ImageBitmap>();

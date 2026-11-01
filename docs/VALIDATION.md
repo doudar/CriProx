@@ -322,3 +322,7 @@ Validation for this update: 297 root tests (295 passed, 2 skipped), production b
 ## Proxy Card Builder cut guides — November 1, 2026
 
 The card preview now has Show cuts alongside zoom, using the shared native polygon geometry for each occupied placement. Browser checks verified four guides for a four-card partial sheet, on/off toggling, constant 1 px dashed pink lines after zoom, and working card context menus through the non-interactive overlay. The production build and existing generated-print/registration checks pass. Screenshot: `docs/assets/criprox-card-cuts.png`. The new unpacked executable is `release/card-cuts-preview/win-unpacked/CriProx.exe`; existing desktop sessions were left untouched. No printer or cutter was accessed.
+
+## AI design release corrections - November 1, 2026
+
+Regression checks cover preserving separate recent identities through AI create/load and Home, rejecting late AI mutations while the human editor is busy, embedding catalog images before layer edits, comparing AI sheet-preview pixels with shared artwork rendering (crop, padding, stroke, rotation and reflection), and clearing only incompatible machine registration captures. The renderer test mounts the real App with an isolated browser profile and an intercepted catalog image fixture. It loads no printer or cutter service and makes no hardware requests. Run `npx electron tests/ai-design-fixes.electron.cjs`; Windows CI also runs this regression.

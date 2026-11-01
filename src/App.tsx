@@ -2596,6 +2596,9 @@ export default function App() {
   const [cardMenu, setCardMenu] = useState<SheetCardMenuTarget | null>(null);
   useAiWorkspace('cards', {
     read: () => project,
+    beforeReplace: async () => {
+      if (project.entries.length) await recordRecent(project, 'cards');
+    },
     write: (next, fresh) => {
       if (fresh) {
         setActiveProjectId(null);
@@ -4314,7 +4317,8 @@ export default function App() {
         request={stickerRequest}
         onDraft={updateStickerDraft}
         onRemember={recordStickerRecent}
-        onAiOpen={() => {
+        onAiOpen={(fresh) => {
+          if (fresh) setRecentId('stickers');
           setModal(null);
           setWorkspace('stickers');
         }}
