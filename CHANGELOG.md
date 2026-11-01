@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/doudar/CriProx/compare/v0.17.0...v0.17.1) (2026-11-01)
+
+
+### Bug Fixes
+
+* preserve projects and match artwork previews during AI design ([#3](https://github.com/doudar/CriProx/issues/3)) ([240d151](https://github.com/doudar/CriProx/commit/240d151c15ea7eb3aad45e853d45652c09270371))
+
 ## [0.17.0](https://github.com/doudar/CriProx/compare/v0.16.0...v0.17.0) (2026-11-01)
 
 
