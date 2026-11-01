@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.17.0](https://github.com/doudar/CriProx/compare/v0.16.0...v0.17.0) (2026-11-01)
+
+
+### Features
+
+* create editable cards and stickers with AI design tools ([#2](https://github.com/doudar/CriProx/issues/2)) ([34ba39b](https://github.com/doudar/CriProx/commit/34ba39b0eab588294f7c6a1cc5dd9f9a475f0cea))
+* design stickers and print and cut sheets directly in CriProx ([83c904c](https://github.com/doudar/CriProx/commit/83c904c1ca72cbdc5b570281104b9184782cd663))
+* **editor:** duplicate cards, fill pages, and delete cards with a right-click ([#127](https://github.com/doudar/CriProx/issues/127)) ([36c65ef](https://github.com/doudar/CriProx/commit/36c65efa9f6a1ebe927e97a18f3d33f03d3f4c7b))
+
 ## [0.16.0](https://github.com/Go2Engle/CriProx/compare/v0.15.0...v0.16.0) (2026-10-15)
 
 
