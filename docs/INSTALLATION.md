@@ -1,6 +1,6 @@
 # Install and run Skarix
 
-Published v0.17.1 installers predate this rebrand. This change does not publish a release.
+Installers are available from [Skarix releases](https://github.com/doudar/Skarix/releases). The signing workflow described below applies to releases built after it is merged; it does not repair existing unsigned installers.
 
 ## Development
 
@@ -8,7 +8,27 @@ Install Node.js 22 or newer, clone [doudar/Skarix](https://github.com/doudar/Ska
 
 ## Packaging
 
-Use `npm run package:windows`, `npm run package:mac`, or `npm run package:linux` on a suitable build host. Builds do not publish automatically. Signing/notarization requires maintainer configuration.
+Use `npm run package:windows`, `npm run package:mac`, or `npm run package:linux` on a suitable build host. Builds do not publish automatically. Local Mac builds and installer previews remain unsigned and are not suitable for validating Bluetooth permission or Keychain persistence across updates.
+
+### Signed macOS releases
+
+The Release workflow uses `npm run package:mac:release` for macOS. It requires a Developer ID Application certificate, enables hardened runtime, signs the app and its nested components, notarizes and staples the app, and signs the DMG. Before upload it mounts the finished DMG read-only and checks the contained app's signature across both architectures, bundle identifier, Apple team, Developer ID authority, hardened runtime, stapled notarization ticket and Gatekeeper acceptance. Missing credentials or a failed check blocks publication; there is no unsigned release fallback. Windows and Linux packaging are unchanged.
+
+In **doudar/Skarix → Settings → Secrets and variables → Actions → Repository secrets**, configure:
+
+| Secret | Value |
+| --- | --- |
+| `MAC_CSC_LINK` | Base64 encoding of a password-protected `.p12` export containing the Developer ID Application certificate **and its private key**. Use a Developer ID Application certificate, not Apple Development or a Mac App Store distribution certificate. |
+| `MAC_CSC_KEY_PASSWORD` | Password used for that `.p12` export. |
+| `APPLE_ID` | Apple account email authorized to notarize for the team. |
+| `APPLE_APP_SPECIFIC_PASSWORD` | An app-specific password for that account, not its regular login password. |
+| `APPLE_TEAM_ID` | Ten-character Apple Developer team identifier matching the signing certificate. |
+
+Export the certificate and private key from Keychain Access, then encode the `.p12` as one line before storing it as the secret. Keep the export and password out of Git and chat. GitHub maps `MAC_CSC_LINK` / `MAC_CSC_KEY_PASSWORD` to electron-builder's `CSC_LINK` / `CSC_KEY_PASSWORD`; credentials are exposed only to the Mac release step, never preview or pull-request builds. Use the same team and app identifier (`com.criprox.studio`) across releases so macOS can recognize updates. See [electron-builder signing](https://www.electron.build/v26/docs/mac/) and [notarization](https://www.electron.build/v26/docs/features/code-signing/notarization/).
+
+After configuring secrets, merge the signing change through normal CI. Release Please prepares the version; Release builds and verifies all installers before publishing. Do not manually edit version files or the changelog. If Apple rejects notarization or is unavailable, fix the reported issue and retry the failed workflow; do not bypass verification.
+
+For an upgrade from an unsigned build with a stale Bluetooth permission, quit Skarix, install the signed app in `/Applications`, then, if necessary, run `tccutil reset BluetoothAlways com.criprox.studio`. Reopen Skarix and allow Bluetooth when prompted. This resets only Skarix's Bluetooth permission. Validate a real BLE connection, Keychain save/reload, and a subsequent signed update before claiming hardware or permission persistence is verified.
 
 ## First launch and existing data
 
@@ -34,4 +54,4 @@ Run `npm run desktop:updates` in a development checkout. The isolated simulation
 
 Install Design Space 10.8.81 in /Applications or your user Applications folder. Skarix resolves its app archive and native DeviceIO helper and verifies runtime component hashes. Quit Design Space and other apps using the cutter, then select Explore 5 and Bluetooth LE inside Skarix. Do not pair Explore 5 through system Bluetooth settings. Allow Bluetooth access when macOS requests it. Initialization waits up to five seconds for the controller; Cancel connection releases the attempt. The helper exposes a ready flag but cannot reliably distinguish disabled Bluetooth from denied permission.
 
-Skarix includes a Bluetooth usage description. Current builds use hardened runtime without App Sandbox; adopting App Sandbox would also require a Bluetooth entitlement. The saved-key store uses Electron safeStorage with macOS Keychain. Consistent signing, permission attribution to the packaged app/helper, Keychain denial and update behavior need testing on macOS. No signing identity is added by this change. Cutting is enabled as experimental at the user’s request; a successful homing test is not physical validation of registration or blade paths.
+Skarix includes a Bluetooth usage description. Signed releases use hardened runtime without App Sandbox; adopting App Sandbox would also require a Bluetooth entitlement. The saved-key store uses Electron safeStorage with macOS Keychain. The release checks verify signing and notarization, but permission attribution to the packaged app/helper, Keychain denial and update behavior still need hardware testing. Cutting is enabled as experimental at the user's request; a successful homing test is not physical validation of registration or blade paths.
