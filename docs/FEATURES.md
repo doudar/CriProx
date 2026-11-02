@@ -41,3 +41,5 @@ Settings includes light/dark appearance, AI access and updates. Updates validate
 The macOS release workflow requires Developer ID signing and Apple notarization, and verifies the app inside the finished installer before publishing. This gives macOS a signed app identity for Bluetooth permissions and Keychain access across releases. Existing unsigned installers are not changed; local and branch-preview builds remain unsigned. Maintainers must configure the release secrets described in [Installation](INSTALLATION.md). Packaged Bluetooth and Keychain behavior still require hardware validation.
 
 Release packaging uses the corrected signing-keychain password handling so valid certificate credentials no longer encounter the previous temporary-keychain password mismatch.
+
+Mac release builds also fail explicitly if signing exits before installer verification finishes, preventing a misleading successful build step followed by a missing-installer upload failure.

@@ -83,9 +83,31 @@ async function main() {
   console.log('Verified the signed, notarized universal app inside the release DMG.');
 }
 
-module.exports = { checkCredentials, releaseConfig, verifyApp };
-if (require.main === module)
-  main().catch((error) => {
-    console.error(error.message);
-    process.exitCode = 1;
+function runRelease(task = main) {
+  // An unresolved Promise does not keep Node alive. Require explicit completion
+  // even if a signing dependency abandons its work or calls process.exit(0).
+  let completed = false;
+  process.once('exit', () => {
+    if (!completed) {
+      console.error(
+        'macOS release exited before installer verification completed. No verified installer was produced.',
+      );
+      process.exitCode = 1;
+    }
   });
+  return Promise.resolve()
+    .then(task)
+    .then(
+      () => {
+        completed = true;
+      },
+      (error) => {
+        completed = true;
+        console.error(error.message);
+        process.exitCode = 1;
+      },
+    );
+}
+
+module.exports = { checkCredentials, releaseConfig, verifyApp, runRelease };
+if (require.main === module) runRelease();

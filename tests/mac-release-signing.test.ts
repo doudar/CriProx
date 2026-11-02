@@ -3,6 +3,26 @@ import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
+
+test('release fails if signing abandons a pending promise or exits early', () => {
+  const entry = fileURLToPath(new URL('../scripts/package-mac-release.cjs', import.meta.url));
+  for (const task of ['() => new Promise(() => {})', '() => process.exit(0)']) {
+    const result = spawnSync(
+      process.execPath,
+      ['-e', `require(${JSON.stringify(entry)}).runRelease(${task})`],
+      { encoding: 'utf8' },
+    );
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /before installer verification completed/);
+  }
+  const success = spawnSync(
+    process.execPath,
+    ['-e', `require(${JSON.stringify(entry)}).runRelease(async () => {})`],
+    { encoding: 'utf8' },
+  );
+  assert.equal(success.status, 0);
+});
 const require = createRequire(import.meta.url);
 const {
   checkCredentials,

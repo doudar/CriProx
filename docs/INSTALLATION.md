@@ -12,6 +12,8 @@ Use `npm run package:windows`, `npm run package:mac`, or `npm run package:linux`
 
 ### Signed macOS releases
 
+The signing step must print `Verified the signed, notarized universal app inside the release DMG.` before it can succeed. If a signing dependency exits early or abandons asynchronous work, the release wrapper fails the step rather than proceeding to upload a missing installer. A log naming `Apple Development` indicates the wrong certificate was selected; export the **Developer ID Application** certificate and its private key instead.
+
 The Release workflow uses `npm run package:mac:release` for macOS. It requires a Developer ID Application certificate, enables hardened runtime, signs the app and its nested components, notarizes and staples the app, and signs the DMG. Before upload it mounts the finished DMG read-only and checks the contained app's signature across both architectures, bundle identifier, Apple team, Developer ID authority, hardened runtime, stapled notarization ticket and Gatekeeper acceptance. Missing credentials or a failed check blocks publication; there is no unsigned release fallback. Windows and Linux packaging are unchanged.
 
 In **doudar/Skarix → Settings → Secrets and variables → Actions → Repository secrets**, configure:
