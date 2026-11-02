@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.19.0](https://github.com/doudar/Skarix/compare/v0.18.0...v0.19.0) (2026-11-02)
+
+
+### Features
+
+* create richer artwork with compact editing tools ([#10](https://github.com/doudar/Skarix/issues/10)) ([5976808](https://github.com/doudar/Skarix/commit/5976808f3f7999d2efe61e6b04031b40da6663f2))
+
+
+### Bug Fixes
+
+* let Mac releases sign with valid certificate passwords ([e4d2130](https://github.com/doudar/Skarix/commit/e4d2130dd56ac2c6ec000e224e1326f4b7a6c7d0))
+* report incomplete Mac installer builds as failures ([c4b8eac](https://github.com/doudar/Skarix/commit/c4b8eacf0f7e808ac63fc7fa75ae687bc20a1c5f))
+* sign Mac releases so Bluetooth permissions recognize Skarix ([46eeb64](https://github.com/doudar/Skarix/commit/46eeb64fd117c7109867cc5fe3aa9f2348036e1c))
+
 ## [0.18.0](https://github.com/doudar/Skarix/compare/v0.17.1...v0.18.0) (2026-11-02)
 
 
