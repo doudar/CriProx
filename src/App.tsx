@@ -239,9 +239,8 @@ export default function App() {
                 </button>
               </div>
             </div>
-            <div className="skarix-hero-art" aria-label="Skarix geometric cut mark">
-              <img src="./brand/skarix-mark.svg" alt="Skarix" />
-              <span>DESIGN / PRINT / CUT</span>
+            <div className="skarix-hero-art" aria-label="Skarix Aurora logo">
+              <img src="./brand/skarix-logo.svg" alt="Skarix — Make it your own" />
             </div>
           </section>
           <section className="skarix-start" aria-label="Start a project">

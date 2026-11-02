@@ -19,4 +19,4 @@ Home exports legacy projects as copies. New design recents never prune preserved
 
 ## Assets
 
-Original SVG mark, logo and icon live in `public/brand/`; `build/icon.png` is the 1024 px desktop icon. The ink/mint angular mark represents cut shapes. The starter uses equivalent editable paths and text. Preserve LICENSE, NOTICE and third-party notices.
+The editable Aurora logo lives in `src/assets/skarix-logo.json`. Run `node --import tsx scripts/generate-brand.ts` to regenerate the SVG logo and lettering-free icons in `public/brand/`, `public/favicon.svg`, and the 1024 px desktop icon in `build/icon.png`. The starter loads the same editable artwork. Preserve LICENSE, NOTICE and third-party notices.

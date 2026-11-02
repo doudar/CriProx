@@ -105,30 +105,15 @@
   margin-top: 24px;
 }
 .skarix-hero-art {
-  aspect-ratio: 1.22;
-  background: #112b29;
-  border-radius: 28px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  background-image:
-    linear-gradient(#ffffff08 1px, transparent 1px),
-    linear-gradient(90deg, #ffffff08 1px, transparent 1px);
-  background-size: 26px 26px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
 }
 .skarix-hero-art img {
-  width: 48%;
-  filter: drop-shadow(15px 20px 0 #0003);
-  transform: rotate(-9deg);
-}
-.skarix-hero-art span {
-  color: #9fdac9;
-  font-size: 10px;
-  letter-spacing: 3px;
-  margin-top: 32px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .skarix-start {
   display: grid;

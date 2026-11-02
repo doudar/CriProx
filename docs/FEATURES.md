@@ -4,7 +4,7 @@ Skarix — Open Source Cutting Studio — is based on CriProx by Chris Engle and
 
 ## Home and projects
 
-Home offers a blank canvas, **Meet Skarix**, the continuing draft, and recent projects. The starter has a 76 × 42 mm Skarix sticker with four editable layers: two geometric logo strokes, the wordmark and a tagline. It uses no downloaded artwork.
+Home offers a blank canvas, **Meet Skarix**, the continuing draft, and recent projects. The starter has a 100 × 100 mm rounded-square Aurora logo with ten editable layers: the badge, lighting, mint and coral chevrons, divider, textured wordmark and tagline. It uses no downloaded artwork.
 
 The starter loads automatically only when no saved draft exists. Opening it explicitly preserves the previous project in Recents. Blank projects stay blank when reopened. Save portable `.skarix.json` files for durable storage.
 
@@ -59,3 +59,5 @@ Release packaging uses the corrected signing-keychain password handling so valid
 Mac release builds also fail explicitly if signing exits before installer verification finishes, preventing a misleading successful build step followed by a missing-installer upload failure.
 
 The [Aurora logo example](../examples/README.md) demonstrates editable gradients, lighting and textures, including textures on text, created through the MCP server.
+
+The Aurora logo appears throughout the app, README and website. **Meet Skarix** opens its editable rounded-square artwork, including the textured lettering.
