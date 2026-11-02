@@ -40,12 +40,6 @@ Use `npm run dev` for browser development. Direct cutter access and desktop prin
 
 ![Compact artwork editor with layer controls](docs/assets/skarix-editor.png)
 
-## Existing projects
-
-The gaming-card workspace and its catalog integrations are removed. Existing user files are not deleted or rewritten. Existing sticker/design projects open in Skarix. Home offers export copies of preserved legacy projects for continued use in CriProx.
-
-Storage identifiers and the installation ID remain unchanged for continuity. An existing draft always takes precedence over the starter. New portable files use `.skarix.json`.
-
 ## License and credits
 
 Skarix is based on [CriProx](https://github.com/Go2Engle/CriProx), created by [Chris Engle (Go2Engle)](https://github.com/Go2Engle) and its original contributors. Original copyright notices and GPL-3.0-only licensing remain in [NOTICE](NOTICE) and [LICENSE](LICENSE).
