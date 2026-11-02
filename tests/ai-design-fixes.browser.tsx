@@ -224,7 +224,13 @@ export async function run() {
     workspace: 'stickers',
     designId: starterArtworkId,
     operations: [
-      { action: 'update', id: 'skarix-wordmark', patch: { text: 'My customized starter' } },
+      {
+        action: 'update',
+        id: starter.project.artwork[0].design.elements.find(
+          (e: { text?: string }) => e.text === 'skarix',
+        ).id,
+        patch: { text: 'My customized starter' },
+      },
     ],
   });
   await tick();
