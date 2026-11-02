@@ -64,6 +64,7 @@ function createAiServer({ invoke, version, connectionFile }) {
     url = '',
     owner,
     starting = false,
+    stopping,
     active = 0,
     generation = 0;
   const pending = new Set();
@@ -73,7 +74,16 @@ function createAiServer({ invoke, version, connectionFile }) {
     connectionFile: connectionFile || '',
     scope: 'design-only',
   });
-  async function stop() {
+  function stop() {
+    // Window closure and before-quit can arrive together. Every caller must
+    // await the same socket closure and connection-file removal before exit.
+    if (!stopping)
+      stopping = finishStop().finally(() => {
+        stopping = undefined;
+      });
+    return stopping;
+  }
+  async function finishStop() {
     generation++;
     const old = listener;
     const record = JSON.stringify({ url, token });
@@ -98,6 +108,7 @@ function createAiServer({ invoke, version, connectionFile }) {
     return status();
   }
   async function start(windowId) {
+    if (stopping) await stopping;
     if (starting) throw Error('The AI design server is starting.');
     if (listener) {
       if (windowId !== owner) throw Error('The AI server belongs to another Skarix window.');
