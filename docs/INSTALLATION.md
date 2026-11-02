@@ -28,6 +28,8 @@ Export the certificate and private key from Keychain Access, then encode the `.p
 
 After configuring secrets, merge the signing change through normal CI. Release Please prepares the version; Release builds and verifies all installers before publishing. Do not manually edit version files or the changelog. If Apple rejects notarization or is unavailable, fix the reported issue and retry the failed workflow; do not bypass verification.
 
+Release packaging pins electron-builder 26.16.1, which fixes temporary signing-keychain password handling. Earlier 26.15.3 builds could import the certificate successfully and then fail at `security set-key-partition-list` with `SecKeychainUnlock`: they incorrectly supplied the certificate export password instead of the temporary keychain password. For that failure, build the updated revision rather than changing the certificate or notarization secrets. Rerunning a workflow on the old revision retains its old lockfile.
+
 For an upgrade from an unsigned build with a stale Bluetooth permission, quit Skarix, install the signed app in `/Applications`, then, if necessary, run `tccutil reset BluetoothAlways com.criprox.studio`. Reopen Skarix and allow Bluetooth when prompted. This resets only Skarix's Bluetooth permission. Validate a real BLE connection, Keychain save/reload, and a subsequent signed update before claiming hardware or permission persistence is verified.
 
 ## First launch and existing data

@@ -39,3 +39,5 @@ Closing the design window stops AI access and removes its local connection recor
 Settings includes light/dark appearance, AI access and updates. Updates validate release origins and installer checksums from **doudar/Skarix**. Existing CriProx-named assets in that repository remain recognizable.
 
 The macOS release workflow requires Developer ID signing and Apple notarization, and verifies the app inside the finished installer before publishing. This gives macOS a signed app identity for Bluetooth permissions and Keychain access across releases. Existing unsigned installers are not changed; local and branch-preview builds remain unsigned. Maintainers must configure the release secrets described in [Installation](INSTALLATION.md). Packaged Bluetooth and Keychain behavior still require hardware validation.
+
+Release packaging uses the corrected signing-keychain password handling so valid certificate credentials no longer encounter the previous temporary-keychain password mismatch.
