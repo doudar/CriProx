@@ -6,7 +6,7 @@ test('website changes cannot create app releases through PR squash titles', () =
   for (const files of [
     ['site/build.mjs'],
     ['site/style.css', 'README.md'],
-    ['docs/assets/criprox-studio.png'],
+    ['docs/assets/skarix-home.png'],
     ['docs/WEBSITE.md'],
     ['.github/workflows/pages.yml'],
   ]) {

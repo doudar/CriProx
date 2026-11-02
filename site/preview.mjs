@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { normalizeBase } from './lib.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '_site');
-const base = normalizeBase(process.env.SITE_BASE_PATH);
+const base = normalizeBase(process.env.SITE_BASE_PATH ?? '/Skarix/');
 const port = Number(process.env.PORT || 4174);
 const types = {
   '.html': 'text/html; charset=utf-8',
@@ -59,4 +59,4 @@ createServer((request, response) => {
     response.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
     response.end(files.get(base + '404.html')?.body || 'Page not found.');
   }
-}).listen(port, '127.0.0.1', () => console.log(`CriProx website: http://127.0.0.1:${port}${base}`));
+}).listen(port, '127.0.0.1', () => console.log(`Skarix website: http://127.0.0.1:${port}${base}`));

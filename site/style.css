@@ -937,3 +937,20 @@ figcaption {
     animation: none;
   }
 }
+
+/* Skarix ink and mint brand */
+:root {
+  --purple: #197b64;
+  --purple-dark: #125c4b;
+  --purple-light: #e1f6ef;
+}
+.brand {
+  letter-spacing: -0.045em;
+}
+.hero h1 span {
+  color: #197b64;
+}
+.button.primary {
+  background: #197b64;
+  border-color: #197b64;
+}

@@ -3,7 +3,7 @@ import { Marked } from 'marked';
 import sanitizeHtml from 'sanitize-html';
 import { Parser } from 'htmlparser2';
 
-export const repository = 'Go2Engle/CriProx';
+export const repository = 'doudar/Skarix';
 export const github = `https://github.com/${repository}`;
 export const guides = [
   {
@@ -74,7 +74,7 @@ export function normalizeBase(value = '/') {
     !/^\/(?:[\w.-]+\/)*$/.test(value) ||
     value.split('/').some((segment) => segment === '.' || segment === '..')
   )
-    throw new Error('SITE_BASE_PATH must be / or a path such as /CriProx/.');
+    throw new Error('SITE_BASE_PATH must be / or a path such as /Skarix/.');
   return value;
 }
 
@@ -174,10 +174,10 @@ export function section(content, heading) {
 
 export function featureCards(readme) {
   const table = new Marked()
-    .lexer(section(readme, readme.includes('## Why Skarix?') ? 'Why Skarix?' : 'Why CriProx?'))
+    .lexer(section(readme, 'Why Skarix?'))
     .find((token) => token.type === 'table');
   if (!table || !table.rows.length)
-    throw new Error('The Why CriProx? feature table is missing or empty.');
+    throw new Error('The Why Skarix? feature table is missing or empty.');
   return table.rows.map((row) => ({
     title: row[0].text.replace(/\*\*/g, '').replace(/^[^\p{L}\p{N}]+/u, ''),
     description: row[1].text,
@@ -228,7 +228,7 @@ export function releaseHeading(release) {
   // Drop an issue suffix from the headline; its link remains in the release notes.
   const issue = text.lastIndexOf(' (#');
   if (issue >= 0 && /^\d+\)$/.test(text.slice(issue + 3))) text = text.slice(0, issue);
-  if (!text) return `CriProx ${version}`;
+  if (!text) return `Skarix ${version}`;
   if (text.length > 140) text = text.slice(0, 137).trimEnd() + '…';
   return text;
 }
@@ -267,7 +267,7 @@ export async function fetchReleases({ token, fetchImpl = fetch } = {}) {
         headers: {
           Accept: 'application/vnd.github+json',
           'X-GitHub-Api-Version': '2022-11-28',
-          'User-Agent': 'CriProx-site',
+          'User-Agent': 'Skarix-site',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         signal: AbortSignal.timeout(30_000),
