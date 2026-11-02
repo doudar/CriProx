@@ -9,7 +9,7 @@ import { verifySite } from '../verify.mjs';
 
 const site = fileURLToPath(new URL('../', import.meta.url));
 test('complete build keeps current docs, uses stable installer assets, and verifies Pages links', async () => {
-  const temporary = await mkdtemp(path.join(tmpdir(), 'criprox-site-test-'));
+  const temporary = await mkdtemp(path.join(tmpdir(), 'skarix-site-test-'));
   const fixture = path.join(temporary, 'releases.json');
   const releases = [
     {
@@ -92,7 +92,7 @@ test('complete build keeps current docs, uses stable installer assets, and verif
 });
 
 test('generated-site verification rejects broken Markdown links and duplicate anchors', async () => {
-  const temporary = await mkdtemp(path.join(tmpdir(), 'criprox-site-invalid-'));
+  const temporary = await mkdtemp(path.join(tmpdir(), 'skarix-site-invalid-'));
   try {
     await writeFile(
       path.join(temporary, 'index.html'),

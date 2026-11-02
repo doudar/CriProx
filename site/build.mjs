@@ -96,7 +96,7 @@ const home = `<section class="hero"><p class="eyebrow">OPEN SOURCE CUTTING STUDI
   })
   .join(
     '',
-  )}</div><p class="download-note">Skarix is in development. Published v0.17.1 installers still contain the earlier CriProx interface. Current installers are unsigned. See the <a href="${url('docs/installation/')}">installation guide</a> for first-launch steps. Cricut Design Space is unavailable on Linux.</p></section>`;
+  )}</div><p class="download-note">Skarix is in active development. See the <a href="${url('docs/installation/')}">installation guide</a> for first-launch steps. Cricut Design Space is unavailable on Linux.</p></section>`;
 
 await rm(output, { recursive: true, force: true });
 await mkdir(path.join(output, 'assets'), { recursive: true });

@@ -22,7 +22,7 @@ Defaults are `SITE_ORIGIN=https://doudar.github.io` and `SITE_BASE_PATH=/Skarix/
 - Release downloads: published doudar/Skarix assets.
 - Branding: public/favicon.svg and docs/assets/skarix-home.png.
 
-The footer credits CriProx, Chris Engle and the original contributors. Historical release notes retain their original content. v0.17.1 downloads still use the previous product name until a new release is published.
+The footer credits CriProx, Chris Engle and the original contributors. Historical release notes retain their original content.
 
 Keep website changes in separate non-breaking chore(site), docs(site), or style(site) pull requests so they do not create application releases.
 
