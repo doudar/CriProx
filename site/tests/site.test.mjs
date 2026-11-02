@@ -18,10 +18,10 @@ import {
 test('Markdown renders GFM, rebases documentation links, and removes executable content', () => {
   const html = markdown(
     '# Test\n\n[Guide](FEATURES.md#sheet-design)\n\n| A | B |\n| - | - |\n| C | D |\n\n<script>alert(1)</script><img src="x" onerror="alert(1)">\n\n[Unsafe](javascript:alert(1))',
-    { source: 'docs/INSTALLATION.md', base: '/CriProx/' },
+    { source: 'docs/INSTALLATION.md', base: '/Skarix/' },
   );
   assert.match(html, /id="test"/);
-  assert.match(html, /href="\/CriProx\/docs\/features\/#sheet-design"/);
+  assert.match(html, /href="\/Skarix\/docs\/features\/#sheet-design"/);
   assert.match(html, /<table>/);
   assert.doesNotMatch(html, /<script|onerror|javascript:/);
 });
@@ -34,15 +34,15 @@ test('relative links resolve from both root and nested guides for Pages or custo
   );
   assert.equal(rewriteLink('../CONTRIBUTING.md', 'docs/FEATURES.md', '/'), '/docs/contributing/');
   assert.equal(
-    rewriteLink('docs/assets/criprox-studio.png', 'README.md', '/CriProx/'),
-    '/CriProx/docs/assets/criprox-studio.png',
+    rewriteLink('docs/assets/skarix-home.png', 'README.md', '/Skarix/'),
+    '/Skarix/docs/assets/skarix-home.png',
   );
   assert.equal(
-    rewriteLink('LICENSE', 'README.md', '/CriProx/'),
-    'https://github.com/Go2Engle/CriProx/blob/main/LICENSE',
+    rewriteLink('LICENSE', 'README.md', '/Skarix/'),
+    'https://github.com/doudar/Skarix/blob/main/LICENSE',
   );
   assert.equal(
-    rewriteLink('#network-access-and-offline-use', 'docs/INSTALLATION.md', '/CriProx/'),
+    rewriteLink('#network-access-and-offline-use', 'docs/INSTALLATION.md', '/Skarix/'),
     '#network-access-and-offline-use',
   );
   assert.throws(() => normalizeBase('https://other.site/'));
@@ -78,17 +78,17 @@ test('timeline categories use release-specific anchors', () => {
 
 test('homepage feature summaries are derived from the README table and fail on drift', () => {
   const content =
-    '## Why CriProx?\n\n| | |\n| - | - |\n| ✨ **New feature** | A helpful description. |\n\n## Next\n';
+    '## Why Skarix?\n\n| | |\n| - | - |\n| ✨ **New feature** | A helpful description. |\n\n## Next\n';
   assert.deepEqual(featureCards(content), [
     { title: 'New feature', description: 'A helpful description.' },
   ]);
   assert.throws(() => featureCards('## Something else'), /missing/);
-  assert.throws(() => featureCards('## Why CriProx?\nEmpty'), /missing or empty/);
+  assert.throws(() => featureCards('## Why Skarix?\nEmpty'), /missing or empty/);
 });
 
 test('release notes keep issue links and meaning while removing commit noise and duplicates', () => {
   const bullet =
-    '* **print:** correct A4 layouts ([#83](https://github.com/Go2Engle/CriProx/issues/83)) ([acc0e4f](https://github.com/Go2Engle/CriProx/commit/acc0e4f38853445))';
+    '* **print:** correct A4 layouts ([#83](https://github.com/doudar/Skarix/issues/83)) ([acc0e4f](https://github.com/doudar/Skarix/commit/acc0e4f38853445))';
   const cleaned = cleanReleaseNotes(
     `## [0.11.2](https://example.com) (2026-10-05)\n\n### Bug Fixes\n${bullet}\n${bullet}`,
   );
@@ -169,7 +169,7 @@ test('release headings use custom names or existing feature subjects before fixe
   const release = {
     tag_name: 'v1.2.3',
     name: 'v1.2.3',
-    body: '### Bug Fixes\n* **print:** correct A4 layouts\n\n### Features\n* **cards:** browse & sort sets ([#88](https://github.com/Go2Engle/CriProx/pull/88))',
+    body: '### Bug Fixes\n* **print:** correct A4 layouts\n\n### Features\n* **cards:** browse & sort sets ([#88](https://github.com/doudar/Skarix/pull/88))',
   };
   assert.equal(releaseHeading(release), 'Browse & sort sets');
   assert.equal(releaseHeading({ ...release, name: 'A new way to browse' }), 'A new way to browse');
@@ -181,7 +181,7 @@ test('release headings use custom names or existing feature subjects before fixe
     }),
     'Correct A4 layouts',
   );
-  assert.equal(releaseHeading({ ...release, body: '' }), 'CriProx 1.2.3');
+  assert.equal(releaseHeading({ ...release, body: '' }), 'Skarix 1.2.3');
 });
 
 test('derived release headings strip Markdown markup and executable content', () => {
