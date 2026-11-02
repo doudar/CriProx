@@ -35,6 +35,13 @@ jobs:
       - name: Verify renderer and existing project preservation
         if: runner.os == 'Windows'
         run: npx --no-install electron tests/ai-design-fixes.electron.cjs
+      - name: Verify actual app shutdown with AI access off and on
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          npx --no-install electron tests/app-shutdown.electron.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npx --no-install electron tests/app-shutdown.electron.cjs --ai
       - name: Verify desktop packaging
         run: npx --no-install electron-builder --dir --publish never
         env:

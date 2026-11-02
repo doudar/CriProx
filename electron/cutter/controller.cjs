@@ -17,6 +17,7 @@ function createCutterController({
   keyStore,
 } = {}) {
   let child,
+    closing,
     storageWork = Promise.resolve(),
     nextId = 0,
     pending,
@@ -218,7 +219,14 @@ function createCutterController({
       );
     });
   }
-  async function close() {
+  function close() {
+    if (!closing)
+      closing = finishClose().finally(() => {
+        closing = undefined;
+      });
+    return closing;
+  }
+  async function finishClose() {
     // Let an in-flight bounded operation finish before the ordinary disconnect.
     if (pending || forgetting) {
       await new Promise((resolve) => {
@@ -241,11 +249,34 @@ function createCutterController({
     } catch {}
     const old = child;
     child = undefined;
-    old?.disconnect();
     if (old) {
-      const timer = setTimeout(() => old.kill(), 3000);
-      timer.unref?.();
-      old.once('exit', () => clearTimeout(timer));
+      // The app awaits close() before quitting. Keep the fallback alive until
+      // this worker exits; an unref'ed timer disappears when the parent quits.
+      await new Promise((resolve) => {
+        let timer;
+        const finished = () => {
+          clearTimeout(timer);
+          old.removeListener('exit', finished);
+          resolve();
+        };
+        old.once('exit', finished);
+        timer = setTimeout(() => {
+          try {
+            old.kill();
+          } finally {
+            finished();
+          }
+        }, 3000);
+        try {
+          old.disconnect();
+        } catch {
+          try {
+            old.kill();
+          } finally {
+            finished();
+          }
+        }
+      });
     }
   }
   async function keyStatus() {

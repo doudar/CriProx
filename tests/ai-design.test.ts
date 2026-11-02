@@ -248,6 +248,32 @@ test('local MCP requires authorization and rejects browser origins, bad hosts an
     await rm(directory, { recursive: true, force: true });
   }
 });
+test('concurrent AI shutdown callers both await connection-file cleanup before restart', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'skarix-ai-stop-'));
+  const file = join(directory, 'connection.json');
+  const service = createAiServer({ connectionFile: file, invoke: async () => ({ ok: true }) });
+  try {
+    await service.start(1);
+    const closing = service.stop();
+    const quitting = service.stop();
+    assert.equal(closing, quitting, 'window-close and quit must share the complete cleanup');
+    await quitting;
+    await assert.rejects(readFile(file), { code: 'ENOENT' });
+    assert.equal(service.status().running, false);
+    await service.start(2);
+    assert.equal(service.owns(2), true);
+    const stopAgain = service.stop();
+    const restarting = service.start(3);
+    await stopAgain;
+    await restarting;
+    assert.equal(service.owns(3), true);
+    assert.ok(JSON.parse(await readFile(file, 'utf8')).url);
+  } finally {
+    await service.stop();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('another app instance cannot replace or remove an active design connection', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'criprox-ai-owner-')),
     file = join(directory, 'connection.json');

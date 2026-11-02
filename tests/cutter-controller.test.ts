@@ -185,6 +185,47 @@ test('late worker replies cannot complete a different pending command', async ()
   f.reply({ status: 'disconnected', encrypted: false });
   await close;
 });
+test('closing waits for the cutter helper to exit before application quit can continue', async () => {
+  const f = fixture();
+  const connect = f.controller.command('connect', { transport: 'usb', authorized: true });
+  f.reply({ status: 'connected', encrypted: true });
+  await connect;
+  f.child.disconnect = () => {};
+  let finished = false;
+  const closing = f.controller.close().then(() => {
+    finished = true;
+  });
+  f.reply({ status: 'disconnected', encrypted: false });
+  await new Promise(setImmediate);
+  assert.equal(finished, false, 'close returned while the helper was still running');
+  let secondFinished = false;
+  const secondClose = f.controller.close().then(() => {
+    secondFinished = true;
+  });
+  await new Promise(setImmediate);
+  assert.equal(secondFinished, false, 'a repeated close bypassed pending helper cleanup');
+  f.child.emit('exit', 0);
+  await Promise.all([closing, secondClose]);
+  assert.equal(finished, true);
+});
+
+test('closing terminates a helper that ignores IPC disconnect after a bounded grace period', async () => {
+  const f = fixture();
+  const connect = f.controller.command('connect', { transport: 'usb', authorized: true });
+  f.reply({ status: 'connected', encrypted: true });
+  await connect;
+  f.child.disconnect = () => {};
+  let killed = false;
+  f.child.kill = () => {
+    killed = true;
+    f.child.emit('exit', 0);
+  };
+  const closing = f.controller.close();
+  f.reply({ status: 'disconnected', encrypted: false });
+  await closing;
+  assert.equal(killed, true);
+});
+
 test('browser and non-Windows hosts cannot start the native worker', async () => {
   const c = createCutterController({
     platform: 'darwin',
