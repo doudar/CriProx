@@ -162,15 +162,21 @@ function sessionFromCache(records, now = Date.now()) {
 }
 async function getMachineKey(
   applicationVersion,
-  { authorized = false, profile = process.env.USERPROFILE, fetchImpl = fetch } = {},
+  {
+    authorized = false,
+    profile = require('node:os').homedir(),
+    fetchImpl = fetch,
+    machine = 'explore-5',
+  } = {},
 ) {
+  const model = require('./bifrost-device.cjs').bifrostMachine(machine);
   if (!authorized)
     throw Error('Authorize use of the signed-in Design Space session before connecting.');
   if (applicationVersion !== '10.8.81')
     throw Error(
       'Authenticated connections currently require the inspected Design Space 10.8.81 build.',
     );
-  if (!profile) throw Error('Windows user profile is unavailable.');
+  if (!profile) throw Error('Your home directory is unavailable.');
   let session;
   try {
     session = sessionFromCache(
@@ -186,16 +192,19 @@ async function getMachineKey(
   const client = 'design3.appdesign@' + applicationVersion;
   let r;
   try {
-    r = await fetchImpl('https://apis.cricut.com/machine/v2/Machines/settings/24', {
-      method: 'GET',
-      redirect: 'error',
-      headers: {
-        Authorization: 'Bearer ' + session.accessToken,
-        'X-Cricut-Client': client,
-        Accept: 'application/json',
+    r = await fetchImpl(
+      `https://apis.cricut.com/machine/v2/Machines/settings/${model.machineFamily}`,
+      {
+        method: 'GET',
+        redirect: 'error',
+        headers: {
+          Authorization: 'Bearer ' + session.accessToken,
+          'X-Cricut-Client': client,
+          Accept: 'application/json',
+        },
+        signal: AbortSignal.timeout(15000),
       },
-      signal: AbortSignal.timeout(15000),
-    });
+    );
   } catch {
     throw Error('Could not reach Cricut machine settings. Check your internet connection.');
   } finally {

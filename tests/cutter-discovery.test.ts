@@ -174,7 +174,7 @@ test('Adapter errors and unsupported installations are explicit', async () => {
   await session.close();
   await assert.rejects(
     discoverCricutDevices({ installation: { bridgeInstalled: true, version: '99.0.0' } }),
-    /verified only/,
+    /inspected Design Space/,
   );
 });
 
@@ -191,7 +191,10 @@ test('Unavailable Bluetooth does not start a scan', async () => {
     reply(message(3, Buffer.concat([message(1, scalar(1, 2)), message(request + 1)])));
   });
   const session = new DiscoverySession('fixture.exe', { spawnProcess: () => child });
-  assert.deepEqual(await session.scanBluetooth(0), { ready: false, devices: [] });
+  assert.deepEqual(await session.scanBluetooth(0, { readinessTimeoutMs: 0 }), {
+    ready: false,
+    devices: [],
+  });
   await Promise.all([session.close(), session.close()]);
   assert.deepEqual(requests, [35, 10]);
 });
@@ -326,4 +329,44 @@ test('USB transport uses observed composite interface defaults and closes its ow
     await session.close();
   }
   assert.equal(child.killCount, 0);
+});
+
+test('Bluetooth waits for delayed readiness before starting the scan', async () => {
+  let polls = 0;
+  const requests: number[] = [];
+  const child = fakeBridge((bytes, reply) => {
+    const top = fields(bytes);
+    if (one(top, 30, 2)) {
+      reply(message(31, message(1, scalar(1, 2))));
+      return;
+    }
+    const request = fields(one(top, 3, 2)).find((f: any) => f.number !== 1).number;
+    requests.push(request);
+    const payload = request === 35 ? scalar(1, ++polls >= 3 ? 1 : 0) : Buffer.alloc(0);
+    reply(message(3, Buffer.concat([message(1, scalar(1, 2)), message(request + 1, payload)])));
+  });
+  const session = new DiscoverySession('fixture', { spawnProcess: () => child });
+  assert.deepEqual(await session.scanBluetooth(0, { pollMs: 1 }), { ready: true, devices: [] });
+  await session.close();
+  assert.deepEqual(requests, [35, 35, 35, 12, 31, 14, 10]);
+});
+
+test('Bluetooth initialization can be cancelled without starting a scan or reusing an unsynchronized adapter', async () => {
+  const abort = new AbortController();
+  const requests: number[] = [];
+  const child = fakeBridge((bytes, reply) => {
+    const top = fields(bytes);
+    if (one(top, 30, 2)) {
+      reply(message(31, message(1, scalar(1, 2))));
+      return;
+    }
+    const request = fields(one(top, 3, 2)).find((f: any) => f.number !== 1).number;
+    requests.push(request);
+    reply(message(3, Buffer.concat([message(1, scalar(1, 2)), message(request + 1)])));
+    if (request === 35) queueMicrotask(() => abort.abort());
+  });
+  const session = new DiscoverySession('fixture', { spawnProcess: () => child });
+  await assert.rejects(session.scanBluetooth(0, { signal: abort.signal }), /abort|cancel/i);
+  await session.close();
+  assert.deepEqual(requests, [35]);
 });

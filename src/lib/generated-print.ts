@@ -1,3 +1,4 @@
+import { generatedSheetIssue } from './machine-guides';
 import { PDFDocument, PrintScaling, rgb, type PDFPage } from 'pdf-lib';
 import JSZip from 'jszip';
 import { readCutSettings, cutSettingsSummary, cutPressureGrams } from './cut-settings';
@@ -48,6 +49,8 @@ export async function generateMarkedPrint(
     throw Error(
       'This manual / Basic Cut layout does not use registration marks. Use its manual print workflow.',
     );
+  const issue = generatedSheetIssue(machine, settings.paper);
+  if (issue) throw Error(issue);
   const doc = await PDFDocument.create();
   const sheets =
     input.kind === 'stickers'
@@ -254,8 +257,8 @@ export async function generatedPrintBundle(result: GeneratedPrintResult) {
   if (result.backPdf) zip.file('card-backs.pdf', result.backPdf);
   zip.file(
     'READ-ME.txt',
-    'Print the PDF at 100% / Actual size. It includes all generated black registration marks and the top-left directional arrow. Keep the matching cut-job file: it records the same page coordinates and cut contours.\n\nThese are Skarix-generated sheets. Do not cut them using an unrelated Design Space mat: its mark placement may differ. The Windows Explore 5 controller can scan and cut the matching prepared sheet from Print then cut. Reopen the project and prepare it again to cut; this exported JSON is a reference, not an executable Cricut file. An Explore 5 USB sticker sheet has been physically validated at 80 g, one pass; check alignment for other settings.\n\n' +
-      `Requested cut settings: ${cutSettingsSummary(cut)}. Explore 5 applies these settings to every contour in the selected sheet.\n\n` +
+    'Print the PDF at 100% / Actual size. It includes all generated black registration marks and the top-left directional arrow. Keep the matching cut-job file: it records the same page coordinates and cut contours.\n\nThese are Skarix-generated sheets. Do not cut them using an unrelated Design Space mat: its mark placement may differ. Supported cutter providers can scan and cut the matching prepared sheet from Print then cut. Reopen the project and prepare it again to cut; this exported JSON is a reference, not an executable Cricut file. An Explore 5 USB sticker sheet has been physically validated at 80 g, one pass; check alignment for other settings.\n\n' +
+      `Requested cut settings: ${cutSettingsSummary(cut)}. The matching cutter applies these settings to every contour in the selected sheet.\n\n` +
       result.warnings.join('\n'),
   );
   const binding = job.backPrint?.flip;

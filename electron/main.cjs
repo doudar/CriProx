@@ -85,14 +85,15 @@ ipcMain.handle('cutter-state', (event) => {
   checkCutterSender(event);
   return cutter.snapshot();
 });
-ipcMain.handle('cutter-key-status', (event) => {
+ipcMain.handle('cutter-key-status', (event, machine) => {
   checkCutterSender(event);
-  return cutter.keyStatus();
+  return cutter.keyStatus(machine);
 });
 ipcMain.handle('cutter-connect-saved', (event, request) => {
   checkCutterSender(event);
   return cutter.command('connect', {
     transport: request?.transport,
+    machine: request?.machine,
     authorized: true,
     savedOnly: true,
   });
@@ -101,6 +102,7 @@ ipcMain.handle('cutter-connect', (event, request) => {
   checkCutterSender(event);
   return cutter.command('connect', {
     transport: request?.transport,
+    machine: request?.machine,
     authorized: request?.authorized === true,
   });
 });
@@ -108,9 +110,9 @@ ipcMain.handle('cutter-disconnect', (event) => {
   checkCutterSender(event);
   return cutter.command('disconnect');
 });
-ipcMain.handle('cutter-forget-key', (event) => {
+ipcMain.handle('cutter-forget-key', (event, machine) => {
   checkCutterSender(event);
-  return cutter.command('forgetKey');
+  return cutter.command('forgetKey', { machine });
 });
 ipcMain.handle('cutter-home', (event, request) => {
   checkCutterSender(event);
@@ -307,9 +309,9 @@ ipcMain.handle('cricut-open', async () => {
   const found = await findCricutInstallation();
   if (!found)
     throw new Error(
-      'Design Space was not found. Open it manually; automatic launch currently supports Windows installations only.',
+      'Design Space was not found. Open it manually; check that the app is installed in the usual Applications location.',
     );
-  const error = await shell.openPath(found.executable);
+  const error = await shell.openPath(found.launchPath || found.executable);
   if (error) throw new Error(error);
 });
 

@@ -24,4 +24,4 @@ export const BUILTIN_MATERIALS: MaterialProfile[];
 export function validateMaterial(value: unknown): MaterialProfile;
 export function materialForSettings(value: Settings): MaterialProfile;
 export function passPressures(value: Settings): number[];
-export function directCutIssue(value: Settings): string;
+export function directCutIssue(value: Settings, machineId?: string): string;

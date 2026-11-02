@@ -1,13 +1,25 @@
+import { getMachine, type Machine } from '../lib/machine-guides';
 import { useEffect, useMemo, useState } from 'react';
 import { Cable, Unplug, CheckCircle2, Scissors, ExternalLink } from 'lucide-react';
 import { DISCONNECTED_CUTTER, type CutterState } from '../lib/cutter';
 import { cutSettingsSummary, readCutSettings, directCutIssue } from '../lib/cut-settings';
 import { watchCutterPage } from '../lib/cutter-page-connection';
 
-export default function CutterPanel({ job, active = true }: { job?: string; active?: boolean }) {
+export default function CutterPanel({
+  job,
+  active = true,
+  machine = 'explore-5',
+}: {
+  job?: string;
+  active?: boolean;
+  machine?: Machine;
+}) {
+  const model = getMachine(machine);
+  const mac = window.criprox?.platform === 'darwin';
   const [state, setState] = useState<CutterState>(DISCONNECTED_CUTTER);
   const [transport, setTransport] = useState<'usb' | 'ble'>(() => {
     try {
+      if (mac) return 'ble';
       return localStorage.getItem('criprox-cutter-transport') === 'ble' ? 'ble' : 'usb';
     } catch {
       return 'usb';
@@ -25,7 +37,7 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
     if (!job) return undefined;
     try {
       const value = JSON.parse(job);
-      if (value.machine !== 'explore-5' || !Array.isArray(value.sheets)) return undefined;
+      if (value.machine !== machine || !Array.isArray(value.sheets)) return undefined;
       return {
         sheets: value.sheets as { frontPdfPage: number; contours: unknown[] }[],
         paper: value.paper as string,
@@ -39,36 +51,53 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
     } catch {
       return undefined;
     }
-  }, [job]);
+  }, [job, machine]);
   useEffect(() => {
     setSheetIndex(0);
     setPrinted(false);
     setMaterialReady(false);
-  }, [job]);
+  }, [job, machine]);
   useEffect(() => {
     setPrinted(false);
     setMaterialReady(false);
   }, [sheetIndex]);
   const api = window.criprox?.cutter;
-  const materialIssue = prepared ? directCutIssue(prepared.settings) : '';
+  const materialIssue = prepared ? directCutIssue(prepared.settings, machine) : '';
   useEffect(() => {
-    if (!api || !active) {
+    setSavedKey(undefined);
+    setAuthorized(false);
+    setSetupOpened(false);
+    setError('');
+  }, [machine]);
+  useEffect(() => {
+    if (!api || !active || !model.directConnect) {
       setPending(false);
       return;
     }
     setError('');
-    return watchCutterPage(api, transport, {
-      state: setState,
-      savedKey: (available) => {
-        setSavedKey(available);
-        setAuthorized(available);
+    return watchCutterPage(
+      api,
+      transport,
+      {
+        state: setState,
+        savedKey: (available) => {
+          setSavedKey(available);
+          setAuthorized(available);
+        },
+        pending: setPending,
+        error: setError,
       },
-      pending: setPending,
-      error: setError,
-    });
-  }, [api, active, transport]);
+      machine,
+    );
+  }, [api, active, transport, machine, model.directConnect]);
   const cutting = state.status === 'cutting';
-  const connected = ['connected', 'cutting'].includes(state.status) && state.encrypted;
+  const connected =
+    ['connected', 'cutting'].includes(state.status) &&
+    state.encrypted &&
+    (state.machine ?? 'explore-5') === machine;
+  const otherMachineConnected =
+    ['connected', 'cutting', 'homing'].includes(state.status) &&
+    (state.machine ?? 'explore-5') !== machine;
   const busy =
     pending || ['connecting', 'homing', 'cutting', 'disconnecting'].includes(state.status);
   async function run(action: () => Promise<CutterState>) {
@@ -86,9 +115,11 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
     if (!api) return;
     await run(async () => {
       try {
-        return await (savedKey ? api.connectSaved(transport) : api.connect(transport, authorized));
+        return await (savedKey
+          ? api.connectSaved(transport, machine)
+          : api.connect(transport, authorized, machine));
       } finally {
-        const key = await api.keyStatus().catch(() => ({ available: false }));
+        const key = await api.keyStatus(machine).catch(() => ({ available: false }));
         setSavedKey(key.available);
       }
     });
@@ -123,15 +154,48 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
         </span>
       </div>
       <p className="muted">
-        Explore 5 · Fine-point blade · 12 × 12 inch mat · Close Design Space before connecting.
+        {model.name} · Fine-point blade
+        {model.mat ? ` · ${model.mat.width} × ${model.mat.height} inch mat` : ''} · Close Design
+        Space before connecting.
       </p>
-      {!api || !state.supported ? (
+      {!model.directConnect ? (
+        <p role="status">{model.unavailableReason}</p>
+      ) : !api || !state.supported ? (
         <p>
-          Direct cutter control requires the Windows desktop app. Printing and exports remain
-          available here.
+          Direct cutter control requires the Windows or macOS desktop app. Printing and exports
+          remain available here.
         </p>
       ) : (
         <>
+          {otherMachineConnected && (
+            <p role="alert">
+              A different cutter is connected.{' '}
+              <button disabled={busy} onClick={() => void run(() => api.disconnect())}>
+                Disconnect {state.name || 'cutter'}
+              </button>
+            </p>
+          )}
+          {state.status === 'connecting' && (
+            <button
+              className="secondary"
+              onClick={() =>
+                void api
+                  .disconnect()
+                  .then(setState)
+                  .catch(() => {})
+              }
+            >
+              Cancel connection
+            </button>
+          )}
+          {!model.directCut && <p>{model.unavailableReason}</p>}
+          {(!model.hardwareVerified || mac) && (
+            <p className="muted">
+              {mac
+                ? 'macOS BLE cutting is experimental. Connection, authentication and homing were physically verified; registration and cutting still need a physical test.'
+                : `${model.name} support is experimental and has not been physically validated.`}
+            </p>
+          )}
           {!connected && savedKey === false && (
             <section className="cutter-test" aria-label="Cutter setup">
               <h3>
@@ -139,8 +203,8 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
               </h3>
               <p>
                 {setupOpened
-                  ? 'Sign in to Design Space and connect your Explore 5 there. Then close Design Space, leave the cutter powered on, and connect below.'
-                  : 'No usable saved cutter key is available. Open Cricut Design Space, sign in and connect your Explore 5, then close it before connecting in Skarix.'}
+                  ? 'Sign in to Design Space and connect your selected cutter there. Then close Design Space, leave the cutter powered on, and connect below.'
+                  : 'No usable saved cutter key is available. Open Cricut Design Space, sign in and connect your selected cutter, then close it before connecting in Skarix.'}
               </p>
               <button
                 className="secondary"
@@ -167,7 +231,7 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
                   } catch {}
                 }}
               >
-                <option value="usb">USB</option>
+                {!mac && <option value="usb">USB</option>}
                 <option value="ble">Bluetooth LE (experimental)</option>
               </select>
             </label>
@@ -178,7 +242,7 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
                 onClick={() =>
                   void run(async () => {
                     const next = await api.disconnect();
-                    const key = await api.keyStatus().catch(() => ({ available: false }));
+                    const key = await api.keyStatus(machine).catch(() => ({ available: false }));
                     setSavedKey(key.available);
                     setAuthorized(key.available);
                     return next;
@@ -191,7 +255,7 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
             ) : (
               <button
                 className="primary"
-                disabled={busy || (!savedKey && !authorized)}
+                disabled={busy || otherMachineConnected || (!savedKey && !authorized)}
                 onClick={() => void connect()}
               >
                 <Cable size={16} />
@@ -204,7 +268,7 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
                 disabled={busy}
                 onClick={() =>
                   void run(async () => {
-                    const next = await api.forgetKey();
+                    const next = await api.forgetKey(machine);
                     setSavedKey(false);
                     setAuthorized(false);
                     setSetupOpened(false);
@@ -225,10 +289,11 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
                 onChange={(e) => setAuthorized(e.target.checked)}
               />
               <span>
-                Use and remember my cutter key on this PC.
+                Use and remember my cutter key on this computer.
                 <small>
-                  Skarix protects the saved key with your Windows account. Design Space sign-in is
-                  needed only to get a new key. Login tokens are never saved by Skarix.
+                  Skarix protects the saved key with{' '}
+                  {mac ? 'macOS Keychain' : 'your Windows account'}. Design Space sign-in is needed
+                  only to get a new key. Login tokens are never saved by Skarix.
                 </small>
               </span>
             </label>

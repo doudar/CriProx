@@ -37,12 +37,13 @@ contextBridge.exposeInMainWorld(
     }),
     cutter: Object.freeze({
       state: () => ipcRenderer.invoke('cutter-state'),
-      keyStatus: () => ipcRenderer.invoke('cutter-key-status'),
-      connectSaved: (transport) => ipcRenderer.invoke('cutter-connect-saved', { transport }),
-      connect: (transport, authorized) =>
-        ipcRenderer.invoke('cutter-connect', { transport, authorized }),
+      keyStatus: (machine) => ipcRenderer.invoke('cutter-key-status', machine),
+      connectSaved: (transport, machine) =>
+        ipcRenderer.invoke('cutter-connect-saved', { transport, machine }),
+      connect: (transport, authorized, machine) =>
+        ipcRenderer.invoke('cutter-connect', { transport, authorized, machine }),
       disconnect: () => ipcRenderer.invoke('cutter-disconnect'),
-      forgetKey: () => ipcRenderer.invoke('cutter-forget-key'),
+      forgetKey: (machine) => ipcRenderer.invoke('cutter-forget-key', machine),
       home: (bladeRemoved) => ipcRenderer.invoke('cutter-home', { bladeRemoved }),
       cutSheet: (job, sheetIndex, materialReady) =>
         ipcRenderer.invoke('cutter-cut-sheet', { job, sheetIndex, materialReady }),

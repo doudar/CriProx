@@ -1,10 +1,11 @@
 // Isolated native/WASM owner. The renderer never receives credentials, paths, or raw packets.
-const path = require('node:path');
 const { loadInstalledRuntime } = require('./runtime.cjs');
 const { DeviceSession } = require('./device-session.cjs');
 const { connectionKey, authenticateWithKey } = require('./connection-key.cjs');
 const { homeIdleDevice } = require('./home.cjs');
 const { startSheetJob } = require('./sheet-job.cjs');
+const { bifrostMachine, createDevice, matchesDescriptor } = require('./bifrost-device.cjs');
+let selectedMachine = bifrostMachine('explore-5');
 const { one, scalar } = require('./wire.cjs');
 console.log = console.error = () => {}; // Installed runtime diagnostics may contain device data.
 let state = { status: 'disconnected', encrypted: false, message: 'Not connected' };
@@ -18,7 +19,14 @@ function storage(operation, applicationVersion, key) {
       reject(Error('Could not access protected cutter key storage.'));
     }, 5000);
     storageRequests.set(requestId, { resolve, reject, timer });
-    process.send?.({ type: 'key-store', requestId, operation, applicationVersion, key });
+    process.send?.({
+      type: 'key-store',
+      requestId,
+      operation,
+      applicationVersion,
+      key,
+      machine: selectedMachine.id,
+    });
   });
 }
 const keyStore = {
@@ -26,7 +34,8 @@ const keyStore = {
   save: (version, key) => storage('save', version, key),
   clear: () => storage('clear'),
 };
-let session,
+let initialization,
+  session,
   activeJob,
   jobDeadline,
   connection,
@@ -80,83 +89,72 @@ async function cleanup() {
   session = connection = device = undefined;
   closing = false;
 }
-async function connect(transport, authorized, fresh = false, savedOnly = false) {
+async function connect(
+  transport,
+  authorized,
+  fresh = false,
+  savedOnly = false,
+  machineId = 'explore-5',
+) {
+  const machine = bifrostMachine(machineId);
+  if (!machine.transports.includes(transport))
+    throw Error('Invalid connection type for this machine.');
   if (!['usb', 'ble'].includes(transport) || authorized !== true)
     throw Error('Authorize the Design Space connection first.');
   await cleanup();
+  selectedMachine = machine;
   publish({
     status: 'connecting',
+    machine: machine.id,
     transport,
     encrypted: false,
     firmware: undefined,
     name: undefined,
     message: fresh ? 'Refreshing the cutter key from Cricut…' : 'Checking saved cutter key…',
   });
+  initialization?.signal.throwIfAborted();
   runtime ??= await loadInstalledRuntime();
   const keyRecord = await connectionKey(runtime.applicationVersion, {
     authorized,
     store: keyStore,
     fresh,
     savedOnly,
+    machine: machine.id,
   });
+  initialization?.signal.throwIfAborted();
   const { Bifrost: B, Runtime: R } = runtime.api;
   const config = B.ConnectionConfig.create(
     transport === 'usb' ? 'usbSerial' : 'bluetoothLowEnergySerial',
-    'gandalf',
+    machine.deviceType,
   );
-  session = new DeviceSession(
-    path.join(
-      path.dirname(runtime.installation.executable),
-      'resources/plugins/cricut-device-io/CricutDeviceIO.exe',
-    ),
-    { timeoutMs: 12000 },
-  );
+  session = new DeviceSession(runtime.installation.bridgeExecutable, { timeoutMs: 12000 });
   let devices;
-  publish({ message: transport === 'usb' ? 'Finding Explore 5 on USB…' : 'Scanning Bluetooth…' });
+  publish({
+    message: transport === 'usb' ? `Finding ${machine.name} on USB…` : 'Scanning Bluetooth…',
+  });
   if (transport === 'usb') {
-    devices = (await session.enumerateUsb()).filter((d) => {
-      try {
-        return (
-          B.DeviceType.fromUsbSerialDescriptor({
-            vid: d.vendorId,
-            pid: d.productId,
-            serialNumber: d.serialNumber,
-          }) === 'gandalf'
-        );
-      } catch {
-        return false;
-      }
-    });
+    devices = (await session.enumerateUsb()).filter((d) =>
+      matchesDescriptor(B, machine, transport, d),
+    );
     session.adapterId = [...session.adapters][0];
   } else {
-    const found = await session.scanBluetooth(5000);
-    if (!found.ready) throw Error('Bluetooth is not ready. Enable Bluetooth and try again.');
+    const found = await session.scanBluetooth(5000, { signal: initialization?.signal });
+    if (!found.ready)
+      throw Error(
+        'Bluetooth is not ready after initialization. Enable Bluetooth and allow Bluetooth access for Skarix and its helper in system privacy settings, then try again.',
+      );
     session.adapterId = [...session.adapters][0];
-    devices = found.devices.filter((d) => {
-      try {
-        return (
-          B.DeviceType.fromBluetoothLeDescriptor({
-            localName: d.localName,
-            manufacturerData: d.manufacturerData.buffer.slice(
-              d.manufacturerData.byteOffset,
-              d.manufacturerData.byteOffset + d.manufacturerData.byteLength,
-            ),
-          }) === 'gandalf'
-        );
-      } catch {
-        return false;
-      }
-    });
+    devices = found.devices.filter((d) => matchesDescriptor(B, machine, transport, d));
   }
   if (devices.length !== 1)
     throw Error(
-      `Expected one Explore 5; found ${devices.length}. Connect one powered-on cutter and close Design Space.`,
+      `Expected one ${machine.name}; found ${devices.length}. Quit Design Space and other apps using the cutter, then connect one powered-on cutter. Select Explore 5 inside Skarix; do not pair it in system Bluetooth settings.`,
     );
   if (transport === 'usb') await session.createUsbTransport(devices[0]);
   else
     await session.createTransport(devices[0], {
-      tx: B.DeviceType.getBluetoothLowEnergyTxUUID('gandalf'),
-      rx: B.DeviceType.getBluetoothLowEnergyRxUUID('gandalf'),
+      tx: B.DeviceType.getBluetoothLowEnergyTxUUID(machine.deviceType),
+      rx: B.DeviceType.getBluetoothLowEnergyRxUUID(machine.deviceType),
     });
   let connectError;
   connection = B.GenericPhysicalConnection.create(
@@ -208,26 +206,28 @@ async function connect(transport, authorized, fresh = false, savedOnly = false) 
   };
   await connection.connect();
   if (connectError) throw connectError;
-  publish({ message: 'Authenticating Explore 5…' });
-  device = B.GandalfDevice.createDevice(connection);
+  publish({ message: `Authenticating ${machine.name}…` });
+  device = createDevice(B, machine, connection);
   let remembered;
   try {
     remembered = await authenticateWithKey(device, keyRecord, keyStore, runtime.applicationVersion);
   } catch (error) {
     if (error.code === 'RETRY_FRESH_KEY' && !fresh && !savedOnly) {
       // A new transport/handshake is required; never retry on a half-open connection.
-      return connect(transport, authorized, true);
+      return connect(transport, authorized, true, false, machine.id);
     }
     throw error;
   }
+  initialization?.signal.throwIfAborted();
   const version = await device.deviceInformationSkill.getVersion();
+  initialization?.signal.throwIfAborted();
   publish({
     status: 'connected',
     encrypted: true,
     firmware: `${version.major}.${version.minor}.${version.patch}`,
-    name: 'Cricut Explore 5',
+    name: `${machine.manufacturer} ${machine.name}`,
     message: remembered
-      ? 'Connected and authenticated. Cutter key saved with Windows protection.'
+      ? 'Connected and authenticated. Cutter key saved with operating system protection.'
       : 'Connected and authenticated. Could not save the cutter key; sign-in may be needed next time.',
   });
   timer = setInterval(() => {
@@ -249,6 +249,10 @@ async function connect(transport, authorized, fresh = false, savedOnly = false) 
   }, 3000);
 }
 process.on('message', async (request) => {
+  if (request?.type === 'cancel-connect') {
+    initialization?.abort();
+    return;
+  }
   if (request?.type === 'key-store-reply') {
     const pending = storageRequests.get(request.requestId);
     if (!pending) return;
@@ -269,9 +273,16 @@ process.on('message', async (request) => {
   try {
     if (activeJob && !['cancelCut', 'pauseCut', 'resumeCut'].includes(request.command))
       throw Error('The cutter job is active. Cancel it first.');
-    if (request.command === 'connect')
-      await connect(request.transport, request.authorized, false, request.savedOnly === true);
-    else if (request.command === 'disconnect') {
+    if (request.command === 'connect') {
+      initialization = new AbortController();
+      await connect(
+        request.transport,
+        request.authorized,
+        false,
+        request.savedOnly === true,
+        request.machine ?? 'explore-5',
+      );
+    } else if (request.command === 'disconnect') {
       publish({ status: 'disconnecting', message: 'Disconnecting…' });
       await cleanup();
       publish({
@@ -305,6 +316,7 @@ process.on('message', async (request) => {
       const job = await startSheetJob({
         api: runtime.api,
         device,
+        machine: selectedMachine.id,
         request,
         onUpdate: (message) => publish({ message }),
         onPhase: (phase) => publish({ phase }),
@@ -367,14 +379,22 @@ process.on('message', async (request) => {
     reply();
   } catch (e) {
     const error = message(e);
+    const cancelled = request.command === 'connect' && initialization?.signal.aborted;
     await cleanup();
+    if (cancelled) {
+      publish({ status: 'disconnected', encrypted: false, message: 'Connection cancelled.' });
+      reply();
+      return;
+    }
     publish({ status: 'error', encrypted: false, message: error });
     reply(error);
   } finally {
+    if (request.command === 'connect') initialization = undefined;
     busy = false;
   }
 });
 process.on('disconnect', () => {
+  initialization?.abort();
   void cleanup().finally(() => process.exit(0));
 });
 process.send?.({ type: 'ready', state });

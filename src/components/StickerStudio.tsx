@@ -1070,6 +1070,7 @@ export default function StickerStudio({
                 />
                 <div className="settings-divider" />
                 <CutSettingsControls
+                  machine={project.machine}
                   value={project.settings}
                   onChange={(patch) => update({ ...project.settings, ...patch })}
                 />

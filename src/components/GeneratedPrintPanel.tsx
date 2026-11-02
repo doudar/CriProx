@@ -1,3 +1,4 @@
+import { generatedSheetIssue } from '../lib/machine-guides';
 import { useEffect, useRef, useState } from 'react';
 import { Download } from 'lucide-react';
 import {
@@ -17,6 +18,8 @@ export default function GeneratedPrintPanel({
   input: Parameters<typeof generateMarkedPrint>[0];
   active?: boolean;
 }) {
+  const machine = input.kind === 'cards' ? input.project.settings.machine : input.project.machine;
+  const sheetIssue = generatedSheetIssue(machine, input.project.settings.paper);
   const [result, setResult] = useState<GeneratedPrintResult>(),
     [busy, setBusy] = useState(''),
     [error, setError] = useState('');
@@ -63,9 +66,10 @@ export default function GeneratedPrintPanel({
         Skarix generates all four black corner marks and the directional arrow, then prints them
         with your artwork. No Design Space capture is needed.
       </p>
-      <button className="primary" disabled={!!busy} onClick={() => void prepare()}>
+      <button className="primary" disabled={!!busy || !!sheetIssue} onClick={() => void prepare()}>
         {busy || 'Prepare print sheets'}
       </button>
+      {sheetIssue && <p role="status">{sheetIssue}</p>}
       {error && (
         <p role="alert" className="workflow-error">
           {error}
@@ -108,7 +112,7 @@ export default function GeneratedPrintPanel({
           />
         </>
       )}
-      <CutterPanel job={result?.job} active={active} />
+      <CutterPanel job={result?.job} active={active} machine={machine} />
       <p className="muted">
         Print at 100% / Actual size. Generated sheets have their own matching cut coordinates; an
         unrelated Design Space job may not align. Explore 5 can scan and cut the matching prepared

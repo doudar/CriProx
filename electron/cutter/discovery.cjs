@@ -1,6 +1,5 @@
 const { spawn } = require('node:child_process');
 const { setTimeout: delay } = require('node:timers/promises');
-const path = require('node:path');
 const { findCricutInstallation } = require('../cricut-installation.cjs');
 const { message, scalar, fields, one, frame, FrameReader } = require('./wire.cjs');
 
@@ -64,14 +63,14 @@ class DiscoverySession {
     this.pending = null;
     pending.resolve(decoded);
   }
-  request(bytes, envelopeField, adapterId, responseField) {
+  request(bytes, envelopeField, adapterId, responseField, timeoutMs = this.timeoutMs) {
     if (this.closing || this.failure)
       return Promise.reject(this.failure || new Error('DeviceIO is closed'));
     if (this.pending) return Promise.reject(new Error('DeviceIO operation already in progress'));
     return new Promise((resolve, reject) => {
       const timer = setTimeout(
         () => this.fail(new Error('DeviceIO response timed out')),
-        this.timeoutMs,
+        timeoutMs,
       );
       this.pending = { resolve, reject, timer, envelopeField, adapterId, responseField };
       try {
@@ -96,13 +95,14 @@ class DiscoverySession {
     this.adapters.add(id);
     return id;
   }
-  adapterRequest(id, request, response) {
+  adapterRequest(id, request, response, timeoutMs) {
     if (!this.adapters.has(id)) throw new Error('Unknown DeviceIO adapter');
     return this.request(
       message(3, Buffer.concat([message(1, scalar(1, id)), message(request)])),
       3,
       id,
       response,
+      timeoutMs,
     );
   }
   async enumerateUsb() {
@@ -122,36 +122,68 @@ class DiscoverySession {
         };
       });
   }
-  async scanBluetooth(durationMs = 1500) {
-    if (!Number.isInteger(durationMs) || durationMs < 0 || durationMs > 5000)
-      throw new Error('Bluetooth scan duration must be between 0 and 5000 ms');
-    const id = await this.create('ble');
-    const ready = one(await this.adapterRequest(id, 35, 36), 1, 0) === 1;
-    if (!ready) return { ready: false, devices: [] };
-    const checkError = (response) => {
-      const error = one(response, 1, 2);
-      if (error)
-        throw new Error(
-          `Bluetooth scan: ${one(fields(error), 1, 2)?.toString('utf8') || 'failed'}`,
-        );
-    };
-    checkError(await this.adapterRequest(id, 12, 13));
-    await delay(durationMs);
-    const response = await this.adapterRequest(id, 31, 32);
-    checkError(await this.adapterRequest(id, 14, 15));
-    const devices = response
-      .filter((field) => field.number === 1)
-      .map((field) => {
-        if (field.wire !== 2) throw new Error('Invalid Bluetooth descriptor');
-        const descriptor = fields(field.value);
-        return {
-          deviceIdHigh: one(descriptor, 1, 0) ?? 0,
-          deviceIdLow: one(descriptor, 2, 0) ?? 0,
-          localName: one(descriptor, 3, 2)?.toString('utf8') ?? '',
-          manufacturerData: one(descriptor, 4, 2) ?? Buffer.alloc(0),
-        };
-      });
-    return { ready, devices };
+  async waitForBluetoothReady(id, { signal, readinessTimeoutMs = 5000, pollMs = 250 } = {}) {
+    if (
+      !Number.isInteger(readinessTimeoutMs) ||
+      readinessTimeoutMs < 0 ||
+      readinessTimeoutMs > 5000 ||
+      !Number.isInteger(pollMs) ||
+      pollMs < 1 ||
+      pollMs > 250
+    )
+      throw Error('Invalid Bluetooth readiness deadline.');
+    const deadline = Date.now() + readinessTimeoutMs;
+    do {
+      signal?.throwIfAborted();
+      if (this.failure || this.closing) throw this.failure || Error('DeviceIO is closed');
+      const remaining = Math.max(1, deadline - Date.now());
+      if (
+        one(await this.adapterRequest(id, 35, 36, Math.min(this.timeoutMs, remaining)), 1, 0) === 1
+      )
+        return true;
+      if (Date.now() >= deadline) return false;
+      await delay(Math.min(pollMs, deadline - Date.now()), undefined, { signal });
+    } while (Date.now() < deadline);
+    return false;
+  }
+  async scanBluetooth(durationMs = 1500, options = {}) {
+    const { signal } = options;
+    signal?.throwIfAborted();
+    const abort = () => this.fail(new Error('Bluetooth initialization or scan cancelled.'));
+    signal?.addEventListener('abort', abort, { once: true });
+    try {
+      if (!Number.isInteger(durationMs) || durationMs < 0 || durationMs > 5000)
+        throw new Error('Bluetooth scan duration must be between 0 and 5000 ms');
+      const id = await this.create('ble');
+      const ready = await this.waitForBluetoothReady(id, options);
+      if (!ready) return { ready: false, devices: [] };
+      const checkError = (response) => {
+        const error = one(response, 1, 2);
+        if (error)
+          throw new Error(
+            `Bluetooth scan: ${one(fields(error), 1, 2)?.toString('utf8') || 'failed'}`,
+          );
+      };
+      checkError(await this.adapterRequest(id, 12, 13));
+      await delay(durationMs, undefined, { signal });
+      const response = await this.adapterRequest(id, 31, 32);
+      checkError(await this.adapterRequest(id, 14, 15));
+      const devices = response
+        .filter((field) => field.number === 1)
+        .map((field) => {
+          if (field.wire !== 2) throw new Error('Invalid Bluetooth descriptor');
+          const descriptor = fields(field.value);
+          return {
+            deviceIdHigh: one(descriptor, 1, 0) ?? 0,
+            deviceIdLow: one(descriptor, 2, 0) ?? 0,
+            localName: one(descriptor, 3, 2)?.toString('utf8') ?? '',
+            manufacturerData: one(descriptor, 4, 2) ?? Buffer.alloc(0),
+          };
+        });
+      return { ready, devices };
+    } finally {
+      signal?.removeEventListener('abort', abort);
+    }
   }
   close() {
     this.closePromise ??= this.finishClose();
@@ -183,15 +215,13 @@ class DiscoverySession {
 async function discoverCricutDevices({ bluetooth = false, installation, sessionOptions } = {}) {
   const installed = installation ?? (await findCricutInstallation());
   if (!installed?.bridgeInstalled) throw new Error('Cricut DeviceIO is not installed');
-  if (installed.version !== '43.2.0')
-    throw new Error('DeviceIO diagnostics are verified only with Design Space 43.2.0');
-  const executable = path.join(
-    path.dirname(installed.executable),
-    'resources',
-    'plugins',
-    'cricut-device-io',
-    'CricutDeviceIO.exe',
-  );
+  if (
+    installed.platform === 'darwin'
+      ? installed.applicationVersion !== '10.8.81'
+      : installed.version !== '43.2.0'
+  )
+    throw new Error('DeviceIO diagnostics require the inspected Design Space build.');
+  const executable = installed.bridgeExecutable;
   const session = new DiscoverySession(executable, sessionOptions);
   try {
     const usb = await session.enumerateUsb();

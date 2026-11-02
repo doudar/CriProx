@@ -2,26 +2,35 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
+const { bifrostMachine } = require('./bifrost-device.cjs');
 const VERSION = '10.8.81';
 const validKey = (key) => typeof key === 'string' && key.length > 0 && key.length <= 16384;
 
 function createProtectedKeyStore({ safeStorage, directory, platform = process.platform }) {
-  const file = () => path.join(directory(), 'cutter-key.bin');
+  const file = (machine) => {
+    bifrostMachine(machine);
+    return path.join(
+      directory(),
+      machine === 'explore-5' ? 'cutter-key.bin' : `cutter-key-${machine}.bin`,
+    );
+  };
   async function available() {
-    return platform === 'win32' && (await safeStorage.isAsyncEncryptionAvailable());
+    return (
+      ['win32', 'darwin'].includes(platform) && (await safeStorage.isAsyncEncryptionAvailable())
+    );
   }
-  async function save(applicationVersion, key) {
+  async function save(applicationVersion, key, machine = 'explore-5') {
+    const target = file(machine);
     if (applicationVersion !== VERSION || !validKey(key)) throw Error('Invalid cutter key.');
     if (!(await available())) throw Error('Protected storage unavailable.');
     const encrypted = await safeStorage.encryptStringAsync(
       JSON.stringify({
         schema: 1,
-        machine: 'explore-5',
+        machine,
         applicationVersion,
         key,
       }),
     );
-    const target = file();
     await fs.mkdir(path.dirname(target), { recursive: true });
     const temporary = `${target}.${randomUUID()}.tmp`;
     try {
@@ -31,30 +40,30 @@ function createProtectedKeyStore({ safeStorage, directory, platform = process.pl
       await fs.rm(temporary, { force: true });
     }
   }
-  async function load(applicationVersion) {
+  async function load(applicationVersion, machine = 'explore-5') {
     if (applicationVersion !== VERSION) return null;
     try {
       if (!(await available())) return null;
-      const target = file();
+      const target = file(machine);
       if ((await fs.stat(target)).size > 128 * 1024) return null;
       const decrypted = await safeStorage.decryptStringAsync(await fs.readFile(target));
       const record = JSON.parse(decrypted.result);
       if (
         record.schema !== 1 ||
-        record.machine !== 'explore-5' ||
+        record.machine !== machine ||
         record.applicationVersion !== applicationVersion ||
         !validKey(record.key)
       )
         return null;
-      if (decrypted.shouldReEncrypt) await save(applicationVersion, record.key);
+      if (decrypted.shouldReEncrypt) await save(applicationVersion, record.key, machine);
       return record.key;
     } catch {
       // Missing, corrupt, foreign-user or unavailable storage falls back to ordinary sign-in.
       return null;
     }
   }
-  async function clear() {
-    await fs.rm(file(), { force: true });
+  async function clear(machine = 'explore-5') {
+    await fs.rm(file(machine), { force: true });
   }
   return { load, save, clear };
 }

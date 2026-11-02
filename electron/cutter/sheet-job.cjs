@@ -6,14 +6,17 @@ const {
   registrationConflicts,
 } = require('./geometry.cjs');
 const { resolveCutSettings, buildPressurePlot, startPressureTest } = require('./pressure-test.cjs');
+const { getMachine, generatedSheetIssue } = require('../cutters/catalog.cjs');
 
 function prepareSheetJob(text, sheetIndex) {
   if (typeof text !== 'string' || text.length > 8_000_000) throw Error('Invalid cut job file.');
   const job = JSON.parse(text);
+  const machine = getMachine(job?.machine);
   if (
     job?.kind !== 'criprox-cut-job' ||
     ![1, 2].includes(job.version) ||
-    job.machine !== 'explore-5' ||
+    !machine.directCut ||
+    generatedSheetIssue(machine.id, job.paper) ||
     !['letter', 'a4'].includes(job.paper) ||
     job.units !== 'mm' ||
     job.origin !== 'page-top-left' ||
@@ -29,7 +32,7 @@ function prepareSheetJob(text, sheetIndex) {
   )
     throw Error('Invalid or unsupported registered sheet job.');
   const sheet = job.sheets[sheetIndex],
-    geometry = registrationGeometry('explore-5', job.paper);
+    geometry = registrationGeometry(machine.id, job.paper);
   if (
     sheet?.registration?.placement !== geometry.placement ||
     ['x', 'y', 'width', 'height'].some(
@@ -110,6 +113,7 @@ function prepareSheetJob(text, sheetIndex) {
   if (job.version === 1 && registrationConflicts(contours, geometry).blocked.length)
     throw Error('The cutter job crosses registration marks or the paper edge.');
   const settings = {
+    machine: machine.id,
     cutMaterial: job.cutSettings?.material,
     cutPressure: job.cutSettings?.pressurePreset,
     cutPasses: job.cutSettings?.passes,
@@ -131,6 +135,7 @@ function prepareSheetJob(text, sheetIndex) {
     return job.version === 2 && !shape.closed ? path.slice(0, -2) : path;
   });
   return {
+    machine: machine.id,
     settings,
     resolved,
     paths,
@@ -146,10 +151,12 @@ async function buildSheetJob(api, text, sheetIndex) {
   if (!built.config.ptcConfig) throw Error('Could not prepare the registration scan.');
   return { ...built, prepared };
 }
-async function startSheetJob({ api, device, request, onUpdate, onPhase }) {
+async function startSheetJob({ api, device, request, onUpdate, onPhase, machine = 'explore-5' }) {
   if (request?.materialReady !== true)
     throw Error('Confirm the printed sheet, fine-point blade, and mat placement first.');
   const prepared = prepareSheetJob(request.job, request.sheetIndex);
+  if (prepared.machine !== machine)
+    throw Error('The prepared sheet belongs to a different cutter.');
   return startPressureTest({
     api,
     device,

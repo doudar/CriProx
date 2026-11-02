@@ -1,5 +1,6 @@
 // Portable material snapshots are shared by the renderer and native job validator.
 const legacy = require('./fine-point-profiles.json');
+const { getMachine } = require('../cutters/catalog.cjs');
 const MAX_CUT_PASSES = 10;
 function validateMaterial(value) {
   const text = (v, max) => typeof v === 'string' && v.trim().length > 0 && v.length <= max;
@@ -89,9 +90,12 @@ function passPressures(settings) {
       profile.pressures[Math.min(i, profile.pressures.length - 1)] + profile.adjustment[index],
   );
 }
-function directCutIssue(settings) {
+function directCutIssue(settings, machineId = 'explore-5') {
+  const machine = getMachine(machineId);
+  if (!machine.directCut) return machine.unavailableReason;
   const profile = materialForSettings(settings);
-  if (profile.machineId !== 24) return 'Direct cutting requires an Explore 5 material profile.';
+  if (profile.machineId !== machine.machineFamily)
+    return `Direct cutting requires a ${machine.name} material profile. Select a matching material in Manage materials.`;
   if (profile.blade !== 'dragKnife')
     return `This material requires ${profile.bladeName}. Direct cutting currently supports the Fine-Point Blade.`;
   if (passPressures(settings).some((p) => p <= 0 || p > 450))

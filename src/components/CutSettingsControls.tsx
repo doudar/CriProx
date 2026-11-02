@@ -1,3 +1,4 @@
+import { getMachine } from '../lib/machine-guides';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Search, SlidersHorizontal, X, Plus, Copy } from 'lucide-react';
 import {
@@ -27,7 +28,9 @@ import './MaterialManager.css';
 export default function CutSettingsControls({
   value,
   onChange,
+  machine = 'explore-5',
 }: {
+  machine?: string;
   value: CutSettings;
   onChange: (patch: Partial<CutSettings>) => void;
 }) {
@@ -88,7 +91,7 @@ export default function CutSettingsControls({
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
-  const issue = directCutIssue(value);
+  const issue = directCutIssue(value, machine);
   async function importAll() {
     setBusy(true);
     setError('');
@@ -218,6 +221,7 @@ export default function CutSettingsControls({
       )}
       {manage && (
         <MaterialManager
+          machine={machine}
           profiles={profiles}
           library={library}
           selected={selected}
@@ -246,6 +250,7 @@ export default function CutSettingsControls({
 }
 
 function MaterialManager({
+  machine,
   profiles,
   library,
   selected,
@@ -258,6 +263,7 @@ function MaterialManager({
   onReset,
   onUse,
 }: {
+  machine: string;
   profiles: MaterialProfile[];
   library: MaterialLibrary;
   selected: MaterialProfile;
@@ -342,8 +348,11 @@ function MaterialManager({
               name: 'New material',
               category: 'Custom',
               source: 'custom',
-              machineId: 24,
-              machineName: 'Cricut Explore 5',
+              machineId: getMachine(machine).machineFamily ?? selected.machineId,
+              machineName:
+                getMachine(machine).machineFamily === undefined
+                  ? selected.machineName
+                  : `Cricut ${getMachine(machine).name}`,
               blade: 'dragKnife',
               bladeName: 'Fine-Point Blade',
               pressure: 80,

@@ -1,6 +1,6 @@
 import { stickerFootprint, footprintsConflict, nestingCandidates } from './sticker-nesting';
 import { designOutputBounds } from './sticker-contours';
-import { machineGuide, outsidePlanningGuide } from './machine-guides';
+import { isMachine, machineGuide, outsidePlanningGuide } from './machine-guides';
 import { validateStickerDesign, type StickerDesign } from './sticker-design';
 import { designCutPaths, hasCustomCuts } from './sticker-cuts';
 import { DEFAULT_SETTINGS, type Settings, type Entry } from './types';
@@ -203,7 +203,8 @@ export function validateStickerProject(value: unknown): StickerProject {
     !p ||
     p.kind !== 'criprox-stickers' ||
     ![1, 2].includes(p.version) ||
-    !['explore-5', 'explore', 'maker', 'joy-xtra'].includes(p.machine) ||
+    !isMachine(p.machine) ||
+    (p.machine as string) === 'manual' ||
     typeof p.name !== 'string' ||
     p.name.length > 100 ||
     !Array.isArray(p.artwork) ||
