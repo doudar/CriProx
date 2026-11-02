@@ -98,11 +98,27 @@ export default function App() {
       .catch(() => {});
     const api = window.criprox?.releases;
     if (!api) return;
-    void api
-      .check()
-      .then(setUpdate)
-      .catch(() => {});
-    return api.onState(setUpdate);
+    let active = true;
+    const receive = (state: UpdateState) => {
+      if (active) setUpdate(state);
+    };
+    const check = () => {
+      void api
+        .check()
+        .then(receive)
+        .catch(() => {});
+    };
+    const unsubscribe = api.onState(receive);
+    check();
+    // The main-process checker caches results and coalesces concurrent requests.
+    const timer = window.setInterval(check, 15 * 60 * 1000);
+    window.addEventListener('focus', check);
+    return () => {
+      active = false;
+      unsubscribe();
+      window.clearInterval(timer);
+      window.removeEventListener('focus', check);
+    };
   }, []);
   const remember = useCallback(async (project: StickerProject, fresh: boolean | string = false) => {
     if (fresh) activeId.current = typeof fresh === 'string' ? fresh : undefined;
@@ -183,6 +199,19 @@ export default function App() {
           </button>
         </nav>
         <div className="skarix-drag-space" />
+        {update.update && (
+          <button
+            className="skarix-update-notice"
+            aria-label={`Skarix ${update.update.latestVersion} is available. Open updates`}
+            onClick={() => {
+              setSettingsPage('Updates');
+              setSettings(true);
+            }}
+          >
+            <Download size={15} aria-hidden="true" />
+            <span>Update {update.update.latestVersion}</span>
+          </button>
+        )}
         <button className="icon-button" aria-label="Settings" onClick={() => setSettings(true)}>
           <Settings size={19} />
         </button>

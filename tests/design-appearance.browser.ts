@@ -342,3 +342,37 @@ test('photo and procedural textures fill text glyphs, including text on a path',
     }
   }
 });
+
+test('closed text paths wrap across zero for every alignment and placement', async () => {
+  for (const side of ['inner', 'middle', 'outer'] as const) {
+    for (const align of ['left', 'center', 'right'] as const) {
+      const d = scene(
+        { id: 'guide', shape: 'ellipse', hidden: true },
+        {
+          kind: 'text',
+          text: 'MMMMMMMM',
+          font: 'Arial',
+          fontSize: 3,
+          bold: true,
+          align,
+          fill: '#ff0000',
+          strokeWidth: 0,
+          textPath: { pathId: 'guide', side, offset: 50 },
+        },
+      );
+      const ink = async (offset: number) => {
+        d.elements[1].textPath!.offset = offset;
+        const p = await pixels(d);
+        let total = 0;
+        for (let x = 0; x < 400; x++) for (let y = 0; y < 400; y++) total += p(x, y)[3];
+        return total;
+      };
+      const baseline = await ink(50);
+      for (const offset of [0, 1, 99, 100]) {
+        const total = await ink(offset);
+        if (total < baseline * 0.95 || total > baseline * 1.05)
+          throw Error(`Clipped text at ${offset}% (${align}, ${side}): ${total}/${baseline}`);
+      }
+    }
+  }
+});

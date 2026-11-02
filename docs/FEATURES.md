@@ -61,3 +61,7 @@ Mac release builds also fail explicitly if signing exits before installer verifi
 The [Aurora logo example](../examples/README.md) demonstrates editable gradients, lighting and textures, including textures on text, created through the MCP server.
 
 The Aurora logo appears throughout the app, README and website. **Meet Skarix** opens its editable rounded-square artwork, including the textured lettering.
+
+Text on a closed path wraps across the 0%/100% position, keeping letters visible as they cross the start of a circle or polygon. Artwork outside the canvas or cut outline is still clipped.
+
+The desktop app checks GitHub for newer stable releases at startup and every 15 minutes, and refreshes its cached check when you return to the app. When an update is available, an **Update [version]** button appears in the header and opens **Settings → Updates** for release notes and download options. You can also use **Check now** there. Downloads and installation remain manual.

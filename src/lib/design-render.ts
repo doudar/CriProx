@@ -67,14 +67,21 @@ export function renderDesignContent(design: StickerDesign, prefix = 'art'): stri
           inverse(multiply(parentMatrix(design, e), elementMatrix(e))),
           multiply(parentMatrix(design, path), elementMatrix(path)),
         );
-        defs += `<path id="${id}-text-path" d="${elementPath(path)}" transform="matrix(${relative.join(' ')})"/>`;
+        // Give closed guides a lap on either side of the requested position.
+        // SVG otherwise drops glyphs that cross the start/end of a text path.
+        const outline = elementPath(path);
+        const start = outline.match(/^M\s*([-+\d.e]+)[ ,]+([-+\d.e]+)/i)!;
+        const lap = outline.replace(/^M/, 'L').replace(/Z\s*$/i, `L${start[1]} ${start[2]}`);
+        const wrapped = `M${start[1]} ${start[2]} ${lap} ${lap} ${lap}`;
+        const offset = (100 + (e.textPath.offset % 100)) / 3;
+        defs += `<path id="${id}-text-path" d="${wrapped}" transform="matrix(${relative.join(' ')})"/>`;
         const dy =
           e.textPath.side === 'inner'
             ? e.fontSize! * 0.85
             : e.textPath.side === 'middle'
               ? e.fontSize! * 0.35
               : -e.fontSize! * 0.15;
-        body = `<text fill="${fill}" stroke="${e.stroke}" stroke-width="${e.strokeWidth}" paint-order="stroke fill" font-family="${e.font}" font-size="${e.fontSize}" font-weight="${e.bold ? 700 : 400}" text-anchor="${e.align === 'center' ? 'middle' : e.align === 'right' ? 'end' : 'start'}" dy="${dy}"><textPath href="#${id}-text-path" xlink:href="#${id}-text-path" startOffset="${e.textPath.offset}%">${esc(e.text!.replaceAll('\n', ' '))}</textPath></text>`;
+        body = `<text fill="${fill}" stroke="${e.stroke}" stroke-width="${e.strokeWidth}" paint-order="stroke fill" font-family="${e.font}" font-size="${e.fontSize}" font-weight="${e.bold ? 700 : 400}" text-anchor="${e.align === 'center' ? 'middle' : e.align === 'right' ? 'end' : 'start'}" dy="${dy}"><textPath href="#${id}-text-path" xlink:href="#${id}-text-path" startOffset="${offset}%">${esc(e.text!.replaceAll('\n', ' '))}</textPath></text>`;
       }
       if (e.texture) {
         const t = e.texture;
