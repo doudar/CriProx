@@ -2,6 +2,8 @@
 
 Make artwork, labels, decals and cut-ready designs in a local desktop studio.
 
+Skarix takes its name from *skära*—the Swedish word for cutting with a blade—combined with the traditional *-ix* suffix of the open-source movement. It provides a precise, unlocked, and community-driven software foundation for drag-knife cutting machines.
+
 ![Skarix Home](docs/assets/skarix-home.png)
 
 ## Why Skarix?
