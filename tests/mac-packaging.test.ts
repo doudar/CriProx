@@ -2,6 +2,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
+test('Linux installer names use the architecture expected by the in-app updater', async () => {
+  const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  // AppImage expands ${arch} to x86_64, while the updater and release manifest
+  // intentionally share the x64 suffix used by the Windows package.
+  assert.equal(packageJson.build.linux.artifactName, '${productName}-${version}-linux-x64.${ext}');
+  assert.match(packageJson.scripts['package:linux'], /--x64/);
+});
+
 test('macOS installer previews remain unsigned and do not receive signing secrets', async () => {
   const packageJson = JSON.parse(
     await readFile(new URL('../package.json', import.meta.url), 'utf8'),
