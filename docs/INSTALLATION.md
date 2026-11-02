@@ -24,7 +24,7 @@ Update checks target [Skarix releases](https://github.com/doudar/Skarix/releases
 
 ## Test installers from a branch
 
-Use **Actions → Test installers → Run workflow**, leave the workflow branch on main, and enter the feature branch in `build_branch`. Download the platform artifact after the run completes. These are test builds of the recorded commit, not stable releases.
+After the workflow reaches main, use **Actions → Skarix installer previews → Run workflow** and select the branch to build. Download the platform artifact after the run completes. Each artifact includes SHA256SUMS.txt and SOURCE.txt identifying the exact commit. Previews expire after 14 days and are not published releases.
 
 ## Simulate an update locally
 
