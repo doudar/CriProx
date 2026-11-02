@@ -94,7 +94,7 @@ export default function UpdatesPanel({
       <p className="hint">
         {state.lastChecked
           ? `Last checked ${new Date(state.lastChecked).toLocaleString()}.`
-          : 'Checks for stable releases when Skarix starts.'}
+          : 'Checks GitHub for stable releases at startup, every 15 minutes, and when you return to Skarix.'}
       </p>
       <div role="status" aria-live="polite">
         {state.status === 'up-to-date' && <p>You’re up to date.</p>}

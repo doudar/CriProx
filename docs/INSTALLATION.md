@@ -61,3 +61,5 @@ Install Design Space 10.8.81 in /Applications or your user Applications folder. 
 Skarix includes a Bluetooth usage description. Signed releases use hardened runtime without App Sandbox; adopting App Sandbox would also require a Bluetooth entitlement. The saved-key store uses Electron safeStorage with macOS Keychain. The release checks verify signing and notarization, but permission attribution to the packaged app/helper, Keychain denial and update behavior still need hardware testing. Explore 5 Bluetooth connection and cutting have been physically tested on macOS.
 
 The installed application uses the Aurora rounded-square icon with mint and coral chevrons. **Meet Skarix** opens the matching editable logo project.
+
+The desktop app checks GitHub for newer stable releases at startup and every 15 minutes, and refreshes its cached check when you return to the app. When an update is available, an **Update [version]** button appears in the header and opens **Settings → Updates** for release notes and download options. You can also use **Check now** there. Downloads and installation remain manual.

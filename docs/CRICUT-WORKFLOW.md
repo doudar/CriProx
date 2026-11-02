@@ -60,3 +60,5 @@ The optional captured-template workflow retains its saved Design Space cut proje
 AI can prepare artwork and layouts only. The human reviews output and operates printers/cutters.
 
 See [features](FEATURES.md), [integration notes](EXPLORE-5-INTEGRATION.md), and the [official guide](https://help.cricut.com/hc/en-us/articles/360009387274-How-to-Print-Then-Cut-in-Design-Space).
+
+Text on a closed path wraps across the 0%/100% position, keeping letters visible as they cross the start of a circle or polygon. Artwork outside the canvas or cut outline is still clipped.

@@ -42,7 +42,7 @@ app.on('window-all-closed', () => {});
   if (result?.error) throw Error(result.error);
   if (
     !Array.isArray(result) ||
-    result.length < 10 ||
+    result.length < 11 ||
     result.some((line) => !line.startsWith('PASS '))
   )
     throw Error(JSON.stringify(result));

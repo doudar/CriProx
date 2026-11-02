@@ -296,5 +296,86 @@ export async function run() {
     JSON.stringify(await readRecentProject('legacy-sentinel')) === JSON.stringify(legacy),
     'Legacy project evicted or changed',
   );
-  return 'PASS: raw unsaved card draft export without mutation, same-name customized starter preserved, fresh starter, existing and blank drafts, preserved legacy snapshots, preview pixels match shared output with borders/cropping/transforms, late edits preserve the active designer, and real App create/load/Home keeps three separate recent projects.';
+  // Exercise the visible update notification with the real App and IPC state events.
+  const originalBridge = window.criprox;
+  let listener: ((state: UpdateState) => void) | undefined;
+  let checks = 0;
+  let downloads = 0;
+  let unsubscribed = false;
+  const available: UpdateState = {
+    currentVersion: '0.19.0',
+    status: 'available',
+    changelog: [],
+    lastChecked: new Date().toISOString(),
+    transferred: 0,
+    total: 0,
+    error: '',
+    update: {
+      currentVersion: '0.19.0',
+      latestVersion: '0.20.0',
+      releaseUrl: 'https://github.com/doudar/Skarix/releases/tag/v0.20.0',
+      releaseNotes: 'New artwork tools',
+      releaseHeading: 'New artwork tools',
+      releaseNotesHtml: '<p>New artwork tools</p>',
+      publishedAt: null,
+      installerName: null,
+      downloadSize: null,
+      canDownload: false,
+    },
+  };
+  const checkRelease = async () => {
+    checks++;
+    return available;
+  };
+  window.criprox = {
+    ...originalBridge,
+    releases: {
+      check: checkRelease,
+      checkNow: checkRelease,
+      state: async () => available,
+      onState: (cb) => {
+        listener = cb;
+        return () => {
+          unsubscribed = true;
+        };
+      },
+      download: async () => {
+        downloads++;
+        return available;
+      },
+      cancel: async () => available,
+      openInstaller: async () => available,
+      copyMacCommand: async () => {},
+      openTerminal: async () => {},
+      open: async () => {},
+      openLink: async () => {},
+    },
+  } as typeof window.criprox;
+  const updateRoot = createRoot(document.getElementById('root')!);
+  try {
+    updateRoot.render(<App />);
+    const notice = () => document.querySelector<HTMLButtonElement>('.skarix-update-notice');
+    await until(() => notice()?.textContent?.includes('0.20.0'));
+    check(checks === 1, 'Missing startup release check');
+    notice()!.click();
+    await until(() => document.querySelector('dialog[open] .updates-panel'));
+    check(
+      document.querySelector('.updates-panel')!.textContent!.includes('0.19.0'),
+      'Update notice did not open the installed version and release details',
+    );
+    window.dispatchEvent(new Event('focus'));
+    await until(() => checks === 2);
+    listener!({ ...available, status: 'up-to-date', update: null });
+    await until(() => !notice());
+    check(downloads === 0, 'Checking updates started a download');
+  } finally {
+    updateRoot.unmount();
+    window.criprox = originalBridge;
+  }
+  check(unsubscribed, 'Update subscription leaked after unmount');
+  const checksAfterUnmount = checks;
+  window.dispatchEvent(new Event('focus'));
+  await tick();
+  check(checks === checksAfterUnmount, 'Update focus listener leaked after unmount');
+  return 'PASS: raw unsaved card draft export without mutation, same-name customized starter preserved, fresh starter, existing and blank drafts, preserved legacy snapshots, preview pixels match shared output with borders/cropping/transforms, late edits preserve the active designer, real App create/load/Home keeps three separate recent projects, and newer GitHub releases appear in the header and open update details without downloading.';
 }
