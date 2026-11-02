@@ -162,7 +162,7 @@ export async function generateMarkedPrint(
   doc.catalog.getOrCreateViewerPreferences().setPrintScaling(PrintScaling.None);
   doc.setTitle(`${project.name} — generated registration marks`);
   doc.setSubject(
-    'CriProx-generated marks and matching cut coordinates. Check alignment for your machine and material. Not a Design Space saved job.',
+    'Skarix-generated marks and matching cut coordinates. Check alignment for your machine and material. Not a Design Space saved job.',
   );
   const job = JSON.stringify(
     {
@@ -254,7 +254,7 @@ export async function generatedPrintBundle(result: GeneratedPrintResult) {
   if (result.backPdf) zip.file('card-backs.pdf', result.backPdf);
   zip.file(
     'READ-ME.txt',
-    'Print the PDF at 100% / Actual size. It includes all generated black registration marks and the top-left directional arrow. Keep the matching cut-job file: it records the same page coordinates and cut contours.\n\nThese are CriProx-generated sheets. Do not cut them using an unrelated Design Space mat: its mark placement may differ. The Windows Explore 5 controller can scan and cut the matching prepared sheet from Print then cut. Reopen the project and prepare it again to cut; this exported JSON is a reference, not an executable Cricut file. An Explore 5 USB sticker sheet has been physically validated at 80 g, one pass; check alignment for other settings.\n\n' +
+    'Print the PDF at 100% / Actual size. It includes all generated black registration marks and the top-left directional arrow. Keep the matching cut-job file: it records the same page coordinates and cut contours.\n\nThese are Skarix-generated sheets. Do not cut them using an unrelated Design Space mat: its mark placement may differ. The Windows Explore 5 controller can scan and cut the matching prepared sheet from Print then cut. Reopen the project and prepare it again to cut; this exported JSON is a reference, not an executable Cricut file. An Explore 5 USB sticker sheet has been physically validated at 80 g, one pass; check alignment for other settings.\n\n' +
       `Requested cut settings: ${cutSettingsSummary(cut)}. Explore 5 applies these settings to every contour in the selected sheet.\n\n` +
       result.warnings.join('\n'),
   );

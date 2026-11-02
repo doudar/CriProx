@@ -17,10 +17,6 @@ const pending = new Map<
   }
 >();
 
-export function isScryfallArtwork(source: string) {
-  return /^https:\/\/cards\.scryfall\.io\//.test(source);
-}
-
 function upscaleWorker() {
   if (worker) return worker;
   worker = new Worker(new URL('../workers/upscale.worker.ts', import.meta.url), { type: 'module' });
@@ -50,7 +46,7 @@ function upscaleWorker() {
   return worker;
 }
 
-export async function upscaleScryfallArtwork(
+export async function upscaleArtwork(
   source: string,
   original: ImageBitmap,
   progress: (text: string) => void,
@@ -70,7 +66,7 @@ export async function upscaleScryfallArtwork(
     progress(`Upscaling ${name} with Upscayl…`);
     const canvas = new OffscreenCanvas(original.width, original.height);
     const context = canvas.getContext('2d');
-    if (!context) throw new Error('Could not read the Scryfall card image.');
+    if (!context) throw new Error('Could not read the artwork image.');
     context.drawImage(original, 0, 0);
     const input = new Uint8Array(
       await (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer(),
@@ -84,7 +80,7 @@ export async function upscaleScryfallArtwork(
       // Upscayl's RGB model may discard transparency. Retain the source corners.
       const merged = new OffscreenCanvas(enhanced.width, enhanced.height);
       const mergedContext = merged.getContext('2d');
-      if (!mergedContext) throw new Error('Could not create the upscaled card image.');
+      if (!mergedContext) throw new Error('Could not create the upscaled artwork image.');
       mergedContext.drawImage(original, 0, 0, merged.width, merged.height);
       mergedContext.globalCompositeOperation = 'source-in';
       mergedContext.drawImage(enhanced, 0, 0);

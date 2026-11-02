@@ -29,8 +29,8 @@ const { createUpdateManager, checksumFor } = require('../electron/update-manager
 };
 const bytes = Buffer.from('test installer');
 const hash = createHash('sha256').update(bytes).digest('hex');
-const name = 'CriProx-0.14.0-win-x64.exe';
-const base = 'https://github.com/Go2Engle/CriProx/releases/download/v0.14.0/';
+const name = 'Skarix-0.14.0-win-x64.exe';
+const base = 'https://github.com/doudar/Skarix/releases/download/v0.14.0/';
 const asset = (name: string, size = bytes.length) => ({
   name,
   size,
@@ -40,7 +40,7 @@ const release = {
   tag_name: 'v0.14.0',
   draft: false,
   prerelease: false,
-  html_url: 'https://github.com/Go2Engle/CriProx/releases/tag/v0.14.0',
+  html_url: 'https://github.com/doudar/Skarix/releases/tag/v0.14.0',
   body: 'New features\n<script>untrusted notes</script>',
   assets: [asset(name), asset('SHA256SUMS.txt', 150)],
 };
@@ -107,21 +107,21 @@ test('select only the published platform and architecture from trusted release a
     ...release,
     assets: [
       ...release.assets,
-      asset('CriProx-0.14.0-mac-universal.dmg'),
-      asset('CriProx-0.14.0-linux-x64.AppImage'),
+      asset('Skarix-0.14.0-mac-universal.dmg'),
+      asset('Skarix-0.14.0-linux-x64.AppImage'),
     ],
   };
   assert.equal(
     selectReleaseAssets(multi, 'darwin', 'arm64').installer.name,
-    'CriProx-0.14.0-mac-universal.dmg',
+    'Skarix-0.14.0-mac-universal.dmg',
   );
   assert.equal(
     selectReleaseAssets(multi, 'darwin', 'x64').installer.name,
-    'CriProx-0.14.0-mac-universal.dmg',
+    'Skarix-0.14.0-mac-universal.dmg',
   );
   assert.equal(
     selectReleaseAssets(multi, 'linux', 'x64').installer.name,
-    'CriProx-0.14.0-linux-x64.AppImage',
+    'Skarix-0.14.0-linux-x64.AppImage',
   );
   assert.equal(selectReleaseAssets(multi, 'win32', 'arm64'), null);
   assert.equal(selectReleaseAssets({ ...release, assets: [asset(name)] }, 'win32', 'x64'), null);
@@ -131,7 +131,7 @@ test('select only the published platform and architecture from trusted release a
   );
   for (const url of [
     'https://evil.example/' + name,
-    base.replace('CriProx', 'Other') + name,
+    base.replace('Skarix', 'Other') + name,
     base + name + '?x=1',
   ]) {
     assert.equal(
@@ -386,7 +386,7 @@ test('concurrent checks share one request, while a forced check discovers a newe
               ? {
                   ...release,
                   tag_name: 'v0.15.0',
-                  html_url: 'https://github.com/Go2Engle/CriProx/releases/tag/v0.15.0',
+                  html_url: 'https://github.com/doudar/Skarix/releases/tag/v0.15.0',
                   assets: [],
                 }
               : release,

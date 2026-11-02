@@ -135,12 +135,12 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
           {!connected && savedKey === false && (
             <section className="cutter-test" aria-label="Cutter setup">
               <h3>
-                {setupOpened ? 'Finish setup, then return to CriProx' : 'Set up your cutter key'}
+                {setupOpened ? 'Finish setup, then return to Skarix' : 'Set up your cutter key'}
               </h3>
               <p>
                 {setupOpened
                   ? 'Sign in to Design Space and connect your Explore 5 there. Then close Design Space, leave the cutter powered on, and connect below.'
-                  : 'No usable saved cutter key is available. Open Cricut Design Space, sign in and connect your Explore 5, then close it before connecting in CriProx.'}
+                  : 'No usable saved cutter key is available. Open Cricut Design Space, sign in and connect your Explore 5, then close it before connecting in Skarix.'}
               </p>
               <button
                 className="secondary"
@@ -227,8 +227,8 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
               <span>
                 Use and remember my cutter key on this PC.
                 <small>
-                  CriProx protects the saved key with your Windows account. Design Space sign-in is
-                  needed only to get a new key. Login tokens are never saved by CriProx.
+                  Skarix protects the saved key with your Windows account. Design Space sign-in is
+                  needed only to get a new key. Login tokens are never saved by Skarix.
                 </small>
               </span>
             </label>
@@ -334,14 +334,14 @@ export default function CutterPanel({ job, active = true }: { job?: string; acti
                 Cut sheet
               </button>
               <p className="muted">
-                Load the mat when prompted. CriProx measures it, scans the registration marks, and
+                Load the mat when prompted. Skarix measures it, scans the registration marks, and
                 cuts only this sheet’s contours using the saved pressure and passes. A failed scan
                 cancels the job. An Explore 5 USB sticker sheet cut successfully at 80 g, one pass.
                 Check alignment when changing paper, material, or settings.
               </p>
             </section>
           ) : (
-            <p>Prepare the marked print sheets in CriProx to enable their matching cut job.</p>
+            <p>Prepare the marked print sheets in Skarix to enable their matching cut job.</p>
           )}
           {connected && (
             <p className="muted">

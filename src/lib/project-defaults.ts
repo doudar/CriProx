@@ -155,7 +155,7 @@ export function projectFromDefaults(defaults: ProjectDefaults): Project {
 export function validateProjectDefaults(value: unknown): ProjectDefaults {
   const candidate = value as Partial<ProjectDefaults> | null;
   if (!candidate || candidate.version !== 1 || !candidate.settings)
-    throw new Error('These are not supported CriProx project defaults.');
+    throw new Error('These are not supported Skarix project defaults.');
 
   const project = validateProject({
     version: 1,

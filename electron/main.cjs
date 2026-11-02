@@ -1,8 +1,21 @@
-const { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, net, safeStorage, shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeImage,
+  net,
+  safeStorage,
+  shell,
+} = require('electron');
 const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { deckSourceUrl } = require('./deck-source.cjs');
+// Keep existing local drafts, library settings and cutter keys across the rename.
+const { compatibleUserData } = require('./user-data-path.cjs');
+app.setPath('userData', compatibleUserData(app.getPath('appData')));
 const { contextMenuTemplate } = require('./context-menu.cjs');
 const { isTrustedReleaseUrl } = require('./release-check.cjs');
 const { createUpdateManager } = require('./update-manager.cjs');
@@ -32,18 +45,23 @@ const { projectLibraryPaths } = require('./project-library-paths.cjs');
 const { findUpscayl, runUpscayl } = require('./upscayl.cjs');
 const { findCricutInstallation } = require('./cricut-installation.cjs');
 const { createCutterController } = require('./cutter/controller.cjs');
-const printing = require('./printing.cjs').createPrintService({ BrowserWindow, nativeImage,
-  showPreview: require('./print-preview.cjs').createPrintPreview({BrowserWindow,ipcMain}) });
+const printing = require('./printing.cjs').createPrintService({
+  BrowserWindow,
+  nativeImage,
+  showPreview: require('./print-preview.cjs').createPrintPreview({ BrowserWindow, ipcMain }),
+});
 for (const command of ['begin', 'page', 'finish', 'abort']) {
   ipcMain.handle(`print-${command}`, (event, ...args) => {
-    if (event.senderFrame !== event.sender.mainFrame) throw Error('Printing requires the main workspace.');
+    if (event.senderFrame !== event.sender.mainFrame)
+      throw Error('Printing requires the main workspace.');
     checkCutterSender(event);
     return printing[command](event.sender, ...args);
   });
 }
 const cutter = createCutterController({
   keyStore: require('./cutter/protected-key.cjs').createProtectedKeyStore({
-    safeStorage, directory: () => app.getPath('userData'),
+    safeStorage,
+    directory: () => app.getPath('userData'),
   }),
   onState: (state) => {
     for (const window of BrowserWindow.getAllWindows())
@@ -57,7 +75,7 @@ function checkCutterSender(event) {
     require('node:url').fileURLToPath(new URL(url)) !==
       path.resolve(__dirname, '../dist/index.html')
   )
-    throw new Error('Cutter access is limited to the CriProx workspace.');
+    throw new Error('Cutter access is limited to the Skarix workspace.');
 }
 ipcMain.handle('materials-import', (event) => {
   checkCutterSender(event);
@@ -73,7 +91,11 @@ ipcMain.handle('cutter-key-status', (event) => {
 });
 ipcMain.handle('cutter-connect-saved', (event, request) => {
   checkCutterSender(event);
-  return cutter.command('connect', { transport: request?.transport, authorized: true, savedOnly: true });
+  return cutter.command('connect', {
+    transport: request?.transport,
+    authorized: true,
+    savedOnly: true,
+  });
 });
 ipcMain.handle('cutter-connect', (event, request) => {
   checkCutterSender(event);
@@ -97,12 +119,20 @@ ipcMain.handle('cutter-home', (event, request) => {
 ipcMain.handle('cutter-cut-sheet', (event, request) => {
   checkCutterSender(event);
   return cutter.command('cutSheet', {
-    job: request?.job, sheetIndex: request?.sheetIndex,
+    job: request?.job,
+    sheetIndex: request?.sheetIndex,
     materialReady: request?.materialReady === true,
   });
 });
-for (const [channel,command] of [['cutter-cancel','cancelCut'],['cutter-pause','pauseCut'],['cutter-resume','resumeCut']])
-  ipcMain.handle(channel, event => { checkCutterSender(event); return cutter.command(command); });
+for (const [channel, command] of [
+  ['cutter-cancel', 'cancelCut'],
+  ['cutter-pause', 'pauseCut'],
+  ['cutter-resume', 'resumeCut'],
+])
+  ipcMain.handle(channel, (event) => {
+    checkCutterSender(event);
+    return cutter.command(command);
+  });
 let cutterQuitReady = false;
 let aiDesignBridge;
 app.on('before-quit', (event) => {
@@ -169,53 +199,6 @@ async function projectLibrarySnapshot() {
     ...(await listLibrary(root)),
   };
 }
-
-const mpcPaths = new Set(['/2/sources/', '/2/exploreSearch/']);
-ipcMain.handle('mpc-request', async (_event, request) => {
-  const { path: requestPath, method, body } = request || {};
-  if (!mpcPaths.has(requestPath) || !['GET', 'POST'].includes(method))
-    throw new Error('Unsupported MPC Autofill request.');
-  const response = await fetch(new URL(requestPath, 'https://mpcfill.com/'), {
-    method,
-    headers: {
-      Accept: 'application/json',
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(30000),
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.message || `MPC Autofill returned ${response.status}.`);
-  return result;
-});
-
-ipcMain.handle('deck-request', async (_event, request) => {
-  const requestUrl = deckSourceUrl(request);
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
-  let response;
-  try {
-    response = await net.fetch(requestUrl, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': `CriProx/${app.getVersion()} (+https://github.com/Go2Engle/CriProx)`,
-      },
-      credentials: 'omit',
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
-  if (!response.ok) throw new Error(`${request.provider} returned ${response.status}.`);
-  const body = await response.text();
-  if (body.length > 10_000_000) throw new Error('Deck response exceeds 10 MB.');
-  try {
-    return JSON.parse(body);
-  } catch {
-    throw new Error('Deck source returned invalid JSON.');
-  }
-});
 
 function senderWindow(event) {
   const window = BrowserWindow.fromWebContents(event.sender);
@@ -336,16 +319,16 @@ ipcMain.handle('save-project', async (event, request) => {
     throw new Error('Project data is invalid or exceeds 100 MB.');
   const requestedName = typeof request?.defaultName === 'string' ? request.defaultName : 'project';
   const safeName = path.basename(requestedName).replace(/[^\p{L}\p{N}._-]+/gu, '-') || 'project';
-  const defaultPath = safeName.endsWith('.criprox.json') ? safeName : `${safeName}.criprox.json`;
+  const defaultPath = safeName.endsWith('.skarix.json') ? safeName : `${safeName}.skarix.json`;
   const result = await dialog.showSaveDialog(senderWindow(event), {
-    title: 'Save CriProx project',
+    title: 'Save Skarix project',
     defaultPath,
-    filters: [{ name: 'CriProx project', extensions: ['json'] }],
+    filters: [{ name: 'Skarix project', extensions: ['json'] }],
   });
   if (result.canceled || !result.filePath) return false;
-  const target = result.filePath.toLowerCase().endsWith('.criprox.json')
+  const target = result.filePath.toLowerCase().endsWith('.skarix.json')
     ? result.filePath
-    : `${result.filePath.replace(/\.json$/i, '')}.criprox.json`;
+    : `${result.filePath.replace(/\.json$/i, '')}.skarix.json`;
   await fs.writeFile(target, data, 'utf8');
   return true;
 });
@@ -354,7 +337,7 @@ ipcMain.handle('list-projects', () => projectLibrarySnapshot());
 
 ipcMain.handle('choose-projects-directory', async (event) => {
   const result = await dialog.showOpenDialog(senderWindow(event), {
-    title: 'Choose CriProx projects folder',
+    title: 'Choose Skarix projects folder',
     defaultPath: await getLibraryRoot(),
     properties: ['openDirectory', 'createDirectory'],
   });
@@ -496,7 +479,7 @@ function createWindow() {
     minHeight: 660,
     frame: false,
     backgroundColor: '#f6f7f9',
-    title: 'CriProx',
+    title: 'Skarix',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -512,7 +495,8 @@ function createWindow() {
   window.on('enter-full-screen', publishWindowState);
   window.on('leave-full-screen', publishWindowState);
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https:\/\/(help\.cricut\.com|scryfall\.com|mpcfill\.com)\//.test(url))
+    if (/^https:\/\/(help\.cricut\.com)\//.test(url)) shell.openExternal(url);
+    else if (/^https:\/\/github\.com\/(?:doudar\/Skarix|Go2Engle\/CriProx)(?:\/|$)/.test(url))
       shell.openExternal(url);
     else if (/^https:\/\/ko-fi\.com\/go2engle(?:\/|$)/.test(url)) shell.openExternal(url);
     return { action: 'deny' };
@@ -526,7 +510,11 @@ function createWindow() {
 }
 app.whenReady().then(() => {
   aiDesignBridge = require('./ai-bridge.cjs').installAiBridge({
-    ipcMain, BrowserWindow, clipboard, app, checkSender: checkCutterSender,
+    ipcMain,
+    BrowserWindow,
+    clipboard,
+    app,
+    checkSender: checkCutterSender,
   });
   createWindow();
   app.on('activate', () => {

@@ -30,8 +30,8 @@ export default function AiDesignSettings() {
     <section aria-label="AI design settings">
       <h3>AI design with MCP</h3>
       <p>
-        Let a connected AI create and edit proxy cards, sticker artwork, text, shapes, images, drawn
-        paths and sheet layouts in the live editor. Changes support Undo.
+        Let a connected AI create and edit artwork, text, shapes, images, drawn paths and sheet
+        layouts in the live editor. Changes support Undo.
       </p>
       <p>
         Printing and all cutter operations are user-only. The design server cannot print, connect a
@@ -65,9 +65,9 @@ export default function AiDesignSettings() {
             </button>
           </div>
           <p className="hint">
-            Start access, copy the configuration into your MCP client, and leave CriProx open.
-            Access uses a private local token, starts off each time you launch the app, and stops
-            when this window closes. Stopping access cancels pending edits.
+            Start access, copy the configuration into your MCP client, and leave Skarix open. Access
+            uses a private local token, starts off each time you launch the app, and stops when this
+            window closes. Stopping access cancels pending edits.
           </p>
         </>
       ) : (

@@ -22,19 +22,19 @@ function createDemoRelease({
       : platform === 'win32'
         ? `win-${arch}.exe`
         : `linux-${arch}.AppImage`;
-  const name = `CriProx-${version}-${suffix}`;
+  const name = `Skarix-${version}-${suffix}`;
   const payload = Buffer.alloc(8 * 1024 ** 2, 0x43);
   const hash = crypto.createHash('sha256').update(payload).digest('hex');
   const checksums = `${hash}  ${name}\n`;
-  const base = `https://github.com/Go2Engle/CriProx/releases/download/v${version}/`;
+  const base = `https://github.com/doudar/Skarix/releases/download/v${version}/`;
   const release = {
     tag_name: `v${version}`,
     name: `v${version}`,
     draft: false,
     prerelease: false,
-    html_url: `https://github.com/Go2Engle/CriProx/releases/tag/v${version}`,
+    html_url: `https://github.com/doudar/Skarix/releases/tag/v${version}`,
     published_at: new Date().toISOString(),
-    body: `## [${version}](https://github.com/Go2Engle/CriProx/compare/v${currentVersion}...v${version})\n\n### Features\n\n* **updates:** download and verify desktop updates ([#98](https://github.com/Go2Engle/CriProx/issues/98)) ([72a3a52](https://github.com/Go2Engle/CriProx/commit/72a3a5281252b1d9805241b68db6551f63525117))\n* **settings:** review release notes without leaving CriProx\n\n### Performance Improvements\n\n* Download in the background while you keep working.\n\n### Bug Fixes\n\n* Retry interrupted downloads without leaving partial installers.\n\nThis is a **local simulation**, using an 8 MB test file. [Read the update guide](docs/INSTALLATION.md).`,
+    body: `## [${version}](https://github.com/doudar/Skarix/compare/v${currentVersion}...v${version})\n\n### Features\n\n* **updates:** download and verify desktop updates ([#98](https://github.com/doudar/Skarix/issues/98)) ([72a3a52](https://github.com/doudar/Skarix/commit/72a3a5281252b1d9805241b68db6551f63525117))\n* **settings:** review release notes without leaving Skarix\n\n### Performance Improvements\n\n* Download in the background while you keep working.\n\n### Bug Fixes\n\n* Retry interrupted downloads without leaving partial installers.\n\nThis is a **local simulation**, using an 8 MB test file. [Read the update guide](docs/INSTALLATION.md).`,
     assets: [
       { name, size: payload.length, browser_download_url: base + name },
       {
@@ -49,14 +49,14 @@ function createDemoRelease({
   async function fetchRelease(input, options = {}) {
     const url = String(input);
     options.signal?.throwIfAborted();
-    if (url === 'https://api.github.com/repos/Go2Engle/CriProx/releases/latest') {
+    if (url === 'https://api.github.com/repos/doudar/Skarix/releases/latest') {
       checks++;
       if (scenario === 'network-failure' && checks === 1) return new Response('', { status: 503 });
       return new Response(JSON.stringify(release), {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    if (url === 'https://api.github.com/repos/Go2Engle/CriProx/releases?per_page=100') {
+    if (url === 'https://api.github.com/repos/doudar/Skarix/releases?per_page=100') {
       return new Response(JSON.stringify([release]), {
         headers: { 'Content-Type': 'application/json' },
       });
@@ -110,7 +110,7 @@ function startUpdateDemo(app, dialog) {
   }
   app.setPath('userData', profile);
   app.setPath('sessionData', profile);
-  app.setName('CriProx update simulation');
+  app.setName('Skarix update simulation');
   console.log(`Update simulation: ${scenario}. Temporary profile: ${profile}`);
   async function showCompletion() {
     await dialog.showMessageBox({
@@ -118,7 +118,7 @@ function startUpdateDemo(app, dialog) {
       title: 'Update simulation',
       message: 'The simulated update completed.',
       detail:
-        'CriProx downloaded and verified the test file. A normal build would now launch the update and close CriProx. This test keeps CriProx open and does not install anything or replace your app.',
+        'Skarix downloaded and verified the test file. A normal build would now launch the update and close Skarix. This test keeps Skarix open and does not install anything or replace your app.',
       buttons: ['Done'],
     });
     return '';

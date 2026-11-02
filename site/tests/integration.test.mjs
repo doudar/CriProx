@@ -45,7 +45,7 @@ test('complete build keeps current docs, uses stable installer assets, and verif
     assert.match(home, /releases\/download\/v1.2.3\/CriProx.dmg/);
     assert.match(timeline, /id="v1.2.3-new"/);
     assert.doesNotMatch(timeline, /v1.2.4-draft|v1.3.0-beta/);
-    assert.match(guide, /Card and artwork sources/);
+    assert.match(guide, /Artwork and layout/);
     assert.match(home, /<script src="\/CriProx\/assets\/nav.js" defer><\/script>/);
     assert.doesNotMatch(home, /<script(?! src=)/);
     assert.match(home, /<details class="mobile-navigation">/);

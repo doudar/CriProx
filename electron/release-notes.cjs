@@ -36,7 +36,7 @@ function isReleaseNotesUrl(value) {
       !url.username &&
       !url.password &&
       !url.port &&
-      ((url.hostname === 'github.com' && /^\/Go2Engle\/CriProx(?:\/|$)/.test(url.pathname)) ||
+      ((url.hostname === 'github.com' && /^\/doudar\/Skarix(?:\/|$)/.test(url.pathname)) ||
         url.hostname === 'criprox.themanamarket.com')
     );
   } catch {
@@ -47,24 +47,7 @@ function isReleaseNotesUrl(value) {
 function resolveLink(value) {
   if (!value) return '';
   try {
-    const guides = {
-      'docs/FEATURES.md': 'features',
-      'docs/INSTALLATION.md': 'installation',
-      'docs/CRICUT-WORKFLOW.md': 'cricut-workflow',
-      'docs/VALIDATION.md': 'validation',
-      'docs/ARCHITECTURE.md': 'architecture',
-      'docs/REFERENCES.md': 'references',
-      'docs/WEBSITE.md': 'website',
-      'CONTRIBUTING.md': 'contributing',
-      'SECURITY.md': 'security',
-    };
-    const [file, hash] = value.split('#');
-    if (guides[file])
-      return `https://criprox.themanamarket.com/docs/${guides[file]}/${hash ? `#${hash}` : ''}`;
-    if (file === 'CHANGELOG.md')
-      return `https://criprox.themanamarket.com/changelog/${hash ? `#${hash}` : ''}`;
-    if (file === 'README.md') return `https://criprox.themanamarket.com/${hash ? `#${hash}` : ''}`;
-    const url = new URL(value, 'https://github.com/Go2Engle/CriProx/blob/main/');
+    const url = new URL(value, 'https://github.com/doudar/Skarix/blob/main/');
     return isReleaseNotesUrl(url.href) ? url.href : '';
   } catch {
     return '';
@@ -128,7 +111,7 @@ function releaseHeading({ version, name, body }) {
   text = text.replace(/\s+/g, ' ').trim();
   const issue = text.lastIndexOf(' (#');
   if (issue >= 0 && /^\d+\)$/.test(text.slice(issue + 3))) text = text.slice(0, issue);
-  if (!text) return `CriProx ${version}`;
+  if (!text) return `Skarix ${version}`;
   return text.length > 140 ? text.slice(0, 137).trimEnd() + '…' : text;
 }
 

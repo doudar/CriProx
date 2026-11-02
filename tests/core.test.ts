@@ -1,7 +1,5 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseDeck } from '../src/lib/deck';
-import { parseArchidektDeck, parseDeckSource, parseMoxfieldDeck } from '../src/lib/deck-source';
 import { envelope, grid, layout, mmToPx, templateSvg } from '../src/lib/layout';
 import { formatDimensions, formatMeasurement } from '../src/lib/units';
 import { projectFilename } from '../src/lib/save-project';
@@ -18,20 +16,7 @@ import {
 } from '../src/lib/types';
 import { validateProject } from '../src/lib/project';
 import { withDpi } from '../src/lib/png';
-import {
-  mpcArtworkAsCard,
-  mpcArtworkType,
-  mpcExploreSearchPayload,
-  normalizeMpcArtwork,
-} from '../src/lib/mpc';
-import {
-  cardMatchesDeckLine,
-  normalizeScryfallCard,
-  scryfallLookupName,
-  scryfallSearchPath,
-  scryfallVariantsPath,
-} from '../src/lib/scryfall';
-import { artworkSourceAtDpi, fitArtwork, instructions } from '../src/lib/export';
+import { fitArtwork, instructions } from '../src/lib/export';
 import { availableSheetProfiles, paperWorkflow } from '../src/lib/paper-workflow';
 import {
   MANUAL_CUT_INSET_MM,
@@ -69,206 +54,6 @@ const entry: Entry = {
     ],
   },
 };
-test('deck parser accepts counts, suffix x, set and collector numbers, foil suffix, split names and headings', () => {
-  const result = parseDeck(
-    'Deck\n4 Lightning Bolt\n2x Counterspell (MH2) 267\n1 Fire // Ice\nSol Ring\n1 Plains (UNF) 240 *F*\n# note\nSideboard\n1 Negate',
-  );
-  assert.deepEqual(result.errors, []);
-  assert.equal(result.cards.length, 6);
-  assert.deepEqual(result.cards[1], {
-    quantity: 2,
-    name: 'Counterspell',
-    set: 'mh2',
-    collector: '267',
-    line: 3,
-  });
-  assert.equal(result.cards[2].name, 'Fire // Ice');
-  assert.equal(result.cards[3].quantity, 1);
-  assert.equal(result.cards[4].collector, '240');
-});
-test('double-faced deck names use the front face for Scryfall lookup and retain full-name matching', () => {
-  const names = [
-    'Ashling, Rekindled // Ashling, Rimebound',
-    "Gandalf, Goblins' Bane // Flameshape",
-    'Hydroelectric Specimen // Hydroelectric Laboratory',
-    'Pinnacle Monk // Mystic Peak',
-    'Silundi Vision // Silundi Isle',
-    'Sink into Stupor // Soporific Springs',
-    'The Emperor of Palamecia // The Lord Master of Hell',
-    'Valakut Awakening // Valakut Stoneforge',
-    'Venat, Heart of Hydaelyn // Hydaelyn, the Mothercrystal',
-  ];
-  for (const name of names) {
-    assert.equal(scryfallLookupName(name), name.split(' // ')[0]);
-    assert.ok(
-      cardMatchesDeckLine(
-        {
-          ...entry.card,
-          name,
-          faces: name.split(' // ').map((face) => ({ ...entry.card.faces[0], name: face })),
-        },
-        { name, quantity: 1, line: 1 },
-      ),
-    );
-  }
-  assert.equal(scryfallLookupName('Silundi Vision//Silundi Isle'), 'Silundi Vision');
-});
-test('card search includes printable tokens and supports token-only names', () => {
-  assert.equal(
-    scryfallSearchPath('  Sol Ring  '),
-    '/cards/search?q=name%3A%22Sol%20Ring%22%20game%3Apaper&unique=cards&order=name&include_extras=true',
-  );
-  assert.equal(
-    decodeURIComponent(scryfallSearchPath("Gandalf, Goblins' Bane")),
-    '/cards/search?q=name:"Gandalf, Goblins\' Bane" game:paper&unique=cards&order=name&include_extras=true',
-  );
-  assert.equal(
-    decodeURIComponent(scryfallSearchPath('Goblin token')),
-    '/cards/search?q=name:"Goblin" game:paper is:token&unique=cards&order=name&include_extras=true',
-  );
-  assert.equal(
-    decodeURIComponent(scryfallSearchPath('Treasure Tokens')),
-    '/cards/search?q=name:"Treasure" game:paper is:token&unique=cards&order=name&include_extras=true',
-  );
-  assert.equal(
-    scryfallVariantsPath({ ...entry.card, oracleId: 'token-oracle-id' }),
-    '/cards/search?q=oracleid%3Atoken-oracle-id%20game%3Apaper&unique=prints&order=released&include_extras=true',
-  );
-  assert.throws(() => scryfallSearchPath('   '), /card name/);
-});
-test('Scryfall tokens retain their type for MPC artwork searches', () => {
-  const raw = {
-    id: 'goblin-token',
-    oracle_id: 'goblin-oracle',
-    name: 'Goblin',
-    layout: 'token',
-    set: 'tst',
-    set_name: 'Sample Tokens',
-    collector_number: '1',
-    image_uris: {
-      png: 'https://cards.scryfall.io/goblin.png',
-      normal: 'https://cards.scryfall.io/goblin.jpg',
-    },
-  };
-  const card = normalizeScryfallCard(raw);
-  assert.equal(card.kind, 'token');
-  assert.equal(mpcArtworkType(card), 'TOKEN');
-  assert.equal(
-    mpcArtworkType(normalizeScryfallCard({ ...raw, layout: 'double_faced_token' })),
-    'TOKEN',
-  );
-});
-test('MPC artwork searches select the matching card or token category', () => {
-  assert.equal(mpcArtworkType(entry.card), 'CARD');
-  assert.equal(mpcArtworkType({ ...entry.card, setName: 'Older Set Tokens' }), 'TOKEN');
-  const payload = mpcExploreSearchPayload('  Goblin  ', 'TOKEN', 1, [12]);
-  assert.deepEqual(payload.cardTypes, ['TOKEN']);
-  assert.equal(payload.query, 'Goblin');
-  assert.equal(payload.pageStart, 24);
-  assert.equal(payload.searchSettings.searchTypeSettings.filterCardbacks, false);
-  assert.deepEqual(mpcExploreSearchPayload('Sol Ring', 'CARD', 0, [12]).cardTypes, ['CARD']);
-});
-test('deck parser rejects unreasonable counts and caps total', () => {
-  assert.equal(parseDeck('0 Island\n101 Forest').errors.length, 2);
-  assert.match(parseDeck(Array(6).fill('100 Forest').join('\n')).errors.join(' '), /500/);
-  assert.equal(parseDeck('  \n// comment').cards.length, 0);
-});
-test('deck source parser accepts Moxfield and Archidekt deck links only', () => {
-  assert.deepEqual(parseDeckSource('https://www.moxfield.com/decks/abc_DEF-123?foo=bar'), {
-    provider: 'moxfield',
-    id: 'abc_DEF-123',
-  });
-  assert.deepEqual(parseDeckSource('https://archidekt.com/decks/14420275/example-deck'), {
-    provider: 'archidekt',
-    id: '14420275',
-  });
-  assert.throws(() => parseDeckSource('http://moxfield.com/decks/abc'), /https/);
-  assert.throws(() => parseDeckSource('https://example.com/decks/123'), /Moxfield or Archidekt/);
-  assert.throws(() => parseDeckSource('https://archidekt.com/folders/123'), /deck link/);
-});
-test('Moxfield import keeps active boards and selected printings but excludes maybeboards', () => {
-  const result = parseMoxfieldDeck({
-    name: 'Artifacts',
-    boards: {
-      commanders: {
-        cards: {
-          commander: {
-            quantity: 1,
-            card: { name: 'Urza, Lord High Artificer', set: 'mh1', cn: '75' },
-          },
-        },
-      },
-      mainboard: {
-        cards: {
-          ring: { quantity: 1, card: { name: 'Sol Ring', set: 'cmm', cn: '396' } },
-          island: { quantity: 10, card: { name: 'Island', set: 'dmu', cn: '278' } },
-        },
-      },
-      sideboard: { cards: { wish: { quantity: 1, card: { name: 'Karn, the Great Creator' } } } },
-      signatureSpells: {
-        cards: {
-          spell: { quantity: 1, card: { name: 'Whir of Invention', set: 'aer', cn: '49' } },
-        },
-      },
-      maybeboard: { cards: { maybe: { quantity: 1, card: { name: 'Mana Crypt' } } } },
-      tokens: { cards: { token: { quantity: 1, card: { name: 'Construct' } } } },
-    },
-  });
-  assert.equal(result.name, 'Artifacts');
-  assert.deepEqual(
-    result.cards.map(({ name, quantity, set, collector }) => ({ name, quantity, set, collector })),
-    [
-      { name: 'Urza, Lord High Artificer', quantity: 1, set: 'mh1', collector: '75' },
-      { name: 'Whir of Invention', quantity: 1, set: 'aer', collector: '49' },
-      { name: 'Sol Ring', quantity: 1, set: 'cmm', collector: '396' },
-      { name: 'Island', quantity: 10, set: 'dmu', collector: '278' },
-      { name: 'Karn, the Great Creator', quantity: 1, set: undefined, collector: undefined },
-    ],
-  );
-});
-test('Archidekt import reads oracle names and excludes deleted and maybeboard cards', () => {
-  const result = parseArchidektDeck({
-    name: 'Counters',
-    cards: [
-      {
-        quantity: 1,
-        categories: ['Commander'],
-        deletedAt: null,
-        card: {
-          collectorNumber: '3',
-          edition: { editioncode: 'EOC' },
-          oracleCard: { name: 'Kilo, Apogee Mind' },
-        },
-      },
-      {
-        quantity: 2,
-        categories: ['Artifact'],
-        deletedAt: null,
-        card: {
-          collectorNumber: '53',
-          edition: { editioncode: 'EOC' },
-          oracleCard: { name: 'Arcane Signet' },
-        },
-      },
-      {
-        quantity: 1,
-        categories: ['Maybeboard'],
-        card: { oracleCard: { name: 'Lux Cannon' } },
-      },
-      {
-        quantity: 1,
-        categories: [],
-        deletedAt: '2026-01-01T00:00:00Z',
-        card: { oracleCard: { name: 'Contagion Engine' } },
-      },
-    ],
-  });
-  assert.equal(result.name, 'Counters');
-  assert.deepEqual(result.cards, [
-    { name: 'Kilo, Apogee Mind', quantity: 1, set: 'eoc', collector: '3', line: 1 },
-    { name: 'Arcane Signet', quantity: 2, set: 'eoc', collector: '53', line: 2 },
-  ]);
-});
 test('layout preserves requested quantity over full and partial sheets without stretching', () => {
   const settings = DEFAULT_SETTINGS;
   const pages = layout([{ ...entry, quantity: 9 }], settings);
@@ -844,31 +629,6 @@ test('project import validates geometry, IDs, totals, image schemes and selected
     } as unknown),
   );
 });
-test('MPC Autofill artwork uses the official image CDN and remains valid in saved projects', () => {
-  const artwork = normalizeMpcArtwork({
-    identifier: 'drive_id-1',
-    name: 'Sol Ring (Community Render)',
-    sourceName: 'Example Artist',
-    sourceType: 'Google Drive',
-    dpi: 1200,
-  });
-  assert.match(
-    artwork.face.image,
-    /^https:\/\/cdn\.mpcautofill\.com\/images\/google_drive\/full\//,
-  );
-  assert.match(artwork.face.image, /[?&]dpi=1200(?:&|$)/);
-  assert.match(artwork.face.preview, /\/large\//);
-  assert.equal(artwork.face.trim, 'mpc');
-  const card = mpcArtworkAsCard(artwork, 'Sol Ring');
-  const project = {
-    version: 1 as const,
-    name: 'MPC art',
-    entries: [{ ...entry, card }],
-    settings: DEFAULT_SETTINGS,
-    backArtwork: artwork.face,
-  };
-  assert.equal(validateProject(project).entries[0].card.set, 'mpc');
-});
 
 test('MPC trim removes source bleed at every DPI and recognizes legacy saved URLs', () => {
   const explicit = {
@@ -940,15 +700,6 @@ test('custom artwork suggests MPC-style trim by dimensions and keeps the choice 
   assert.equal(disabled.trim, undefined);
   assert.equal(usesMpcTrim(disabled), false);
   assert.equal(face.image, disabled.image);
-});
-
-test('higher-resolution exports upgrade legacy MPC source requests without changing other art', () => {
-  const legacy =
-    'https://cdn.mpcautofill.com/images/google_drive/full/drive-id.jpg?dpi=600&jpgQuality=95';
-  assert.match(artworkSourceAtDpi(legacy, 1200), /[?&]dpi=1200(?:&|$)/);
-  assert.match(artworkSourceAtDpi(legacy, 300), /[?&]dpi=600(?:&|$)/);
-  const scryfall = 'https://cards.scryfall.io/large/front/example.jpg';
-  assert.equal(artworkSourceAtDpi(scryfall, 1200), scryfall);
 });
 
 test('cover artwork fills card and bleed bounds without exposing backing bars', () => {

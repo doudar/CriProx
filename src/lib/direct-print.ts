@@ -53,7 +53,7 @@ export async function printPdf(
     if (api) id = await api.begin(settings);
     else {
       frame = document.createElement('iframe');
-      frame.title = 'CriProx print sheets';
+      frame.title = 'Skarix print sheets';
       Object.assign(frame.style, {
         position: 'fixed',
         width: '1px',

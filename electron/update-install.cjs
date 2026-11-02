@@ -3,7 +3,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawn } = require('node:child_process');
 
-const MAC_UNBLOCK_COMMAND = 'xattr -dr com.apple.quarantine "/Applications/CriProx.app"';
+const MAC_UNBLOCK_COMMAND = 'xattr -dr com.apple.quarantine "/Applications/Skarix.app"';
 
 function launchAppImage(file) {
   return new Promise((resolve, reject) => {
@@ -29,7 +29,7 @@ function createInstallerHandoff({
   return async (file) => {
     if (platform !== 'linux') return openPath(file);
     const result = await chooseDestination({
-      title: 'Save and launch updated CriProx AppImage',
+      title: 'Save and launch updated Skarix AppImage',
       defaultPath: path.join(downloads, path.basename(file)),
       filters: [{ name: 'AppImage', extensions: ['AppImage'] }],
     });

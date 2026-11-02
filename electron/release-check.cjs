@@ -1,5 +1,5 @@
-const RELEASE_API = 'https://api.github.com/repos/Go2Engle/CriProx/releases/latest';
-const HISTORY_API = 'https://api.github.com/repos/Go2Engle/CriProx/releases?per_page=100';
+const RELEASE_API = 'https://api.github.com/repos/doudar/Skarix/releases/latest';
+const HISTORY_API = 'https://api.github.com/repos/doudar/Skarix/releases?per_page=100';
 
 function parseVersion(value) {
   const match = String(value)
@@ -49,7 +49,7 @@ function isTrustedReleaseUrl(value) {
       url.hostname === 'github.com' &&
       !url.username &&
       !url.password &&
-      /^\/Go2Engle\/CriProx\/releases\/tag\/[^/]+$/.test(url.pathname)
+      /^\/doudar\/Skarix\/releases\/tag\/[^/]+$/.test(url.pathname)
     );
   } catch {
     return false;
@@ -73,7 +73,7 @@ function releaseAsset(asset, version) {
       url.password ||
       url.search ||
       url.hash ||
-      url.pathname !== `/Go2Engle/CriProx/releases/download/v${version}/${asset.name}`
+      url.pathname !== `/doudar/Skarix/releases/download/v${version}/${asset.name}`
     )
       return null;
     return { name: asset.name, size: asset.size, url: url.href };
@@ -98,7 +98,9 @@ function selectReleaseAssets(release, platform, arch) {
     const matches = assets.filter((asset) => asset?.name === name);
     return matches.length === 1 ? releaseAsset(matches[0], version) : null;
   };
-  const installer = suffix ? find(`CriProx-${version}-${suffix}`) : null;
+  const installer = suffix
+    ? find('Skarix-' + version + '-' + suffix) || find('CriProx-' + version + '-' + suffix)
+    : null;
   const checksums = find('SHA256SUMS.txt');
   return installer && installer.size <= 1024 ** 3 && checksums && checksums.size <= 1024 ** 2
     ? { installer, checksums }
@@ -114,7 +116,7 @@ async function findAvailableRelease(
   const response = await fetchRelease(RELEASE_API, {
     headers: {
       Accept: 'application/vnd.github+json',
-      'User-Agent': `CriProx/${currentVersion}`,
+      'User-Agent': `Skarix/${currentVersion}`,
       'X-GitHub-Api-Version': '2022-11-28',
     },
     signal: AbortSignal.timeout(8000),
@@ -145,7 +147,7 @@ async function findReleaseHistory(currentVersion, fetchRelease = fetch) {
   const response = await fetchRelease(HISTORY_API, {
     headers: {
       Accept: 'application/vnd.github+json',
-      'User-Agent': `CriProx/${currentVersion}`,
+      'User-Agent': `Skarix/${currentVersion}`,
       'X-GitHub-Api-Version': '2022-11-28',
     },
     signal: AbortSignal.timeout(8000),

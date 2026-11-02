@@ -19,7 +19,7 @@ self.onmessage = async ({
     engine ??= new Upscaler({ model });
     const sourceCanvas = new OffscreenCanvas(original.width, original.height);
     const sourceContext = sourceCanvas.getContext('2d');
-    if (!sourceContext) throw new Error('Could not read the Scryfall card image.');
+    if (!sourceContext) throw new Error('Could not read the artwork image.');
     sourceContext.drawImage(original, 0, 0);
     const sourcePixels = sourceContext.getImageData(0, 0, original.width, original.height);
     const rgb = new Uint8Array(original.width * original.height * 3);
@@ -55,7 +55,7 @@ self.onmessage = async ({
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Could not create the upscaled card image.');
 
-    // Resize source alpha separately: the RGB model cannot preserve Scryfall's
+    // Resize source alpha separately: the RGB model cannot preserve the artwork's
     // transparent rounded corners on its own.
     context.drawImage(original, 0, 0, width, height);
     const image = context.getImageData(0, 0, width, height);

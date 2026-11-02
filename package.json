@@ -1,15 +1,15 @@
 {
-  "name": "criprox",
+  "name": "skarix",
   "version": "0.17.1",
   "private": true,
-  "description": "A local card-sheet studio for Cricut Print Then Cut",
+  "description": "Open Source Cutting Studio",
   "license": "GPL-3.0-only",
   "author": "Go2Engle",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Go2Engle/CriProx.git"
+    "url": "https://github.com/doudar/Skarix.git"
   },
-  "homepage": "https://github.com/Go2Engle/CriProx",
+  "homepage": "https://github.com/doudar/Skarix",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -56,11 +56,12 @@
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
     "typescript": "~7.0.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "esbuild": "^0.28.2"
   },
   "build": {
     "appId": "com.criprox.studio",
-    "productName": "CriProx",
+    "productName": "Skarix",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "files": [
       "dist/**/*",
@@ -87,7 +88,7 @@
       "category": "public.app-category.graphics-design",
       "hardenedRuntime": true,
       "extendInfo": {
-        "NSDocumentsFolderUsageDescription": "CriProx accesses the project folders you choose."
+        "NSDocumentsFolderUsageDescription": "Skarix accesses the project folders you choose."
       },
       "target": [
         "dmg"

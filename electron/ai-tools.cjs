@@ -1,7 +1,7 @@
 // Shared, closed design-only tool catalogue. Neither the MCP router nor the renderer
 // accepts arbitrary IPC channels, JavaScript, printer commands, or cutter commands.
 const { z } = require('zod/v4');
-const mode = z.enum(['cards', 'stickers']);
+const mode = z.enum(['stickers']);
 const color = z.string().regex(/^(#[0-9a-f]{6}|transparent)$/i);
 const id = z.string().regex(/^[a-zA-Z0-9-]{1,80}$/);
 const text = z.string().max(2000);
@@ -59,23 +59,8 @@ const pose = z.strictObject({
 });
 const tools = [
   [
-    'search_cards',
-    'Search the existing Scryfall card catalog for proxy cards. Uses CriProx’s cached catalog search, returns card IDs for add_catalog_cards.',
-    z.strictObject({ query: z.string().min(1).max(400) }),
-    true,
-  ],
-  [
-    'add_catalog_cards',
-    'Add official catalog printing IDs to the proxy card project. Quantity applies to each printing; subsequent edits support face selection, custom artwork and duplication.',
-    z.strictObject({
-      ids: z.array(z.string().uuid()).min(1).max(75),
-      quantity: z.number().int().min(1).max(100).default(1),
-    }),
-    false,
-  ],
-  [
     'manage_design',
-    'Duplicate or delete a sticker-library design or card entry. Deleting a sticker design also removes its placed copies; Undo restores them.',
+    'Duplicate or delete a sticker-library design. Deleting a sticker design also removes its placed copies; Undo restores them.',
     z.strictObject({
       workspace: mode,
       designId: id,
@@ -87,13 +72,13 @@ const tools = [
   ],
   [
     'get_design_capabilities',
-    'Read the design guide, limits, layer schema, coordinate system and suggested illustration/card workflow.',
+    'Read the design guide, limits, layer schema, coordinate system and suggested illustration workflow.',
     z.strictObject({}),
     true,
   ],
   [
     'get_workspace',
-    'Inspect the current card or sticker project, IDs, settings, poses and editable layers. Image bytes are omitted unless includeImages is true.',
+    'Inspect the current design project, IDs, settings, poses and editable layers. Image bytes are omitted unless includeImages is true.',
     z.strictObject({ workspace: mode, includeImages: z.boolean().default(false) }),
     true,
   ],
@@ -105,7 +90,7 @@ const tools = [
   ],
   [
     'load_project',
-    'Load a native CriProx project JSON object into its live edit workspace. Validation and Undo apply; this never opens printing or cutter controls.',
+    'Load a native Skarix project JSON object into its live edit workspace. Validation and Undo apply; this never opens printing or cutter controls.',
     z.strictObject({ workspace: mode, project: z.record(z.string(), z.unknown()) }),
     false,
   ],
@@ -120,7 +105,6 @@ const tools = [
         gap: z.number().optional(),
         radius: z.number().optional(),
         paper: z.enum(['letter', 'a4']).optional(),
-        profile: z.enum(['expanded', 'seven', 'eight', 'nine']).optional(),
         machine: z.enum(['maker', 'explore', 'explore-5', 'joy-xtra', 'manual']).optional(),
         layout: z.enum(['grid', 'tapered']).optional(),
         areaWidth: z.number().optional(),
@@ -136,23 +120,13 @@ const tools = [
   ],
   [
     'create_design',
-    'Create an editable sticker or custom card. Use up to 500 layered shapes/text/images/drawn paths for detailed artwork. Cards can start with a hero template, then every layer can be edited. Returns the design ID.',
+    'Create an editable design. Use up to 500 layered shapes/text/images/drawn paths for detailed artwork. Returns the design ID.',
     z.strictObject({
       workspace: mode,
       name: z.string().min(1).max(100),
       canvas: canvas.optional(),
       elements: z.array(element).max(500).optional(),
       copies: z.number().int().min(0).max(100).default(1),
-      hero: z
-        .strictObject({
-          title: z.string().max(80),
-          subtitle: z.string().max(120).optional(),
-          rules: text.optional(),
-          stats: z.string().max(80).optional(),
-          accent: color.optional(),
-          artwork: raster.optional(),
-        })
-        .optional(),
     }),
     false,
   ],
@@ -198,7 +172,7 @@ const tools = [
   ],
   [
     'import_artwork',
-    'Import embedded PNG/JPEG/WebP or a sanitized plain SVG as a sticker or custom card. No file paths, network fetches or executable SVG are accepted.',
+    'Import embedded PNG/JPEG/WebP or a sanitized plain SVG as a design. No file paths, network fetches or executable SVG are accepted.',
     z
       .strictObject({
         workspace: mode,
@@ -219,17 +193,6 @@ const tools = [
       index: z.number().int().min(0).max(499).optional(),
       copies: z.number().int().min(1).max(100).default(1),
       pose: pose.optional(),
-    }),
-    false,
-  ],
-  [
-    'edit_card_entries',
-    'Set a card quantity, select its front/back face, duplicate or remove an entry. Uses the IDs returned by get_workspace.',
-    z.strictObject({
-      entryId: id,
-      action: z.enum(['quantity', 'face', 'duplicate', 'delete']),
-      quantity: z.number().int().min(1).max(100).optional(),
-      face: z.number().int().min(0).max(1).optional(),
     }),
     false,
   ],

@@ -12,7 +12,7 @@ async function connectionKey(
   const saved = fresh ? null : await store.load(applicationVersion);
   if (!saved && savedOnly)
     throw Error(
-      'Open Design Space, sign in and connect your cutter, then close it and connect in CriProx.',
+      'Open Design Space, sign in and connect your cutter, then close it and connect in Skarix.',
     );
   return {
     key: saved || (await fetchKey(applicationVersion, { authorized })),

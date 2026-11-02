@@ -29,11 +29,11 @@ test('release versions use semantic version precedence', () => {
 test('history includes installed and older stable releases and rejects unsafe entries', async () => {
   const release = (version: string) => ({
     tag_name: `v${version}`,
-    html_url: `https://github.com/Go2Engle/CriProx/releases/tag/v${version}`,
+    html_url: `https://github.com/doudar/Skarix/releases/tag/v${version}`,
     body: '### Features\n* Browse notes',
   });
   const history = await findReleaseHistory('0.14.0', async (url) => {
-    assert.equal(url, 'https://api.github.com/repos/Go2Engle/CriProx/releases?per_page=100');
+    assert.equal(url, 'https://api.github.com/repos/doudar/Skarix/releases?per_page=100');
     return new Response(
       JSON.stringify([
         release('0.15.0'),
@@ -55,29 +55,23 @@ test('history includes installed and older stable releases and rejects unsafe en
   await assert.rejects(findReleaseHistory('0.14.0', async () => new Response('{}')));
 });
 
-test('only CriProx GitHub release pages can be opened by the renderer', () => {
-  assert.equal(
-    isTrustedReleaseUrl('https://github.com/Go2Engle/CriProx/releases/tag/v0.2.0'),
-    true,
-  );
+test('only Skarix GitHub release pages can be opened by the renderer', () => {
+  assert.equal(isTrustedReleaseUrl('https://github.com/doudar/Skarix/releases/tag/v0.2.0'), true);
   assert.equal(isTrustedReleaseUrl('https://github.com/Go2Engle/Other/releases/tag/v0.2.0'), false);
   assert.equal(
-    isTrustedReleaseUrl('https://github.com.evil.example/Go2Engle/CriProx/releases/tag/v0.2.0'),
+    isTrustedReleaseUrl('https://github.com.evil.example/doudar/Skarix/releases/tag/v0.2.0'),
     false,
   );
 });
 
 test('release checks return a newer stable GitHub release', async () => {
   const update = await findAvailableRelease('0.1.0', async (url, init) => {
-    assert.equal(url, 'https://api.github.com/repos/Go2Engle/CriProx/releases/latest');
-    assert.match(
-      String((init.headers as Record<string, string>)['User-Agent']),
-      /CriProx\/0\.1\.0/,
-    );
+    assert.equal(url, 'https://api.github.com/repos/doudar/Skarix/releases/latest');
+    assert.match(String((init.headers as Record<string, string>)['User-Agent']), /Skarix\/0\.1\.0/);
     return new Response(
       JSON.stringify({
         tag_name: 'v0.2.0',
-        html_url: 'https://github.com/Go2Engle/CriProx/releases/tag/v0.2.0',
+        html_url: 'https://github.com/doudar/Skarix/releases/tag/v0.2.0',
         draft: false,
         prerelease: false,
       }),
@@ -88,7 +82,7 @@ test('release checks return a newer stable GitHub release', async () => {
   assert.deepEqual(update, {
     currentVersion: '0.1.0',
     latestVersion: '0.2.0',
-    releaseUrl: 'https://github.com/Go2Engle/CriProx/releases/tag/v0.2.0',
+    releaseUrl: 'https://github.com/doudar/Skarix/releases/tag/v0.2.0',
     releaseName: '',
     releaseNotes: '',
     publishedAt: null,

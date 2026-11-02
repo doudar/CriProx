@@ -32,7 +32,6 @@ import { captureProfile, downloadSetup } from '../lib/registered-pdf';
 import { preparePdfJob } from '../lib/pdf-worker';
 import { download } from '../lib/export';
 import { exportFilename, templateFilename, templateFilenameStem } from '../lib/filenames';
-import MpcArtworkSearch from './MpcArtworkSearch';
 import FrontBleedControl from './FrontBleedControl';
 import UpscalingControls from './UpscalingControls';
 import ArtworkTrimControl from './ArtworkTrimControl';
@@ -54,7 +53,7 @@ export default function RegisteredPrint({
   notify,
   updateSettings,
   updateBackArtwork,
-  selectBackArtwork,
+
   updateBackTrim,
 }: {
   project: Project;
@@ -166,7 +165,7 @@ export default function RegisteredPrint({
             setProfile(saved);
             if (libraryError)
               setError(
-                'The template is available in local app storage, but CriProx could not copy it to the project library root.',
+                'The template is available in local app storage, but Skarix could not copy it to the project library root.',
               );
           }
         } else if (active && libraryError) {
@@ -227,7 +226,7 @@ export default function RegisteredPrint({
       onCapture();
       notify(
         registrationTemplates
-          ? 'Template captured and saved in the CriProx project library. Run a test cut before printing a full deck.'
+          ? 'Template captured and saved in the Skarix project library. Run a test cut before printing a full deck.'
           : 'Template captured. Run a test cut before printing a full deck.',
       );
     } catch (e) {
@@ -411,11 +410,7 @@ export default function RegisteredPrint({
       if (backInput.current) backInput.current.value = '';
     }
   }
-  function chooseMpcBack(face: CardFace) {
-    setPdf(undefined);
-    setBackPdf(undefined);
-    selectBackArtwork(face);
-  }
+
   function changeBackTrim(enabled: boolean) {
     setPdf(undefined);
     setBackPdf(undefined);
@@ -657,10 +652,6 @@ export default function RegisteredPrint({
                     {project.backArtwork && (
                       <ArtworkTrimControl face={project.backArtwork} change={changeBackTrim} />
                     )}
-                    <MpcArtworkSearch
-                      type="CARDBACK"
-                      choose={(artwork) => chooseMpcBack({ ...artwork.face, name: artwork.name })}
-                    />
                   </>
                 ) : (
                   <div className="soft-info double-sided-back-ready">
@@ -861,8 +852,8 @@ export default function RegisteredPrint({
                 </div>
                 <p className="back-help">
                   {project.settings.backPrintMode === 'manual'
-                    ? 'CriProx will make separate front and back PDFs. Print the fronts, refeed the same sheets, then print the backs.'
-                    : `CriProx will alternate front and back pages. Enable duplex and ${project.settings.backFlip === 'long-edge' ? 'long-edge' : 'short-edge'} binding in the printer dialog.`}{' '}
+                    ? 'Skarix will make separate front and back PDFs. Print the fronts, refeed the same sheets, then print the backs.'
+                    : `Skarix will alternate front and back pages. Enable duplex and ${project.settings.backFlip === 'long-edge' ? 'long-edge' : 'short-edge'} binding in the printer dialog.`}{' '}
                   Back pages contain artwork only—no registration marks or cut lines. The front and
                   back bleed settings apply independently. Double-sided cards use the opposite face
                   from the selected front; the shared back applies only to single-sided cards. Back
@@ -912,7 +903,7 @@ export default function RegisteredPrint({
               <div>
                 <h3>Prepare and review the sheets</h3>
                 <p>
-                  CriProx creates portrait {printPaper.systemPaper} print pages with a fixed 3 × 3
+                  Skarix creates portrait {printPaper.systemPaper} print pages with a fixed 3 × 3
                   layout. Review each page before saving the PDF.
                 </p>
                 <button
@@ -1101,7 +1092,7 @@ export default function RegisteredPrint({
               <p className="guide-limit">
                 This workflow deliberately bypasses Print Then Cut’s optical registration. Printer
                 scaling, paper placement, mat loading, and cutter repeatability can shift the
-                result. CriProx matches the source geometry but cannot guarantee perfect physical
+                result. Skarix matches the source geometry but cannot guarantee perfect physical
                 alignment. Keep the saved Design Space project and mat arrangement unchanged after
                 validation.
               </p>
@@ -1111,7 +1102,7 @@ export default function RegisteredPrint({
               <div>
                 <h3>Prepare the matched print and cut files</h3>
                 <p>
-                  CriProx creates a full-quality {printPaper.systemPaper} PDF and one transparent
+                  Skarix creates a full-quality {printPaper.systemPaper} PDF and one transparent
                   nine-slot PNG. Every PDF page keeps all nine positions, so the same cut template
                   works for the entire deck. Your physical calibration is applied to the PDF only;
                   blank positions on the last page will still be cut.
@@ -1194,7 +1185,7 @@ export default function RegisteredPrint({
                         <>
                           keep the printer paper on <strong>Tabloid (11 × 17 in)</strong>. Save a{' '}
                           <strong>one-page portrait Tabloid PDF at 100% / Actual size</strong> with
-                          all four sensor marks. CriProx will check the complete marked area and
+                          all four sensor marks. Skarix will check the complete marked area and
                           reframe it onto {printPaper.outputPaper} without scaling.
                         </>
                       ) : printPaper.usesTabloidSetup ? (
@@ -1208,7 +1199,7 @@ export default function RegisteredPrint({
                       )}{' '}
                       Import that PDF here. We check the slot pattern and size, then{' '}
                       {registrationTemplates
-                        ? 'save it in the root of your CriProx project library'
+                        ? 'save it in the root of your Skarix project library'
                         : 'store it in local app storage'}
                       . It loads automatically the next time this exact cut layout is selected.
                     </p>
@@ -1260,7 +1251,7 @@ export default function RegisteredPrint({
                         </>
                       )}
                       Print at <strong>100% / Actual size</strong>, with no fit, shrink, headers, or
-                      margins. CriProx does not print directly because browser printing reduces
+                      margins. Skarix does not print directly because browser printing reduces
                       output quality. If backs are enabled, print their artwork onto the same
                       sheets; those back pages do not contain registration marks or cut lines. In
                       Design Space, reopen this exact saved project and mat, select{' '}
@@ -1275,7 +1266,7 @@ export default function RegisteredPrint({
                     Every page keeps all {full.placements.length} slots, including the last page.
                     Unused slots print white and will still be cut. Change paper, spacing, machine,
                     or layout and a new captured template is required. Card-back settings and
-                    alignment offsets reuse the current cut template; CriProx never creates a second
+                    alignment offsets reuse the current cut template; Skarix never creates a second
                     Cricut template for the back side.
                   </span>
                 </div>
@@ -1283,7 +1274,7 @@ export default function RegisteredPrint({
                   Captured marks are preserved from your PDF, not independently generated. This is
                   outside Cricut’s recommended print flow and still needs sensor and measurement
                   tests on your machine. Recapture after changes to the saved mat, Design Space, or
-                  printer setup. CriProx only saves the print PDF so the captured marks’ original
+                  printer setup. Skarix only saves the print PDF so the captured marks’ original
                   content and the selected artwork DPI are preserved. Print the saved file from a
                   dedicated PDF application. Artwork bleed extends into the surrounding card spacing
                   without changing the cut pattern.
@@ -1341,7 +1332,12 @@ export default function RegisteredPrint({
         )}
         {pdf && (
           <div className="registered-preview">
-            <PdfPagePreview pdf={pdf} backPdf={backPdf} mode={preparedMode} backFlip={project.settings.backFlip} />
+            <PdfPagePreview
+              pdf={pdf}
+              backPdf={backPdf}
+              mode={preparedMode}
+              backFlip={project.settings.backFlip}
+            />
             <div>
               <strong>
                 {preparedKind === 'alignment'
@@ -1369,7 +1365,9 @@ export default function RegisteredPrint({
                   'Print fronts first, refeed those sheets, then print the matching backs in the same order.'}
                 {preparedMode === 'duplex' &&
                   `Enable duplex with ${project.settings.backFlip === 'long-edge' ? 'long-edge' : 'short-edge'} binding in the system print dialog.`}
-                {' Use the Print buttons here, or save the PDF for another application. Print at 100% / Actual size.'}
+                {
+                  ' Use the Print buttons here, or save the PDF for another application. Print at 100% / Actual size.'
+                }
               </p>
               {preparedMode === 'manual' ? (
                 <>

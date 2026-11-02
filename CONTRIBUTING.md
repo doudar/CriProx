@@ -1,10 +1,10 @@
-# Contributing to CriProx
+# Contributing to Skarix
 
 Thank you for contributing. Bug reports, focused feature proposals, documentation improvements, and tested code changes are welcome.
 
 ## Development
 
-CriProx requires Node.js 22 or newer and npm.
+Skarix requires Node.js 22 or newer and npm.
 
 ```sh
 npm ci

@@ -89,7 +89,7 @@ export default function PrintCutWorkflow({
           )}
           <p>
             {generated
-              ? 'Generate the print PDF in CriProx. Its registration marks and the matching cut-job coordinates are created together; no captured template is required.'
+              ? 'Generate the print PDF in Skarix. Its registration marks and the matching cut-job coordinates are created together; no captured template is required.'
               : registered
                 ? 'Create a print PDF with the original registration marks included from your captured template, and keep its matching saved Design Space job.'
                 : kind === 'cards'
@@ -155,15 +155,15 @@ export default function PrintCutWorkflow({
           <div className="cut-handoff">
             <strong>
               {generated
-                ? 'Generated sheets need their matching prepared CriProx cut job. Direct control is available for Explore 5 on Windows.'
+                ? 'Generated sheets need their matching prepared Skarix cut job. Direct control is available for Explore 5 on Windows.'
                 : 'Registration scanning and cutting currently finish in Design Space.'}
             </strong>
             <p>
               {generated &&
-                'Do not substitute an unrelated Design Space mat for a generated CriProx job. '}
-              Use CriProx’s prepared sheets for direct registration scanning and cutting. Captured
+                'Do not substitute an unrelated Design Space mat for a generated Skarix job. '}
+              Use Skarix’s prepared sheets for direct registration scanning and cutting. Captured
               Design Space templates still use their saved Design Space job. Opening Design Space
-              below releases CriProx’s connection so the two apps do not compete for the cutter.
+              below releases Skarix’s connection so the two apps do not compete for the cutter.
             </p>
             <button
               className="primary"

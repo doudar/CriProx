@@ -8,7 +8,7 @@ import { drawBleedTile, repairTransparentCorners, replicateBorder } from './blee
 import { formatDimensions, formatMeasurement } from './units';
 import { paperWorkflow } from './paper-workflow';
 import { artworkSourceRect, usesMpcTrim, type SourceRect } from './artwork';
-import { isScryfallArtwork, upscaleScryfallArtwork, type UpscaleBackend } from './upscale';
+import { upscaleArtwork, type UpscaleBackend } from './upscale';
 
 type RenderCanvas = HTMLCanvasElement | OffscreenCanvas;
 type RenderContext = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -210,14 +210,8 @@ async function imageBitmap(source: string): Promise<ImageBitmap> {
   return createImageBitmap(blob);
 }
 
-export function artworkSourceAtDpi(source: string, dpi: Settings['dpi']) {
-  if (!source.startsWith('https://cdn.mpcautofill.com/images/google_drive/full/')) return source;
-  const url = new URL(source),
-    current = Number(url.searchParams.get('dpi')) || 0;
-  // Projects created by earlier CriProx versions stored MPC URLs capped at
-  // 600 DPI. A higher export should request a matching source from the CDN.
-  if (current < dpi) url.searchParams.set('dpi', String(dpi));
-  return url.toString();
+export function artworkSourceAtDpi(source: string, _dpi: Settings['dpi']) {
+  return source;
 }
 
 type BleedSides = { top: number; right: number; bottom: number; left: number };
@@ -292,10 +286,10 @@ export async function renderSheet(
         );
         try {
           bitmap = await imageBitmap(artworkSource);
-          if (upscale?.enabled && isScryfallArtwork(artworkSource)) {
+          if (upscale?.enabled) {
             const original = bitmap;
             try {
-              bitmap = await upscaleScryfallArtwork(
+              bitmap = await upscaleArtwork(
                 artworkSource,
                 original,
                 upscale.progress,
@@ -308,7 +302,7 @@ export async function renderSheet(
             }
           }
         } catch (error) {
-          if (upscale?.enabled && isScryfallArtwork(artworkSource))
+          if (upscale?.enabled)
             throw new Error(
               `Could not upscale ${p.entry.card.name}: ${error instanceof Error ? error.message : String(error)}. Choose another engine or turn off upscaling to export the original image.`,
             );
@@ -378,7 +372,7 @@ export async function renderSheet(
           ctx.textAlign = 'center';
           ctx.fillStyle = '#111';
           ctx.font = 'bold 4px sans-serif';
-          ctx.fillText('CriProx · size check', w / 2, h / 2 - 3);
+          ctx.fillText('Skarix · size check', w / 2, h / 2 - 3);
           ctx.font = '3px sans-serif';
           ctx.fillText(formatDimensions(w, h, settings.units), w / 2, h / 2 + 3);
           ctx.fillText(
@@ -415,8 +409,8 @@ export function instructions(project: Project, sheets: Sheet[], calibration: boo
   if (project.settings.profile === 'eight')
     return (
       `CRIPROX — ${calibration ? 'PHYSICAL SIZE CHECK' : project.name}\n\n` +
-      `This package contains eight-card artwork PNGs and matching SVG silhouettes. It does not contain Cricut sensor marks. Use Create print PDF in CriProx for the registered ${printPaper.outputPaper} pages.\n\n` +
-      `EIGHT-CARD REGISTERED PRINT WORKFLOW\n1. In Create print PDF, download the magenta setup PNG. Upload it to Design Space as one flat Print Then Cut image at 6.9685 × 10.0394 in. Keep all eight cards and the transparent gaps together.\n2. Select portrait Tabloid (11 × 17 in) in Design Space and the system print dialog. Save the complete one-page Tabloid PDF at 100% / Actual size with bleed off and all four sensor marks.\n3. Import that Tabloid PDF in Create print PDF. CriProx checks the card pattern and complete marked footprint, then moves the whole capture onto ${printPaper.outputPaper} without scaling.\n4. Export the registered card PDFs and print them on ${printPaper.outputPaper} at 100% / Actual size, with fit-to-page disabled. Check that all four marks are complete and run a measured plain-paper cut before using card stock.\n5. Reopen the same saved Design Space cut job and mat. A change to card spacing, machine, paper, cut layout, or the saved job requires a new capture.\n\n` +
+      `This package contains eight-card artwork PNGs and matching SVG silhouettes. It does not contain Cricut sensor marks. Use Create print PDF in Skarix for the registered ${printPaper.outputPaper} pages.\n\n` +
+      `EIGHT-CARD REGISTERED PRINT WORKFLOW\n1. In Create print PDF, download the magenta setup PNG. Upload it to Design Space as one flat Print Then Cut image at 6.9685 × 10.0394 in. Keep all eight cards and the transparent gaps together.\n2. Select portrait Tabloid (11 × 17 in) in Design Space and the system print dialog. Save the complete one-page Tabloid PDF at 100% / Actual size with bleed off and all four sensor marks.\n3. Import that Tabloid PDF in Create print PDF. Skarix checks the card pattern and complete marked footprint, then moves the whole capture onto ${printPaper.outputPaper} without scaling.\n4. Export the registered card PDFs and print them on ${printPaper.outputPaper} at 100% / Actual size, with fit-to-page disabled. Check that all four marks are complete and run a measured plain-paper cut before using card stock.\n5. Reopen the same saved Design Space cut job and mat. A change to card spacing, machine, paper, cut layout, or the saved job requires a new capture.\n\n` +
       `SHEET SIZES\n` +
       sheets
         .map(
@@ -431,7 +425,7 @@ export function instructions(project: Project, sheets: Sheet[], calibration: boo
   return (
     `CRIPROX — ${calibration ? 'PHYSICAL SIZE CHECK' : project.name}\n\n` +
     `This package contains transparent artwork PNGs and matching vector-only SVG silhouettes. It contains no Cricut sensor marks and is not a native Design Space project. Design Space generates the marks for the actual print-and-cut job.\n\n` +
-    `RECOMMENDED PRINT THEN CUT WORKFLOW\n1. Select your actual machine and ${printPaper.designSpacePaper} paper in Design Space. Calibrate Print Then Cut using Cricut's own calibration flow.${seven ? ' This workaround is limited to Maker and Explore machines.' : ''}\n2. Upload a sheet PNG as a flat / single-layer Print Then Cut image, preserving transparency. Do not remove its background or add an offset. Preview the cut contours: expect exactly one rounded rectangle per card, with no internal holes.\n3. On the Canvas, set that sheet's WIDTH and HEIGHT to the exact values below. Raster DPI metadata alone is not sufficient. Unlock the aspect ratio if needed to correct subpixel rounding. Never auto-resize to fit: that changes the card size.\n4. Make the project. Design Space adds registration marks. ${printPaper.usesTabloidSetup ? `The preview must show all ${cardCount} cards and all four sensor marks on one page. In the system print dialog, change the paper to ${printPaper.systemPaper}, keep portrait orientation, and print at 100% / Actual size. Cancel if it becomes two pages or clips a mark.` : 'The selected paper must accept the design at its original size. If it does not, use a smaller batch. The six-card area is experimental and not machine-validated.'}\n5. ${seven ? 'Keep Design Space bleed off for the setup/capture template. For artwork sheets, inspect every boundary carefully because the 0.1 mm spacing leaves almost no tolerance.' : 'Enable Design Space bleed. CriProx uses a fixed 0.5 mm bleed when the registered-PDF bleed toggle is on.'} Print from Design Space at actual size, with printer scaling/fit-to-page disabled.\n6. Load the sheet as Design Space instructs and finish the cut from the same device in the same session. Do not separately print this PNG from an image viewer.${seven ? ' Design Space may require a 12 × 24 in mat because the declared page is Tabloid, even though the printed sheet is Letter.' : ''}\n7. Measure a test card in both directions before printing a deck. Target: ${formatDimensions(project.settings.width, project.settings.height, project.settings.units)}; corner radius ${formatMeasurement(project.settings.radius, project.settings.units)}. This is a size-check card, not a replacement for Cricut's sensor calibration.\n\n` +
+    `RECOMMENDED PRINT THEN CUT WORKFLOW\n1. Select your actual machine and ${printPaper.designSpacePaper} paper in Design Space. Calibrate Print Then Cut using Cricut's own calibration flow.${seven ? ' This workaround is limited to Maker and Explore machines.' : ''}\n2. Upload a sheet PNG as a flat / single-layer Print Then Cut image, preserving transparency. Do not remove its background or add an offset. Preview the cut contours: expect exactly one rounded rectangle per card, with no internal holes.\n3. On the Canvas, set that sheet's WIDTH and HEIGHT to the exact values below. Raster DPI metadata alone is not sufficient. Unlock the aspect ratio if needed to correct subpixel rounding. Never auto-resize to fit: that changes the card size.\n4. Make the project. Design Space adds registration marks. ${printPaper.usesTabloidSetup ? `The preview must show all ${cardCount} cards and all four sensor marks on one page. In the system print dialog, change the paper to ${printPaper.systemPaper}, keep portrait orientation, and print at 100% / Actual size. Cancel if it becomes two pages or clips a mark.` : 'The selected paper must accept the design at its original size. If it does not, use a smaller batch. The six-card area is experimental and not machine-validated.'}\n5. ${seven ? 'Keep Design Space bleed off for the setup/capture template. For artwork sheets, inspect every boundary carefully because the 0.1 mm spacing leaves almost no tolerance.' : 'Enable Design Space bleed. Skarix uses a fixed 0.5 mm bleed when the registered-PDF bleed toggle is on.'} Print from Design Space at actual size, with printer scaling/fit-to-page disabled.\n6. Load the sheet as Design Space instructs and finish the cut from the same device in the same session. Do not separately print this PNG from an image viewer.${seven ? ' Design Space may require a 12 × 24 in mat because the declared page is Tabloid, even though the printed sheet is Letter.' : ''}\n7. Measure a test card in both directions before printing a deck. Target: ${formatDimensions(project.settings.width, project.settings.height, project.settings.units)}; corner radius ${formatMeasurement(project.settings.radius, project.settings.units)}. This is a size-check card, not a replacement for Cricut's sensor calibration.\n\n` +
     `SHEET SIZES (set both dimensions on the Design Space Canvas)\n` +
     sheets
       .map(
@@ -439,7 +433,7 @@ export function instructions(project: Project, sheets: Sheet[], calibration: boo
           `Sheet ${s.index + 1}: ${formatDimensions(s.width, s.height, project.settings.units)}; ${s.placements.length} cards; ${mmToPx(s.width, project.settings.dpi)} × ${mmToPx(s.height, project.settings.dpi)} px at ${project.settings.dpi} DPI.`,
       )
       .join('\n') +
-    `\n\nSVG TEMPLATE\nThe SVG has the same origin, dimensions, card positions and corner radii as the PNG. It contains only filled cut silhouettes, with no artwork. It is a geometry reference / separate Basic Cut template; it does not independently register a printed page. Uploading the PNG already supplies cut contours through its alpha silhouette. Do not enable both PNG contours and SVG cuts in the same job, or you may cut twice. Vector reference precision does not imply identical Design Space raster tracing.\n\nLIMITS\nPhysical alignment depends on Design Space tracing, machine calibration, printer scaling and media. No hardware cut has been certified. Registered printing can create manual-refeed or alternating duplex back pages; double-sided cards use their opposite face automatically. The selected DPI controls the export raster; it does not add detail to lower-resolution source art. 900 and 1200 DPI use substantially more memory and create larger files.\n\nOfficial workflow: https://help.cricut.com/hc/en-us/articles/360009387274-How-to-Print-Then-Cut-in-Design-Space\nArea limits: https://help.cricut.com/hc/en-us/articles/360009429814-How-large-can-I-Print-Then-Cut\nCalibration: https://help.cricut.com/hc/en-us/articles/360009424974-Calibrating-your-machine-for-Print-Then-Cut\nCard data and artwork: Scryfall. CriProx is not affiliated with Cricut or Wizards of the Coast.\n`
+    `\n\nSVG TEMPLATE\nThe SVG has the same origin, dimensions, card positions and corner radii as the PNG. It contains only filled cut silhouettes, with no artwork. It is a geometry reference / separate Basic Cut template; it does not independently register a printed page. Uploading the PNG already supplies cut contours through its alpha silhouette. Do not enable both PNG contours and SVG cuts in the same job, or you may cut twice. Vector reference precision does not imply identical Design Space raster tracing.\n\nLIMITS\nPhysical alignment depends on Design Space tracing, machine calibration, printer scaling and media. No hardware cut has been certified. Registered printing can create manual-refeed or alternating duplex back pages; double-sided cards use their opposite face automatically. The selected DPI controls the export raster; it does not add detail to lower-resolution source art. 900 and 1200 DPI use substantially more memory and create larger files.\n\nOfficial workflow: https://help.cricut.com/hc/en-us/articles/360009387274-How-to-Print-Then-Cut-in-Design-Space\nArea limits: https://help.cricut.com/hc/en-us/articles/360009429814-How-large-can-I-Print-Then-Cut\nCalibration: https://help.cricut.com/hc/en-us/articles/360009424974-Calibrating-your-machine-for-Print-Then-Cut\nSkarix is not affiliated with Cricut.\n`
   );
 }
 export async function exportBundle(

@@ -3,7 +3,6 @@ import { ImagePlus, X } from 'lucide-react';
 import type { CardFace } from '../lib/types';
 import { usesMpcTrim, withMpcTrim } from '../lib/artwork';
 import ArtworkTrimControl from './ArtworkTrimControl';
-import MpcArtworkSearch from './MpcArtworkSearch';
 
 export default function CardBackArtworkControl({
   artwork,
@@ -91,15 +90,7 @@ export default function CardBackArtworkControl({
           change={(enabled) => change(withMpcTrim(artwork, enabled))}
         />
       )}
-      <MpcArtworkSearch
-        type="CARDBACK"
-        choose={(result) => {
-          if (!disabled) {
-            change({ ...result.face, name: result.name });
-            setError('');
-          }
-        }}
-      />
+
       {error && (
         <p className="error-box" role="alert">
           {error}

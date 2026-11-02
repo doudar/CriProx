@@ -68,7 +68,7 @@ function createPrintPreview({ BrowserWindow, ipcMain }) {
     const printers = await source.getPrintersAsync();
     if (source.isDestroyed()) throw Error('The print job was closed.');
     const window = new BrowserWindow({
-      title: 'CriProx — Print preview',
+      title: 'Skarix — Print preview',
       width: 1100,
       height: 820,
       minWidth: 800,

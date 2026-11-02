@@ -2,7 +2,7 @@ import { grid } from './layout';
 import type { Project, Settings } from './types';
 
 /** Keep names readable while avoiding path separators and Windows reserved names. */
-export function filenameStem(name: string, fallback = 'CriProx') {
+export function filenameStem(name: string, fallback = 'Skarix') {
   const cleaned = name
     .normalize('NFKC')
     .replace(/[^\p{L}\p{N}_-]+/gu, '-')
@@ -15,7 +15,7 @@ export function filenameStem(name: string, fallback = 'CriProx') {
   }
   stem = stem.replace(/-+$/g, '');
   if (!stem) return fallback;
-  return /^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i.test(stem) ? `CriProx-${stem}` : stem;
+  return /^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i.test(stem) ? `Skarix-${stem}` : stem;
 }
 
 export function layoutFilenameStem(settings: Settings) {
@@ -24,7 +24,7 @@ export function layoutFilenameStem(settings: Settings) {
 
 /** Reusable templates describe every setting that changes their cut geometry. */
 export function templateFilenameStem(settings: Settings) {
-  return `CriProx-${settings.machine}-${layoutFilenameStem(settings)}-${settings.profile}-${settings.width}x${settings.height}mm-gap-${settings.gap}mm-radius-${settings.radius}mm`;
+  return `Skarix-${settings.machine}-${layoutFilenameStem(settings)}-${settings.profile}-${settings.width}x${settings.height}mm-gap-${settings.gap}mm-radius-${settings.radius}mm`;
 }
 
 export function templateFilename(settings: Settings, purpose: string, extension: 'png' | 'pdf') {

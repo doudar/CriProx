@@ -1,5 +1,5 @@
 // Load only hash-verified components from the user's installed Design Space.
-// No Cricut runtime code or keys are distributed with CriProx.
+// No Cricut runtime code or keys are distributed with Skarix.
 // Electron virtualizes .asar paths. Read the installed archive as raw bytes for hash verification.
 const fs = process.versions.electron
   ? require('original-fs').promises

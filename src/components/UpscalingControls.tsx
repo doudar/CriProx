@@ -19,7 +19,7 @@ export default function UpscalingControls({
     <div className="upscaling-controls">
       <label className="switch-row upscale-toggle">
         <span>
-          Upscale Scryfall card images (high detail)
+          Upscale artwork images (high detail)
           <small>
             Choose 600+ DPI in Sheet setup to retain extra detail; exports can take much longer.
             Review card text before printing.

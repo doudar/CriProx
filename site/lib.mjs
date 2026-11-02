@@ -174,7 +174,7 @@ export function section(content, heading) {
 
 export function featureCards(readme) {
   const table = new Marked()
-    .lexer(section(readme, 'Why CriProx?'))
+    .lexer(section(readme, readme.includes('## Why Skarix?') ? 'Why Skarix?' : 'Why CriProx?'))
     .find((token) => token.type === 'table');
   if (!table || !table.rows.length)
     throw new Error('The Why CriProx? feature table is missing or empty.');
