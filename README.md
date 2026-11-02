@@ -2,8 +2,6 @@
 
 Make artwork, labels, decals and cut-ready designs in a local desktop studio.
 
-This branch introduces Skarix. Published v0.17.1 installers still contain the earlier CriProx interface; a Skarix release has not been published.
-
 ![Skarix Home](docs/assets/skarix-home.png)
 
 ## Why Skarix?
