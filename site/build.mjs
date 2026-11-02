@@ -60,7 +60,7 @@ function shell({ title, description, route, active, content }) {
     ['changelog/', 'Changelog', 'changelog'],
     ['docs/', 'Docs', 'docs'],
   ];
-  const brand = `<a class="brand" href="${url('')}" aria-label="Skarix home"><img src="${url('assets/favicon.svg?v=layers')}" alt="" width="33" height="36">skarix</a>`;
+  const brand = `<a class="brand" href="${url('')}" aria-label="Skarix home"><img src="${url('assets/favicon.svg?v=aurora')}" alt="" width="36" height="36">skarix</a>`;
   const links = nav
     .map(
       ([route, title, key]) =>
@@ -70,13 +70,13 @@ function shell({ title, description, route, active, content }) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)} · Skarix</title><meta name="description" content="${esc(description)}"><meta name="theme-color" content="#f6f7f9">
-<link rel="canonical" href="${esc(origin + url(route))}"><link rel="icon" href="${url('assets/favicon.svg?v=layers')}" type="image/svg+xml">
+<link rel="canonical" href="${esc(origin + url(route))}"><link rel="icon" href="${url('assets/favicon.svg?v=aurora')}" type="image/svg+xml">
 <meta property="og:title" content="${esc(title)} · Skarix"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${esc(origin + url(route))}"><meta property="og:image" content="${esc(origin + url('docs/assets/skarix-home.png'))}">
 <link rel="stylesheet" href="${url('assets/style.css')}"><link rel="alternate" type="application/atom+xml" title="Skarix releases" href="${url('feed.xml')}"><script src="${url('assets/nav.js')}" defer></script></head>
 <body${active === 'changelog' ? ' class="changelog-page"' : ''}><a class="skip-link" href="#main">Skip to content</a><header class="header">${brand}
 <nav class="desktop-navigation" aria-label="Main navigation">${links}<a href="${github}" class="github-link" aria-label="GitHub">${githubIcon}</a></nav>
 <details class="mobile-navigation"><summary class="menu-toggle" aria-label="Navigation menu" aria-controls="mobile-menu"><svg class="menu-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><svg class="close-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></summary><div class="mobile-menu" id="mobile-menu"><div class="mobile-menu-heading">${brand}</div><nav aria-label="Mobile navigation">${links}<a href="${github}" class="github-link">${githubIcon}<span>GitHub</span></a></nav></div></details></header>
-<main id="main">${content}</main><footer class="footer"><div><a class="brand" href="${url('')}">skarix</a><p>Made for making. Built to stay local.</p></div><div class="footer-links"><a href="${github}">Source code</a><a href="${github}/issues">Feedback</a><a href="https://github.com/Go2Engle/CriProx">Upstream source</a><a href="${github}/blob/main/LICENSE">GPL-3.0</a></div><p class="credits">An independent, open-source project. Based on CriProx by Chris Engle and its contributors. Unaffiliated with Cricut. <a href="${url('docs/references/')}">References & credits</a>.</p></footer></body></html>`;
+<main id="main">${content}</main><footer class="footer"><div>${brand}<p>Made for making. Built to stay local.</p></div><div class="footer-links"><a href="${github}">Source code</a><a href="${github}/issues">Feedback</a><a href="https://github.com/Go2Engle/CriProx">Upstream source</a><a href="${github}/blob/main/LICENSE">GPL-3.0</a></div><p class="credits">An independent, open-source project. Based on CriProx by Chris Engle and its contributors. Unaffiliated with Cricut. <a href="${url('docs/references/')}">References & credits</a>.</p></footer></body></html>`;
 }
 
 const features = featureCards(readme);

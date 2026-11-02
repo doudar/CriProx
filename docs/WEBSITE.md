@@ -25,3 +25,5 @@ Defaults are `SITE_ORIGIN=https://doudar.github.io` and `SITE_BASE_PATH=/Skarix/
 The footer credits CriProx, Chris Engle and the original contributors. Historical release notes retain their original content. v0.17.1 downloads still use the previous product name until a new release is published.
 
 Keep website changes in separate non-breaking chore(site), docs(site), or style(site) pull requests so they do not create application releases.
+
+The header, footer and favicon use the Aurora badge shared with the app. Regenerate shared assets with `node --import tsx scripts/generate-brand.ts` before rebuilding the website.
