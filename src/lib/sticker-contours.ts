@@ -1,3 +1,4 @@
+import { transformPoint } from './design-appearance';
 import type { DesignElement, StickerDesign } from './sticker-design';
 import { shapePolygon, type PointMm } from './generated-registration';
 export type StickerCutPath = { points: PointMm[]; closed: boolean };
@@ -15,7 +16,24 @@ export function cutElementPoints(e: DesignElement): PointMm[] {
   const w = e.width,
     h = e.height;
   let points: PointMm[] = [];
-  if (e.kind === 'draw') points = e.points!.map((p) => ({ x: p.x * w, y: p.y * h }));
+  if (e.kind === 'draw' && e.curves) {
+    let start = { x: e.points![0].x * w, y: e.points![0].y * h };
+    points.push(start);
+    for (const curve of e.curves) {
+      const b = { x: curve.c1.x * w, y: curve.c1.y * h },
+        c = { x: curve.c2.x * w, y: curve.c2.y * h },
+        end = { x: curve.end.x * w, y: curve.end.y * h };
+      const length =
+        Math.hypot(b.x - start.x, b.y - start.y) +
+        Math.hypot(c.x - b.x, c.y - b.y) +
+        Math.hypot(end.x - c.x, end.y - c.y);
+      const steps = Math.max(8, Math.ceil(length / 0.1));
+      if (points.length + steps > 30000)
+        throw Error('Curve is too complex. Reduce its size or segments.');
+      for (let i = 1; i <= steps; i++) points.push(cubic(start, b, c, end, i / steps));
+      start = end;
+    }
+  } else if (e.kind === 'draw') points = e.points!.map((p) => ({ x: p.x * w, y: p.y * h }));
   else if (e.kind === 'line')
     points = [
       { x: 0, y: 0 },
@@ -84,12 +102,13 @@ export function cutElementPoints(e: DesignElement): PointMm[] {
   return points.map((p) => {
     const x = (p.x - w / 2) * (e.flipX ? -1 : 1),
       y = (p.y - h / 2) * (e.flipY ? -1 : 1);
-    return { x: e.x + w / 2 + x * c - y * s, y: e.y + h / 2 + x * s + y * c };
+    const transformed = { x: e.x + w / 2 + x * c - y * s, y: e.y + h / 2 + x * s + y * c };
+    return e.matrix ? transformPoint(e.matrix, transformed) : transformed;
   });
 }
 export function designCutPaths(design: StickerDesign): StickerCutPath[] {
   return design.elements
-    .filter((e) => e.operation === 'cut')
+    .filter((e) => e.operation === 'cut' && !e.hidden)
     .map((e) => {
       const points = cutElementPoints(e),
         closed = e.kind === 'shape' || e.closed === true;

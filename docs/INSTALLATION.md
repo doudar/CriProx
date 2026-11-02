@@ -54,8 +54,8 @@ After the workflow reaches main, use **Actions → Skarix installer previews →
 
 Run `npm run desktop:updates` in a development checkout. The isolated simulation uses an 8 MB fixture and verifies download progress, cancellation, checksums and installer handoff without launching an installer. Add `-- --scenario=checksum-failure`, `network-failure`, or `up-to-date` to exercise those cases.
 
-## Experimental macOS cutter connection
+## macOS cutter connection
 
 Install Design Space 10.8.81 in /Applications or your user Applications folder. Skarix resolves its app archive and native DeviceIO helper and verifies runtime component hashes. Quit Design Space and other apps using the cutter, then select Explore 5 and Bluetooth LE inside Skarix. Do not pair Explore 5 through system Bluetooth settings. Allow Bluetooth access when macOS requests it. Initialization waits up to five seconds for the controller; Cancel connection releases the attempt. The helper exposes a ready flag but cannot reliably distinguish disabled Bluetooth from denied permission.
 
-Skarix includes a Bluetooth usage description. Signed releases use hardened runtime without App Sandbox; adopting App Sandbox would also require a Bluetooth entitlement. The saved-key store uses Electron safeStorage with macOS Keychain. The release checks verify signing and notarization, but permission attribution to the packaged app/helper, Keychain denial and update behavior still need hardware testing. Cutting is enabled as experimental at the user's request; a successful homing test is not physical validation of registration or blade paths.
+Skarix includes a Bluetooth usage description. Signed releases use hardened runtime without App Sandbox; adopting App Sandbox would also require a Bluetooth entitlement. The saved-key store uses Electron safeStorage with macOS Keychain. The release checks verify signing and notarization, but permission attribution to the packaged app/helper, Keychain denial and update behavior still need hardware testing. Explore 5 Bluetooth connection and cutting have been physically tested on macOS.

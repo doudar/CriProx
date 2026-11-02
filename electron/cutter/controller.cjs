@@ -35,7 +35,7 @@ function createCutterController({
       getProvider(selectedMachine).platforms.includes(platform) &&
       getProvider(selectedMachine).transports(selectedMachine, platform).length > 0,
     transports: getProvider(selectedMachine).transports(selectedMachine, platform),
-    experimental: platform === 'darwin' || !selectedMachine.hardwareVerified,
+    experimental: !selectedMachine.hardwareVerified,
     capabilities: {
       ...CAPABILITIES,
       cut: selectedMachine.directCut,

@@ -323,3 +323,10 @@ The card preview now has Show cuts alongside zoom, using the shared native polyg
 ## AI design release corrections - November 1, 2026
 
 Regression checks cover preserving separate recent identities through AI create/load and Home, rejecting late AI mutations while the human editor is busy, embedding catalog images before layer edits, comparing AI sheet-preview pixels with shared artwork rendering (crop, padding, stroke, rotation and reflection), and clearing only incompatible machine registration captures. The renderer test mounts the real App with an isolated browser profile and an intercepted catalog image fixture. It loads no printer or cutter service and makes no hardware requests. Run `npx electron tests/ai-design-fixes.electron.cjs`; Windows CI also runs this regression.
+
+## Artwork appearance and compact editor — November 2, 2026
+
+- The 372-test Node suite passes, including saved appearance validation, Bézier cutting geometry, nested group transforms/duplication/removal, text-path references, hidden output, lock protection, alignment and MCP schema operations.
+- Ten Chromium checks pass in `tests/design-appearance.html`: rendered gradients/transparency, shadows and blur, blend modes, masks/fades, seeded/photo textures, image adjustments, background blur, all three text-path placements, textures confined to straight and curved text glyphs, and MCP create/edit/group/fit/export through the real renderer. Run the local Vite server and open that page, or run `npx electron tests/design-appearance.electron.cjs`; Windows CI runs the same browser checks.
+- Browser interaction checks verify the Add shape picker closes after selection, advanced controls collapse, radial gradients render, locked controls disable editing, and layer visibility/group controls remain available. Screenshot: `docs/assets/skarix-editor.png`.
+- Appearance uses the same SVG renderer in the editor and exported/printed artwork. The guide grid is editor-only. No printer or cutter was operated during these checks.

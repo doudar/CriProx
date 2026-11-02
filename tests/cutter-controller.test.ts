@@ -316,7 +316,7 @@ test('connection cancellation is forwarded without racing a second worker reques
   assert.equal((await cancel).status, 'disconnected');
 });
 
-test('macOS Explore 5 BLE exposes experimental cutting and scopes saved keys to the model', async () => {
+test('macOS Explore 5 BLE exposes verified cutting and scopes saved keys to the model', async () => {
   let child: any;
   const sent: any[] = [];
   const c = createCutterController({
@@ -333,7 +333,7 @@ test('macOS Explore 5 BLE exposes experimental cutting and scopes saved keys to 
   });
   assert.equal(c.snapshot().supported, true);
   assert.equal(c.snapshot().capabilities.cut, true);
-  assert.equal(c.snapshot().experimental, true);
+  assert.equal(c.snapshot().experimental, false);
   assert.deepEqual(c.snapshot().transports, ['ble']);
   assert.deepEqual(await c.keyStatus('explore-5'), { available: true });
   const connect = c.command('connect', {

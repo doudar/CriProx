@@ -15,8 +15,8 @@ This branch introduces Skarix. Published v0.17.1 installers still contain the ea
 | Feature | What you can do |
 | --- | --- |
 | **Your own studio** | Start blank, continue your draft, or explore the editable Skarix starter sticker. |
-| **Editable artwork** | Combine text, shapes, images and filled paths. Import SVG and adjust layers. |
-| **Precise layouts** | Work in physical dimensions, arrange designs, nest copies and inspect cut boundaries. |
+| **Editable artwork** | Combine shapes, Bézier paths and text on a path with gradients, textures, shadows and photo adjustments. Group, align, lock and hide layers. |
+| **Precise layouts** | Work in physical dimensions, snap to a grid, align artwork, nest copies and inspect cut boundaries. |
 | **Print and cut** | Generate marked sheets and matching contours, choose materials and inspect output. |
 | **Local projects** | Save portable files and keep a local draft. Existing sticker projects remain compatible. |
 | **Optional AI design** | Connect an MCP client to edit artwork and layouts. Operate printers and cutters yourself. |
@@ -24,7 +24,7 @@ This branch introduces Skarix. Published v0.17.1 installers still contain the ea
 ## From artwork to cut
 
 1. Choose **Meet Skarix**, **Blank canvas**, or **Open project**.
-2. Create or import artwork in **Design studio**, then set its dimensions and cut outline.
+2. Create or import artwork in **Design studio**. Use **Add shape** for presets, expand the appearance controls you need, then set dimensions and the cut outline.
 3. Arrange copies and choose machine, paper, and material.
 4. Open **Print & cut**, inspect the pages, and print at actual size.
 5. Review the matching cut job and operate the cutter. Read the [print guide](docs/CRICUT-WORKFLOW.md) first.
@@ -42,7 +42,7 @@ Use `npm run dev` for browser development. Direct cutter access and desktop prin
 
 [Installation](docs/INSTALLATION.md) · [Features](docs/FEATURES.md) · [AI design](docs/AI-DESIGN-MCP.md) · [Architecture](docs/ARCHITECTURE.md)
 
-![Editable Skarix starter sticker](docs/assets/skarix-starter.png)
+![Compact artwork editor with layer controls](docs/assets/skarix-editor.png)
 
 ## Existing projects
 

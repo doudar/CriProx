@@ -14,7 +14,21 @@ Existing sticker projects remain readable. Legacy card projects can be exported 
 
 Create text, shapes, embedded images and filled paths. Import SVG, change layer order, opacity, rotation and flipping. Editable layers are stored with projects.
 
+The compact designer keeps shape presets behind **Add shape**. Drawing tools, canvas settings and advanced appearance controls collapse when not needed. Active appearance sections show **On**. Numeric inputs support typing and horizontal dragging.
+
+- **Gradients:** linear or radial fills, angle and radial center/radius, up to 16 color stops with independent opacity.
+- **Effects:** blur, background blur, drop shadows, inner shadows and glows. Blend modes include Multiply, Screen, Overlay and Soft Light.
+- **Masks and textures:** clip artwork or groups to a shape, feather edges or fade them directionally; fill shapes and text with embedded photo tiles or seeded grain, paper, stone and brushed-metal textures.
+- **Paths and text:** create cubic Bézier paths and drag their nodes/handles. Text can follow an existing shape or closed polygon with Inner, Middle or Outer placement and adjustable position along the path.
+- **Layers:** group artwork, transform groups, collapse their layer rows, lock edits and hide output. Shift-click canvas objects or layer rows to align edges/centers or distribute centers evenly. Group effects apply to the combined artwork; reset those effects before ungrouping.
+- **Images:** adjust exposure, contrast, saturation, temperature and sharpening without replacing the source image.
+- **Grid:** show/hide the non-printing guide, choose spacing and snap drawing/movement/resizing to the grid.
+
+The editor, previews and printed artwork share the same renderer. Appearance settings, group structure, visibility, locking and grid preferences are saved with the design and available through MCP. Hidden cut layers are omitted from cutting; visual effects do not change blade geometry.
+
 Work in physical dimensions, arrange copies, nest layouts, and inspect pink cut contours. Artwork and blade paths can be edited separately. Image silhouettes are not automatically traced.
+
+**Cut border** automatically updates the cut when you change border width, stroke width, color or placement. Printed strokes sit inside the cut by default, with centered and outside options. Drag numeric fields horizontally in the designer to adjust values, or click to type.
 
 Undo/redo and clipboard shortcuts work in the active editor. Delete removes a selected design or placed copy; Undo restores it. Text inputs retain their usual shortcuts.
 
@@ -22,7 +36,7 @@ Undo/redo and clipboard shortcuts work in the active editor. Delete removes a se
 
 Choose a machine, Letter or A4 paper and material settings. **Print & cut** prepares marked pages and matching contours. Inspect the preview, print at actual size, and use the matching job.
 
-The machine selector lists individual Cricut models, including **Explore 5**, without putting the operating system in the model name. Explore 5 retains its verified USB workflow. Maker 5 has experimental direct connection and registered cutting; Joy 2 has experimental connection only. Other models remain selectable with an explanation of the missing driver or sheet format. Model-specific keys, materials and jobs cannot be substituted across cutters. Explore 5 also supports experimental macOS BLE connection and cutting using the inspected Design Space runtime. Connection, authentication and homing were physically verified on a Mac; registration, cutting, pause/resume and cancellation remain untested on Mac hardware. See [Print & cut](CRICUT-WORKFLOW.md).
+The machine selector lists individual Cricut models, including **Explore 5**, without putting the operating system in the model name. Explore 5 retains its verified USB workflow. Maker 5 has experimental direct connection and registered cutting; Joy 2 has experimental connection only. Other models remain selectable with an explanation of the missing driver or sheet format. Model-specific keys, materials and jobs cannot be substituted across cutters. Explore 5 also supports macOS BLE connection and cutting using the inspected Design Space runtime. Connection, authentication, homing and cutting have been physically tested on a Mac. See [Print & cut](CRICUT-WORKFLOW.md).
 
 Cutters use a provider registry so other manufacturers, including Silhouette, can add their own transport, authentication and registration rules. Silhouette hardware support is not implemented yet. See [cutter providers](CUTTER-PROVIDERS.md).
 
@@ -43,3 +57,5 @@ The macOS release workflow requires Developer ID signing and Apple notarization,
 Release packaging uses the corrected signing-keychain password handling so valid certificate credentials no longer encounter the previous temporary-keychain password mismatch.
 
 Mac release builds also fail explicitly if signing exits before installer verification finishes, preventing a misleading successful build step followed by a missing-installer upload failure.
+
+The [Aurora logo example](../examples/README.md) demonstrates editable gradients, lighting and textures, including textures on text, created through the MCP server.
