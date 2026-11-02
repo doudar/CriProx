@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.20.0](https://github.com/doudar/Skarix/compare/v0.19.0...v0.20.0) (2026-11-02)
+
+
+### Features
+
+* show new releases and keep text visible around closed paths ([#13](https://github.com/doudar/Skarix/issues/13)) ([5155e1d](https://github.com/doudar/Skarix/commit/5155e1dd113006e4644f6b8cb3f071248352c92d))
+* use the Aurora logo throughout Skarix ([#11](https://github.com/doudar/Skarix/issues/11)) ([34c96a2](https://github.com/doudar/Skarix/commit/34c96a228c68e643c97a4c00c5084dbb16e01fc6))
+
+
+### Bug Fixes
+
+* use Skarix names throughout the app and MCP tools ([7621a02](https://github.com/doudar/Skarix/commit/7621a02cc5fa2c15b71dd970ec06325074205013))
+
 ## [0.19.0](https://github.com/doudar/Skarix/compare/v0.18.0...v0.19.0) (2026-11-02)
 
 
