@@ -80,7 +80,8 @@ test('complete build keeps current docs, uses stable installer assets, and verif
     assert.ok(sitemapUrls.every((url) => url.startsWith(`${origin}/`)));
     assert.equal(robots, `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`);
     for (const content of [rootHome, rootGuide, feed, sitemap, robots]) {
-      assert.doesNotMatch(content, /criprox\.themanamarket\.com|go2engle\.github\.io/);
+      assert.equal(content.includes('criprox.themanamarket.com'), false);
+      assert.equal(content.includes('go2engle.github.io'), false);
     }
     await verifySite(path.join(site, '_site'), '/Skarix/');
   } finally {
