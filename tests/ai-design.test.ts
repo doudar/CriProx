@@ -450,3 +450,37 @@ test('AI replacement preserves the prior snapshot before committing and rejects 
     }
   }
 });
+
+test('MCP creates, edits and disables shape gradients through the shared schema and layer operations', () => {
+  const args = designTool('create_design').schema.parse({
+    workspace: 'stickers',
+    name: 'Gradient',
+    elements: [
+      {
+        id: 'gradient-shape',
+        kind: 'shape',
+        fill: '#222222',
+        gradient: { from: '#ff0000', to: '#0000ff' },
+      },
+    ],
+  });
+  let design = applyDesignOperations(
+    newDesign(),
+    args.elements.map((element: unknown) => ({ action: 'add', element })),
+  );
+  assert.deepEqual(design.elements[0].gradient, { from: '#ff0000', to: '#0000ff' });
+  const edit = (gradient: unknown) =>
+    designTool('edit_design').schema.parse({
+      workspace: 'stickers',
+      designId: 'design',
+      operations: [{ action: 'update', id: 'gradient-shape', patch: { gradient } }],
+    });
+  design = applyDesignOperations(design, edit({ from: '#00ff00', to: '#ffffff' }).operations);
+  assert.equal(design.elements[0].gradient!.from, '#00ff00');
+  assert.ok(designSvg(design).includes('stop-color="#00ff00"'));
+  design = applyDesignOperations(design, edit(null).operations);
+  assert.equal(design.elements[0].gradient, undefined);
+  assert.equal(design.elements[0].fill, '#222222');
+  assert.throws(() => edit({ from: '#000000', to: 'red' }));
+  assert.throws(() => edit({ from: '#000000' }));
+});

@@ -1,6 +1,7 @@
 // Shared, closed design-only tool catalogue. Neither the MCP router nor the renderer
 // accepts arbitrary IPC channels, JavaScript, printer commands, or cutter commands.
 const { z } = require('zod/v4');
+const { appearance } = require('./design-appearance.cjs');
 const mode = z.enum(['stickers']);
 const color = z.string().regex(/^(#[0-9a-f]{6}|transparent)$/i);
 const id = z.string().regex(/^[a-zA-Z0-9-]{1,80}$/);
@@ -11,7 +12,7 @@ const raster = z
   .regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/);
 const element = z.strictObject({
   id: id.optional(),
-  kind: z.enum(['text', 'shape', 'image', 'line', 'draw']).optional(),
+  kind: z.enum(['text', 'shape', 'image', 'line', 'draw', 'group']).optional(),
   operation: z.enum(['print', 'cut']).optional(),
   closed: z.boolean().optional(),
   x: z.number().min(-500).max(500).optional(),
@@ -22,6 +23,7 @@ const element = z.strictObject({
   flipX: z.boolean().optional(),
   flipY: z.boolean().optional(),
   fill: color.optional(),
+  ...appearance,
   stroke: color.optional(),
   strokeWidth: z.number().min(0).max(20).optional(),
   opacity: z.number().min(0).max(1).optional(),
@@ -42,6 +44,9 @@ const element = z.strictObject({
     .optional(),
 });
 const canvas = z.strictObject({
+  grid: z
+    .strictObject({ visible: z.boolean(), snap: z.boolean(), spacing: z.number().min(0.5).max(50) })
+    .optional(),
   width: z.number().min(10).max(250).optional(),
   height: z.number().min(10).max(250).optional(),
   background: color.optional(),
@@ -120,7 +125,7 @@ const tools = [
   ],
   [
     'create_design',
-    'Create an editable design. Use up to 500 layered shapes/text/images/drawn paths for detailed artwork. Returns the design ID.',
+    'Create an editable design. Use up to 500 layered shapes/text/images/drawn paths for detailed artwork. Shapes support gradient: {from, to} hex colors for a left-to-right fill. Returns the design ID.',
     z.strictObject({
       workspace: mode,
       name: z.string().min(1).max(100),
@@ -132,7 +137,7 @@ const tools = [
   ],
   [
     'edit_design',
-    'Atomically edit layers in an existing design. Bottom-to-top layer order; draw.points are normalized 0..1 inside the element box. Closed drawn paths may have fills. Updating an element supports all style and transform properties; cut operation only edits blade geometry, never runs it.',
+    'Atomically edit layers in an existing design. Bottom-to-top layer order; draw.points are normalized 0..1 inside the element box. Closed drawn paths may have fills. Appearance supports advanced gradient stops, effects, blendMode, texture, mask and image adjustments. Set optional appearance objects to null to clear. Draw curves use normalized c1/c2/end cubic segments starting at points[0]. Group/ungroup operations manage artwork hierarchies; group children use local coordinates. Groups resize against groupWidth/groupHeight. Keep cuts outside groups. Text supports textPath {pathId,side:inner|middle|outer,offset:0..100} referencing a shape or closed drawn path. hidden omits a layer from output; locked protects edits until unlocked. align supports edges, centers and center-to-center distribution. Canvas grid controls are non-printing; MCP coordinates remain exact. Updating an element supports all style and transform properties; cut operation only edits blade geometry, never runs it.',
     z.strictObject({
       workspace: mode,
       designId: id,
@@ -144,6 +149,26 @@ const tools = [
             z.strictObject({ action: z.literal('add'), element }),
             z.strictObject({ action: z.literal('update'), id, patch: element }),
             z.strictObject({ action: z.literal('remove'), id }),
+            z.strictObject({
+              action: z.literal('group'),
+              ids: z.array(id).min(2).max(500),
+              id: id.optional(),
+            }),
+            z.strictObject({ action: z.literal('ungroup'), id }),
+            z.strictObject({
+              action: z.literal('align'),
+              ids: z.array(id).min(2).max(500),
+              alignment: z.enum([
+                'left',
+                'center',
+                'right',
+                'top',
+                'middle',
+                'bottom',
+                'distribute-horizontal',
+                'distribute-vertical',
+              ]),
+            }),
             z.strictObject({
               action: z.literal('duplicate'),
               id,
@@ -167,6 +192,7 @@ const tools = [
       borderWidth: z.number().min(0).max(20).default(1),
       strokeWidth: z.number().min(0).max(5).default(0),
       strokeColor: color.default('#222222'),
+      strokePlacement: z.enum(['inside', 'centered', 'outside']).default('inside'),
     }),
     false,
   ],

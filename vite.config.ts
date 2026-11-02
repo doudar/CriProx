@@ -21,7 +21,7 @@ export default defineConfig({
       apply: 'serve',
       transform(_code, id) {
         if (
-          !/\/electron\/(?:ai-tools|cutter\/(?:materials|geometry)|cutters\/catalog)\.cjs$/.test(
+          !/\/electron\/(?:ai-tools|design-appearance|cutter\/(?:materials|geometry)|cutters\/catalog)\.cjs$/.test(
             id.replaceAll('\\\\', '/'),
           )
         )

@@ -1,5 +1,9 @@
+import { layerHidden, layerLocked } from './design-layer-tools';
+import { transformPoint, multiply } from './design-appearance';
 import {
   designSvg,
+  parentMatrix,
+  elementMatrix,
   newElement,
   validateStickerDesign,
   type DesignElement,
@@ -8,7 +12,12 @@ import {
 import { cutElementPoints, designCutPaths } from './sticker-contours';
 import type { PointMm } from './generated-registration';
 
-export type FitCutOptions = { borderWidth: number; strokeWidth: number; strokeColor: string };
+export type FitCutOptions = {
+  borderWidth: number;
+  strokeWidth: number;
+  strokeColor: string;
+  strokePlacement?: 'inside' | 'centered' | 'outside';
+};
 const cross = (a: PointMm, b: PointMm, c: PointMm) =>
   (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 export function artworkHull(points: PointMm[]): PointMm[] {
@@ -56,6 +65,24 @@ function bounds(points: PointMm[]) {
   }
   return { x, y, width: right - x, height: bottom - y };
 }
+function fitArtworkLayers(design: StickerDesign) {
+  if (
+    design.elements.some(
+      (e) => (e.operation === 'cut' || e.id === design.fitCut?.strokeId) && layerLocked(design, e),
+    )
+  )
+    throw Error('Unlock cut and border layers before refitting.');
+  const referenced = new Set(
+    design.elements.flatMap((e) => (e.textPath ? [e.textPath.pathId] : [])),
+  );
+  return design.elements.flatMap((e) =>
+    e.operation === 'cut' || e.id === design.fitCut?.strokeId
+      ? referenced.has(e.id)
+        ? [{ ...e, operation: 'print' as const, hidden: true }]
+        : []
+      : [e],
+  );
+}
 export function fittedDesignFromHull(
   design: StickerDesign,
   hull: PointMm[],
@@ -64,8 +91,13 @@ export function fittedDesignFromHull(
 ): StickerDesign {
   if (hull.length < 3) throw Error('Add visible artwork before fitting a cut.');
   validateStickerDesign({ ...design, fitCut: options });
-  const outer = paddedHull(hull, options.borderWidth + options.strokeWidth + pixelGuard),
-    box = bounds(outer);
+  const placement = options.strokePlacement ?? 'inside';
+  const cutPadding =
+    options.borderWidth +
+    pixelGuard +
+    options.strokeWidth * (placement === 'inside' ? 1 : placement === 'centered' ? 0.5 : 0);
+  const outer = paddedHull(hull, cutPadding),
+    box = bounds(paddedHull(hull, options.borderWidth + options.strokeWidth + pixelGuard));
   if (box.width < 1 || box.height < 1)
     throw Error('Fit Cut needs artwork at least 1 mm wide and tall.');
   const dx = Math.max(0, -box.x),
@@ -76,9 +108,11 @@ export function fittedDesignFromHull(
     throw Error(
       'The fitted border exceeds the 250 mm canvas limit. Reduce the border or artwork size.',
     );
-  const elements = design.elements
-    .filter((e) => e.operation !== 'cut' && e.id !== design.fitCut?.strokeId)
-    .map((e) => ({ ...e, x: e.x + dx, y: e.y + dy }));
+  const elements = fitArtworkLayers(design).map((e) => ({
+    ...e,
+    x: e.x + (e.parentId ? 0 : dx),
+    y: e.y + (e.parentId ? 0 : dy),
+  }));
   const path = (points: PointMm[], operation: 'print' | 'cut'): DesignElement => {
     const b = bounds(points);
     return {
@@ -133,7 +167,8 @@ function transformedRect(
   ].map((p) => {
     const x = (p.x - e.width / 2) * (e.flipX ? -1 : 1),
       y = (p.y - e.height / 2) * (e.flipY ? -1 : 1);
-    return { x: e.x + e.width / 2 + x * c - y * s, y: e.y + e.height / 2 + x * s + y * c };
+    const result = { x: e.x + e.width / 2 + x * c - y * s, y: e.y + e.height / 2 + x * s + y * c };
+    return e.matrix ? transformPoint(e.matrix, result) : result;
   });
 }
 export async function fitDesignCut(
@@ -143,11 +178,24 @@ export async function fitDesignCut(
   await document.fonts.ready;
   const canvas = document.createElement('canvas'),
     ctx = canvas.getContext('2d', { willReadFrequently: true })!;
-  const printed = design.elements.filter(
-    (e) => e.operation !== 'cut' && e.id !== design.fitCut?.strokeId && e.opacity > 0,
-  );
+  const printed = fitArtworkLayers(design);
   const extents: PointMm[] = [];
   for (const e of printed) {
+    if (layerHidden(design, e)) continue;
+    if (e.textPath) {
+      const path = design.elements.find((p) => p.id === e.textPath!.pathId)!;
+      const m = multiply(parentMatrix(design, path), elementMatrix(path));
+      const pad = (e.fontSize ?? 6) * 2;
+      extents.push(
+        ...[
+          { x: -pad, y: -pad },
+          { x: path.width + pad, y: -pad },
+          { x: -pad, y: path.height + pad },
+          { x: path.width + pad, y: path.height + pad },
+        ].map((p) => transformPoint(m, p)),
+      );
+    }
+    const startIndex = extents.length;
     if (e.kind === 'text') {
       ctx.font = `${e.bold ? '700' : '400'} ${e.fontSize}px "${e.font}"`;
       ctx.textAlign = e.align === 'right' ? 'right' : e.align === 'center' ? 'center' : 'left';
@@ -166,7 +214,8 @@ export async function fitDesignCut(
           ),
         );
       }
-    } else if (e.kind === 'image') extents.push(...transformedRect(e, 0, 0, e.width, e.height));
+    } else if (e.kind === 'image' || e.kind === 'group')
+      extents.push(...transformedRect(e, 0, 0, e.width, e.height));
     else {
       const p = cutElementPoints(e);
       const b = bounds(p),
@@ -176,6 +225,20 @@ export async function fitDesignCut(
         { x: b.x + b.width + pad, y: b.y + b.height + pad },
       );
     }
+    const pad = Math.max(
+      (e.effects?.blur ?? 0) * 4,
+      ...(e.effects?.shadows ?? []).map((s) => s.blur * 4 + Math.max(Math.abs(s.x), Math.abs(s.y))),
+    );
+    const local = extents.splice(startIndex);
+    const m = parentMatrix(design, e);
+    extents.push(
+      ...local
+        .flatMap((p) => [
+          { x: p.x - pad, y: p.y - pad },
+          { x: p.x + pad, y: p.y + pad },
+        ])
+        .map((p) => transformPoint(m, p)),
+    );
   }
   if (!extents.length) throw Error('Add visible artwork before fitting a cut.');
   const raw = bounds(extents),
@@ -225,6 +288,12 @@ export function reorderDesignLayer(
   const from = design.elements.findIndex((e) => e.id === sourceId),
     to = design.elements.findIndex((e) => e.id === targetId);
   if (from < 0 || to < 0 || from === to) return design;
+  if (
+    layerLocked(design, design.elements[from]) ||
+    layerLocked(design, design.elements[to]) ||
+    (design.elements[from].parentId || null) !== (design.elements[to].parentId || null)
+  )
+    return design;
   const elements = [...design.elements],
     [element] = elements.splice(from, 1);
   elements.splice(to, 0, element);

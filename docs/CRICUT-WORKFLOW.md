@@ -1,6 +1,6 @@
 # Print and cut with Skarix
 
-Skarix retains CriProx's shared design, print, material, and cutting tools. The rebrand itself has not been physically cut-tested.
+Skarix retains CriProx's shared design, print, material, and cutting tools. Cutting has been physically tested on macOS.
 
 ## Prepare a design
 
@@ -17,9 +17,29 @@ Use matching paper, actual size/100% scale, no fit/shrink and no headers. Save t
 
 Black marks print; editor clearance guides do not. Artwork crossing marks or page edges blocks preparation. Source resolution, DPI and printer scaling all affect output quality.
 
+## Create and refine artwork
+
+Choose **Add shape** to open the preset picker; choosing a shape closes it. **Add text** and **Add image** stay beside it. Expand **Drawing tools & palette** for lines, polygons, freehand strokes and **Add Bézier curve**. The selected layer’s inspector shows only relevant appearance sections.
+
+1. Expand **Gradient**, enable the fill, then choose Linear or Radial. Add color stops, adjust positions and lower stop opacity for transparent highlights. Linear angle and radial center/radius control direction.
+2. Use **Effects** for blend mode, blur and shadows. Background blur softens earlier artwork in the same group; a transparent foreground fill reveals it. **Mask & clipping** contains artwork within a shape and adds feathering or an edge fade. These effects print, but do not move blade paths.
+3. Use **Texture** on shapes or text (including text on a path) for seeded procedural surfaces or a tiled embedded photo. Select an image layer to reveal **Image adjustments**. Keep the original image and refine exposure, contrast, saturation, temperature or sharpening.
+4. For text on a path, add a shape or closed polygon, select the text, and expand **Text on a path**. Choose the guide and Inner, Middle or Outer placement. Adjust position, alignment and font size to fit the lettering. Hiding the guide leaves the text visible; deleting it restores straight text.
+5. Shift-click layer rows or canvas objects to select several. **Align & distribute** aligns to the selection bounds or spaces centers evenly. **Group selected** creates an editable group; its dimensions, rotation, masks and effects apply to the combined artwork. Select a child in Layers to edit it. Reset group effects, mask, blend and opacity before ungrouping to preserve appearance.
+6. Use the eye and lock controls in **Layers** to hide output or prevent edits. Hidden artwork does not print and hidden cut paths do not cut. Unlock a layer before editing it. Group visibility and locking also apply to its children.
+7. Toggle **Grid** and **Snap** above the canvas. Set spacing under **Canvas & cut settings → Grid settings**. The grid never prints. Exact values typed in fields or sent through MCP are retained; snapping applies to pointer drawing, movement and resizing.
+
+Expand **Canvas & cut settings** when you need dimensions, background or border settings. Before saving and printing, inspect the artwork and pink cut outlines, especially after hiding cut layers.
+
+## Adjust the cut border
+
+In the designer, change **Cut border** to automatically fit the cut around visible artwork. Set the gap with **Border width** and the printed line thickness with **Border stroke**; a stroke of 0 hides the printed line. Choose **Inside** (default), **Centered** or **Outside** to place the printed stroke relative to the cut line. Border changes replace the previous fitted outline and printed border. You can also use **Fit Cut** after editing artwork to refit its outline.
+
+Drag numeric fields left or right to decrease or increase values, or click and type an exact value. Review the pink cut preview before saving to the sheet.
+
 ## Direct Explore 5 cutting
 
-The native controller supports Explore 5 over Windows USB/BLE and experimental macOS BLE. USB is preferred; Bluetooth remains experimental. Other machine guides do not imply direct device support.
+The native controller supports Explore 5 over Windows USB/BLE and macOS BLE. macOS Bluetooth cutting has been physically tested. On Windows, USB is preferred and Bluetooth remains experimental. Other machine guides do not imply direct device support.
 
 Choose the exact model in **Cutting method**. Model labels are platform-independent; the native Cricut provider uses inspected components from the installed Design Space app on Windows or macOS. Maker 5 now has experimental direct connection and registered cutting through its own runtime factory and machine-family key. It requires a Maker 5 material profile imported from Design Space or created in Manage materials. Explore 5 presets cannot be reused as Maker 5 presets automatically. Maker 5 has not been physically tested.
 

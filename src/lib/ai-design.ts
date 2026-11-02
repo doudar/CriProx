@@ -1,3 +1,5 @@
+import { alignLayers, layerLocked } from './design-layer-tools';
+import { groupLayers, ungroupLayer, removeLayer, duplicateLayer } from './design-groups';
 import { designTool, DESIGN_TOOLS } from '../../electron/ai-tools.cjs';
 import {
   newDesign,
@@ -61,6 +63,10 @@ export const AI_DESIGN_GUIDE = {
   limits: {
     layers: 500,
     pointsPerPath: 2000,
+    curveSegments: 256,
+    gradientStops: 16,
+    shadowsPerLayer: 4,
+    groupDepth: 8,
     totalPoints: 100000,
     canvasMm: [10, 250],
     copies: 500,
@@ -73,6 +79,21 @@ export const AI_DESIGN_GUIDE = {
     'Each operation is undoable. Read workspace first and use its IDs. Batch related layer changes in edit_design. Reorder takes every element ID, bottom to top. Existing image-only assets can be converted to editable designs by edit_design.',
   illustration:
     'Build detailed scenes from many filled closed draw paths and shapes, with separate sky, clouds, mountain ridges, water, vegetation and highlights. Use normalized path points and opacity for shading; preview and refine. Or embed a detailed raster produced by your image generation tool; Skarix does not itself call an image model.',
+  appearance: {
+    gradients:
+      'gradient supports linear/radial, angle, cx/cy/radius, and 2–16 stops with offset/color/opacity. Legacy from/to colors remain accepted.',
+    effects:
+      'effects supports blur, backgroundBlur and up to four drop/inner/glow shadows. Dimensions are mm. Background blur samples earlier siblings.',
+    compositing:
+      'blendMode: normal, multiply, screen, overlay, soft-light. mask clips to a preset shape with optional feather and directional/radial fade.',
+    textures:
+      'texture supports embedded image, grain, paper, stone or metal with seed, scale and opacity on shapes, text and filled paths. adjustments applies exposure, contrast, saturation, temperature and sharpen to image layers.',
+    paths:
+      'draw.curves contains normalized cubic c1/c2/end segments, starting at points[0]. textPath references a shape or closed draw by pathId, with inner/middle/outer side and offset percent.',
+    layers:
+      'group/ungroup manage nested print layers. Group children use local coordinates; groupWidth/groupHeight are the original frame. Ungroup requires resetting group effects, mask, blend and opacity. hidden omits output; locked protects direct edits. Unlock explicitly before edits. align supports edges, centers and distribution.',
+    grid: 'canvas.grid {visible,snap,spacing} saves non-printing editor guides. Snap affects interactive drawing and dragging; MCP coordinates stay exact.',
+  },
   templates:
     'Create layered original illustrations, labels and decals with editable text, shapes, paths and images.',
   tools: DESIGN_TOOLS.map((t) => ({ name: t.name, description: t.description })),
@@ -101,7 +122,24 @@ export function applyDesignOperations(
   Object.assign(d, canvas || {});
   for (const op of operations) {
     const i = d.elements.findIndex((e) => e.id === op.id);
-    if (op.action === 'add') {
+    const target = d.elements[i];
+    if (
+      target &&
+      layerLocked(d, target) &&
+      op.action !== 'duplicate' &&
+      !(
+        op.action === 'update' &&
+        Object.keys(op.patch).every((k) => k === 'locked' || k === 'hidden')
+      )
+    )
+      throw Error('Unlock the layer before editing it.');
+    if (op.action === 'align') {
+      Object.assign(d, alignLayers(d, op.ids, op.alignment));
+    } else if (op.action === 'group') {
+      Object.assign(d, groupLayers(d, op.ids, op.id));
+    } else if (op.action === 'ungroup') {
+      Object.assign(d, ungroupLayer(d, op.id));
+    } else if (op.action === 'add') {
       if (!op.element.kind) throw Error('New layers require kind.');
       d.elements.push({ ...newElement(op.element.kind, d), ...op.element });
     } else if (op.action === 'reorder') {
@@ -111,23 +149,19 @@ export function applyDesignOperations(
         op.ids.some((id: string) => !d.elements.some((e) => e.id === id))
       )
         throw Error('Reorder must include every layer ID exactly once.');
+      if (d.elements.some((e, index) => layerLocked(d, e) && op.ids.indexOf(e.id) !== index))
+        throw Error('Unlock layers before reordering them.');
       d.elements = op.ids.map((id: string) => d.elements.find((e) => e.id === id)!);
     } else {
       if (i < 0) throw Error('Layer not found.');
-      if (op.action === 'remove') d.elements.splice(i, 1);
+      if (op.action === 'remove') Object.assign(d, removeLayer(d, op.id));
       else if (op.action === 'update') {
         if (op.patch.id && op.patch.id !== op.id) throw Error('Layer IDs cannot be changed.');
         if (op.patch.kind && op.patch.kind !== d.elements[i].kind)
           throw Error('Replace the layer to change its kind.');
         d.elements[i] = { ...d.elements[i], ...op.patch };
       } else if (op.action === 'duplicate') {
-        const e = d.elements[i];
-        d.elements.splice(i + 1, 0, {
-          ...clone(e),
-          id: op.newId || crypto.randomUUID(),
-          x: e.x + op.dx,
-          y: e.y + op.dy,
-        });
+        Object.assign(d, duplicateLayer(d, op.id, op.newId, op.dx, op.dy));
       }
     }
   }

@@ -133,3 +133,34 @@ test('shape, text, image and line layers produce printable SVG with the selected
   // Cut overlays belong only to the editor; generated artwork has no pink cut strokes.
   assert.ok(!designSvg(d).includes('#ec268f'));
 });
+
+test('shape gradients survive saving, render both colors, and leave cut geometry unprinted', async () => {
+  const d = newDesign(40, 30);
+  const shape = {
+    ...newElement('shape', d),
+    x: 0,
+    y: 0,
+    width: 40,
+    height: 30,
+    gradient: { from: '#ff0000', to: '#0000ff' },
+  };
+  d.elements = [shape];
+  const loaded = validateStickerDesign(JSON.parse(JSON.stringify(d)));
+  assert.deepEqual(loaded.elements[0].gradient, shape.gradient);
+  const canvas = createCanvas(400, 300);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(await loadImage(Buffer.from(designSvg(loaded))), 0, 0, 400, 300);
+  const left = ctx.getImageData(40, 150, 1, 1).data;
+  const right = ctx.getImageData(360, 150, 1, 1).data;
+  assert.ok(left[0] > 200 && left[2] < 60);
+  assert.ok(right[2] > 200 && right[0] < 60);
+  assert.ok(
+    !designSvg({ ...d, elements: [{ ...shape, operation: 'cut' }] }).includes('linearGradient'),
+  );
+  for (const gradient of [
+    { from: 'url(https://example.com)', to: '#ffffff' },
+    { from: '#ff0000' },
+    false,
+  ])
+    assert.throws(() => validateStickerDesign({ ...d, elements: [{ ...shape, gradient }] }));
+});

@@ -84,3 +84,65 @@ test('dragging a layer changes its stacking order once and supports Undo/Redo', 
   assert.equal(historyStep(undone, { type: 'redo' }).present, reordered);
   assert.equal(reorderDesignLayer(d, 'missing', d.elements[0].id), d);
 });
+
+for (const [strokePlacement, padding] of [
+  ['inside', 3],
+  ['centered', 2],
+  ['outside', 1],
+] as const) {
+  test(`cut border places the printed stroke ${strokePlacement} and preserves the saved choice`, () => {
+    const design = newDesign();
+    design.elements = [newElement('shape', design)];
+    const hull = artworkHull([
+      { x: 0, y: 0 },
+      { x: 20, y: 0 },
+      { x: 20, y: 20 },
+      { x: 0, y: 20 },
+    ]);
+    const fitted = fittedDesignFromHull(design, hull, {
+      borderWidth: 1,
+      strokeWidth: 2,
+      strokeColor: '#112233',
+      strokePlacement,
+    });
+    const cut = fitted.elements.find((e) => e.operation === 'cut')!;
+    const stroke = fitted.elements.find((e) => e.id === fitted.fitCut!.strokeId)!;
+    assert.ok(Math.abs(cut.width - (20 + 2 * padding)) < 1e-7);
+    assert.ok(Math.abs(stroke.width - 24) < 1e-7);
+    assert.ok(stroke.x - stroke.strokeWidth / 2 >= 0, 'the full printed stroke fits the canvas');
+    assert.equal(
+      validateStickerDesign(JSON.parse(JSON.stringify(fitted))).fitCut!.strokePlacement,
+      strokePlacement,
+    );
+  });
+}
+test('older cut borders default to inside and invalid placement is rejected', () => {
+  const design = {
+    ...newDesign(),
+    fitCut: { borderWidth: 1, strokeWidth: 1, strokeColor: '#000000' },
+  };
+  assert.equal(validateStickerDesign(design).fitCut!.strokePlacement, 'inside');
+  assert.throws(() =>
+    validateStickerDesign({ ...design, fitCut: { ...design.fitCut, strokePlacement: 'invalid' } }),
+  );
+});
+
+test('refitting preserves locked cut layers by requiring an explicit unlock', () => {
+  const design = newDesign();
+  design.elements = [{ ...newElement('shape', design), operation: 'cut', locked: true }];
+  const hull = artworkHull([
+    { x: 5, y: 5 },
+    { x: 10, y: 5 },
+    { x: 10, y: 10 },
+    { x: 5, y: 10 },
+  ]);
+  assert.throws(
+    () =>
+      fittedDesignFromHull(design, hull, {
+        borderWidth: 1,
+        strokeWidth: 0,
+        strokeColor: '#000000',
+      }),
+    /Unlock cut/,
+  );
+});

@@ -1,3 +1,6 @@
+import { parseAppearance } from '../../electron/design-appearance.cjs';
+import { type Appearance, type Matrix, multiply, identity } from './design-appearance';
+import { renderDesignContent } from './design-render';
 import { designOutputBounds, designCutPaths, hasTrimmedOutline, pathSvg } from './sticker-contours';
 export const SHAPES = [
   'rectangle',
@@ -24,12 +27,12 @@ export const PALETTES = {
   Pastel: ['#fff7ed', '#fecdd3', '#fed7aa', '#fef08a', '#bbf7d0', '#bae6fd', '#ddd6fe', '#f5d0fe'],
   Earth: ['#faf5e9', '#d5b893', '#ad795b', '#7d4937', '#57694c', '#8d9b77', '#50777a', '#343d38'],
 };
-export type DesignElement = {
+export type DesignElement = Appearance & {
   operation?: 'print' | 'cut';
   closed?: boolean;
   cornerRadius?: number;
   id: string;
-  kind: 'text' | 'shape' | 'image' | 'line' | 'draw';
+  kind: 'text' | 'shape' | 'image' | 'line' | 'draw' | 'group';
   x: number;
   y: number;
   width: number;
@@ -52,7 +55,14 @@ export type DesignElement = {
 };
 export type StickerDesign = {
   cropToCuts?: boolean;
-  fitCut?: { borderWidth: number; strokeWidth: number; strokeColor: string; strokeId?: string };
+  grid?: { visible: boolean; snap: boolean; spacing: number };
+  fitCut?: {
+    borderWidth: number;
+    strokeWidth: number;
+    strokeColor: string;
+    strokePlacement?: 'inside' | 'centered' | 'outside';
+    strokeId?: string;
+  };
   version: 1;
   width: number;
   height: number;
@@ -74,6 +84,15 @@ export function validateStickerDesign(value: unknown): StickerDesign {
     d.elements.length > 500
   )
     throw Error('Invalid sticker design. Use 10–250 mm and at most 500 elements.');
+  if (
+    d.grid &&
+    (typeof d.grid.visible !== 'boolean' ||
+      typeof d.grid.snap !== 'boolean' ||
+      !Number.isFinite(d.grid.spacing) ||
+      d.grid.spacing < 0.5 ||
+      d.grid.spacing > 50)
+  )
+    throw Error('Grid spacing must be from 0.5 to 50 mm.');
   const ids = new Set<string>();
   let bytes = 0,
     points = 0;
@@ -83,7 +102,7 @@ export function validateStickerDesign(value: unknown): StickerDesign {
       typeof e.id !== 'string' ||
       !/^[a-zA-Z0-9-]{1,80}$/.test(e.id) ||
       ids.has(e.id) ||
-      !['text', 'shape', 'image', 'line', 'draw'].includes(e.kind) ||
+      !['text', 'shape', 'image', 'line', 'draw', 'group'].includes(e.kind) ||
       ![e.x, e.y, e.width, e.height, e.rotation, e.strokeWidth, e.opacity].every(Number.isFinite) ||
       Math.abs(e.x) > 500 ||
       Math.abs(e.y) > 500 ||
@@ -102,6 +121,19 @@ export function validateStickerDesign(value: unknown): StickerDesign {
       typeof e.flipY !== 'boolean'
     )
       throw Error('Invalid design element.');
+    const appearance = parseAppearance(e);
+    if (e.gradient && !['shape', 'draw', 'text'].includes(e.kind))
+      throw Error('Use gradients on shapes, text or filled paths.');
+    if (e.texture && !['shape', 'draw', 'text'].includes(e.kind))
+      throw Error('Use textures on shapes, text or filled paths.');
+    if (e.adjustments && e.kind !== 'image')
+      throw Error('Image adjustments require an image layer.');
+    if (e.curves && e.kind !== 'draw') throw Error('Bezier curves require a drawn path.');
+    if (e.matrix && Math.abs(e.matrix[0] * e.matrix[3] - e.matrix[1] * e.matrix[2]) < 1e-8)
+      throw Error('Layer transform must be invertible.');
+    if (e.kind === 'group' && (!e.groupWidth || !e.groupHeight))
+      throw Error('Groups need their original width and height.');
+    if (e.texture?.image) bytes += e.texture.image.length;
     ids.add(e.id);
     if (e.operation !== undefined && !['print', 'cut'].includes(e.operation))
       throw Error('Invalid element operation.');
@@ -127,6 +159,7 @@ export function validateStickerDesign(value: unknown): StickerDesign {
       flipX: e.flipX,
       flipY: e.flipY,
       fill: e.fill,
+      ...appearance,
       stroke: e.stroke,
       strokeWidth: e.strokeWidth,
       opacity: e.opacity,
@@ -170,10 +203,31 @@ export function validateStickerDesign(value: unknown): StickerDesign {
       )
         throw Error('Invalid drawn line.');
       base.points = e.points.map((p) => ({ x: p.x, y: p.y }));
-      points += base.points.length;
+      points += base.points.length + (e.curves?.length ?? 0) * 3;
     }
     return base;
   });
+  for (const e of elements) {
+    if (e.textPath) {
+      const path = elements.find((p) => p.id === e.textPath!.pathId);
+      if (
+        e.kind !== 'text' ||
+        !path ||
+        !(path.kind === 'shape' || (path.kind === 'draw' && path.closed))
+      )
+        throw Error('Text paths require an existing shape or closed drawn path.');
+    }
+    const seen = new Set([e.id]);
+    let parentId = e.parentId;
+    if (parentId && e.operation === 'cut') throw Error('Keep cut paths outside artwork groups.');
+    while (parentId) {
+      const parent = elements.find((p) => p.id === parentId);
+      if (!parent || parent.kind !== 'group' || seen.has(parentId) || seen.size > 8)
+        throw Error('Invalid group hierarchy (maximum depth 8).');
+      seen.add(parentId);
+      parentId = parent.parentId;
+    }
+  }
   if (bytes > 40_000_000) throw Error('Use less than 40 MB of embedded design images.');
   if (points > 100_000) throw Error('Use at most 100,000 points in one design.');
   if (
@@ -185,6 +239,8 @@ export function validateStickerDesign(value: unknown): StickerDesign {
       d.fitCut.strokeWidth < 0 ||
       d.fitCut.strokeWidth > 5 ||
       !/^#[0-9a-f]{6}$/i.test(d.fitCut.strokeColor) ||
+      (d.fitCut.strokePlacement !== undefined &&
+        !['inside', 'centered', 'outside'].includes(d.fitCut.strokePlacement)) ||
       (d.fitCut.strokeId !== undefined && !/^[a-zA-Z0-9-]{1,80}$/.test(d.fitCut.strokeId)))
   )
     throw Error('Use a border from 0–20 mm and a stroke from 0–5 mm.');
@@ -193,6 +249,9 @@ export function validateStickerDesign(value: unknown): StickerDesign {
     width: d.width,
     height: d.height,
     background: d.background,
+    ...(d.grid
+      ? { grid: { visible: d.grid.visible, snap: d.grid.snap, spacing: d.grid.spacing } }
+      : {}),
     elements,
     ...(d.cropToCuts !== undefined ? { cropToCuts: d.cropToCuts } : {}),
     ...(d.fitCut
@@ -201,6 +260,7 @@ export function validateStickerDesign(value: unknown): StickerDesign {
             borderWidth: d.fitCut.borderWidth,
             strokeWidth: d.fitCut.strokeWidth,
             strokeColor: d.fitCut.strokeColor,
+            strokePlacement: d.fitCut.strokePlacement ?? 'inside',
             ...(d.fitCut.strokeId ? { strokeId: d.fitCut.strokeId } : {}),
           },
         }
@@ -237,6 +297,7 @@ export function newElement(kind: DesignElement['kind'], design: StickerDesign): 
         }
       : {}),
     ...(kind === 'shape' ? { shape: 'rectangle' } : {}),
+    ...(kind === 'group' ? { groupWidth: width, groupHeight: height } : {}),
   };
 }
 export function shapePath(shape: ShapeName, w: number, h: number): string {
@@ -263,21 +324,45 @@ export function elementPath(e: DesignElement): string {
   }
   if (e.kind === 'shape') return shapePath(e.shape!, e.width, e.height);
   if (e.kind === 'line') return `M0 0L${e.width} ${e.height}`;
+  if (e.curves && e.points?.length) {
+    const first = e.points[0];
+    return (
+      `M${first.x * e.width} ${first.y * e.height} ` +
+      e.curves
+        .map(
+          (c) =>
+            `C${c.c1.x * e.width} ${c.c1.y * e.height} ${c.c2.x * e.width} ${c.c2.y * e.height} ${c.end.x * e.width} ${c.end.y * e.height}`,
+        )
+        .join(' ') +
+      (e.closed ? ' Z' : '')
+    );
+  }
   return (
     (e.points || [])
       .map((p, i) => `${i ? 'L' : 'M'} ${p.x * e.width} ${p.y * e.height}`)
       .join(' ') + (e.closed ? ' Z' : '')
   );
 }
-export function elementTransform(e: DesignElement): string {
-  return `translate(${e.x + e.width / 2} ${e.y + e.height / 2}) rotate(${e.rotation}) scale(${e.flipX ? -1 : 1} ${e.flipY ? -1 : 1}) translate(${-e.width / 2} ${-e.height / 2})`;
+export function elementMatrix(e: DesignElement): Matrix {
+  const a = (e.rotation * Math.PI) / 180,
+    c = Math.cos(a),
+    s = Math.sin(a);
+  const sx = e.flipX ? -1 : 1,
+    sy = e.flipY ? -1 : 1;
+  const m: Matrix = [c * sx, s * sx, -s * sy, c * sy, e.x + e.width / 2, e.y + e.height / 2];
+  return multiply(e.matrix ?? identity, multiply(m, [1, 0, 0, 1, -e.width / 2, -e.height / 2]));
 }
-const escape = (s: string) =>
-  s
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+export function elementTransform(e: DesignElement): string {
+  return `${e.matrix ? `matrix(${e.matrix.join(' ')}) ` : ''}translate(${e.x + e.width / 2} ${e.y + e.height / 2}) rotate(${e.rotation}) scale(${e.flipX ? -1 : 1} ${e.flipY ? -1 : 1}) translate(${-e.width / 2} ${-e.height / 2})`;
+}
+export function parentMatrix(design: StickerDesign, e: DesignElement): Matrix {
+  if (!e.parentId) return identity;
+  const p = design.elements.find((p) => p.id === e.parentId)!;
+  return multiply(
+    parentMatrix(design, p),
+    multiply(elementMatrix(p), [p.width / p.groupWidth!, 0, 0, p.height / p.groupHeight!, 0, 0]),
+  );
+}
 /** The editor and print rasterizer use the same SVG primitives, text metrics and transforms. */
 export function designSvg(
   value: StickerDesign,
@@ -287,25 +372,7 @@ export function designSvg(
   } = {},
 ): string {
   const d = validateStickerDesign(value);
-  const content = d.elements
-    .filter((e) => e.operation !== 'cut')
-    .map((e) => {
-      let body = '';
-      if (e.kind === 'image')
-        body = `<image xlink:href="${e.image}" width="${e.width}" height="${e.height}" preserveAspectRatio="xMidYMid meet"/>`;
-      else if (e.kind === 'text')
-        body = `<text fill="${e.fill}" stroke="${e.stroke}" stroke-width="${e.strokeWidth}" paint-order="stroke fill" font-family="${e.font}" font-size="${e.fontSize}" font-weight="${e.bold ? '700' : '400'}" text-anchor="${e.align === 'center' ? 'middle' : e.align === 'right' ? 'end' : 'start'}">${e
-          .text!.split('\n')
-          .map(
-            (line, i) =>
-              `<tspan x="${e.align === 'center' ? e.width / 2 : e.align === 'right' ? e.width : 0}" y="${e.fontSize! * (1 + i * 1.2)}">${escape(line)}</tspan>`,
-          )
-          .join('')}</text>`;
-      else
-        body = `<path d="${elementPath(e)}" fill="${e.kind === 'shape' || (e.kind === 'draw' && e.closed) ? e.fill : 'none'}" stroke="${e.stroke}" stroke-width="${e.strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;
-      return `<g transform="${elementTransform(e)}" opacity="${e.opacity}">${body}</g>`;
-    })
-    .join('');
+  const content = renderDesignContent(d);
   const b = options.bounds ?? designOutputBounds(d);
   const clip =
     !options.artworkOnly && hasTrimmedOutline(d)
@@ -314,7 +381,7 @@ export function designSvg(
           .map((p) => `<path d="${pathSvg(p)}"/>`)
           .join('')
       : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${b.width}mm" height="${b.height}mm" viewBox="${b.x} ${b.y} ${b.width} ${b.height}">${clip ? `<defs><clipPath id="cut-outline">${clip}</clipPath></defs>` : ''}<g${clip ? ' clip-path="url(#cut-outline)"' : ''}>${options.artworkOnly ? '' : `<rect width="${d.width}" height="${d.height}" fill="${d.background}"/>`}${content}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${b.width}mm" height="${b.height}mm" viewBox="${b.x} ${b.y} ${b.width} ${b.height}">${clip ? `<defs><clipPath id="cut-outline">${clip}</clipPath></defs>` : ''}<g${clip ? ' clip-path="url(#cut-outline)"' : ''}>${options.artworkOnly || d.background === 'transparent' ? '' : `<rect width="${d.width}" height="${d.height}" fill="${d.background}"/>`}${content}</g></svg>`;
 }
 export async function renderStickerDesign(value: StickerDesign): Promise<string> {
   const d = validateStickerDesign(value),

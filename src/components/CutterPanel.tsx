@@ -189,11 +189,9 @@ export default function CutterPanel({
             </button>
           )}
           {!model.directCut && <p>{model.unavailableReason}</p>}
-          {(!model.hardwareVerified || mac) && (
+          {!model.hardwareVerified && (
             <p className="muted">
-              {mac
-                ? 'macOS BLE cutting is experimental. Connection, authentication and homing were physically verified; registration and cutting still need a physical test.'
-                : `${model.name} support is experimental and has not been physically validated.`}
+              {`${model.name} support is experimental and has not been physically validated.`}
             </p>
           )}
           {!connected && savedKey === false && (
@@ -232,7 +230,9 @@ export default function CutterPanel({
                 }}
               >
                 {!mac && <option value="usb">USB</option>}
-                <option value="ble">Bluetooth LE (experimental)</option>
+                <option value="ble">
+                  {mac ? 'Bluetooth LE' : 'Bluetooth LE (experimental)'}
+                </option>
               </select>
             </label>
             {connected ? (
