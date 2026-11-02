@@ -83,13 +83,16 @@ async function readVerifiedRuntime(archive) {
 
 async function loadInstalledRuntime() {
   const installation = await findCricutInstallation();
-  if (installation?.version !== '43.2.0')
+  if (
+    !installation ||
+    (installation.platform === 'darwin'
+      ? installation.applicationVersion !== '10.8.81'
+      : installation.version !== '43.2.0')
+  )
     throw new Error(
       'Unverified Design Space installation. Direct connection requires the inspected 10.8.81 build.',
     );
-  const files = await readVerifiedRuntime(
-    path.join(path.dirname(installation.executable), 'resources', 'app.asar'),
-  );
+  const files = await readVerifiedRuntime(installation.archivePath);
   const updated = !!files['design-space-app/chunk-KEEGO4M6.js'];
   const source =
     files[

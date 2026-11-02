@@ -27,6 +27,16 @@ test('installation discovery reports files only, without treating an installed b
     }),
     {
       executable: path.join(root, 'Cricut Design Space.exe'),
+      launchPath: path.join(root, 'Cricut Design Space.exe'),
+      applicationVersion: null,
+      platform: 'win32',
+      archivePath: path.join(root, 'resources', 'app.asar'),
+      bridgeExecutable: path.join(
+        root,
+        'resources',
+        'plugins/cricut-device-io',
+        'CricutDeviceIO.exe',
+      ),
       version: '43.2.0',
       bridgeInstalled: true,
     },
@@ -41,4 +51,39 @@ test('installation discovery reports files only, without treating an installed b
   });
   assert.equal(partial.version, null);
   assert.equal(partial.bridgeInstalled, false);
+});
+
+test('Mac discovery resolves system and user bundles with explicit native paths', async () => {
+  for (const root of [
+    '/Applications/Cricut Design Space.app',
+    '/Users/test/Applications/Cricut Design Space.app',
+  ]) {
+    const files = new Set([
+      root + '/Contents/MacOS/Cricut Design Space',
+      root + '/Contents/Resources/plugins/cricut-device-io/CricutDeviceIO',
+    ]);
+    const result = await findCricutInstallation({
+      platform: 'darwin',
+      home: '/Users/test',
+      env: {},
+      io: {
+        stat: async (p: string) => {
+          if (!files.has(p)) throw Error('ENOENT');
+          return { isFile: () => true };
+        },
+        readFile: async () =>
+          Buffer.from(
+            '<plist><key>CFBundleShortVersionString</key><string>10.8.81</string></plist>',
+          ),
+      },
+    });
+    assert.equal(result.applicationVersion, '10.8.81');
+    assert.equal(result.launchPath, root);
+    assert.equal(result.archivePath, root + '/Contents/Resources/app.asar');
+    assert.equal(
+      result.bridgeExecutable,
+      root + '/Contents/Resources/plugins/cricut-device-io/CricutDeviceIO',
+    );
+    assert.equal(result.bridgeInstalled, true);
+  }
 });

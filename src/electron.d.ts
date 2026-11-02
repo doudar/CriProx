@@ -103,14 +103,18 @@ declare global {
       };
       cutter?: {
         state: () => Promise<import('./lib/cutter').CutterState>;
-        keyStatus: () => Promise<{ available: boolean }>;
-        connectSaved: (transport: 'usb' | 'ble') => Promise<import('./lib/cutter').CutterState>;
+        keyStatus: (machine?: string) => Promise<{ available: boolean }>;
+        connectSaved: (
+          transport: 'usb' | 'ble',
+          machine?: string,
+        ) => Promise<import('./lib/cutter').CutterState>;
         connect: (
           transport: 'usb' | 'ble',
           authorized: boolean,
+          machine?: string,
         ) => Promise<import('./lib/cutter').CutterState>;
         disconnect: () => Promise<import('./lib/cutter').CutterState>;
-        forgetKey: () => Promise<import('./lib/cutter').CutterState>;
+        forgetKey: (machine?: string) => Promise<import('./lib/cutter').CutterState>;
         home: (bladeRemoved: boolean) => Promise<import('./lib/cutter').CutterState>;
         cutSheet: (
           job: string,

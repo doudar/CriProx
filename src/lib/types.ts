@@ -1,3 +1,4 @@
+import type { MachineId } from '../../electron/cutters/catalog.cjs';
 import { DEFAULT_CUT_SETTINGS, type CutSettings } from './cut-settings';
 import type { StickerDesign } from './sticker-design';
 export type CardFace = {
@@ -28,7 +29,7 @@ export type Entry = { id: string; card: Card; quantity: number; face: number };
 export type Settings = CutSettings & {
   units: 'mm' | 'in';
   paper: 'letter' | 'a4';
-  machine: 'maker' | 'explore-5' | 'explore' | 'joy-xtra' | 'manual';
+  machine: MachineId;
   profile: 'expanded' | 'seven' | 'eight' | 'nine';
   width: number;
   height: number;

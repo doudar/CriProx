@@ -1,3 +1,4 @@
+import { isMachine } from './machine-guides';
 import {
   fixedBleedMm,
   isTightRegisteredProfile,
@@ -63,7 +64,7 @@ export function validateProject(value: unknown): Project {
   if (
     !['mm', 'in'].includes(s.units) ||
     !['letter', 'a4'].includes(s.paper) ||
-    !['maker', 'explore-5', 'explore', 'joy-xtra', 'manual'].includes(s.machine) ||
+    !isMachine(s.machine) ||
     !['expanded', 'seven', 'eight', 'nine'].includes(s.profile) ||
     !PRINT_DPI_OPTIONS.includes(s.dpi) ||
     typeof s.upscaleScryfall !== 'boolean' ||

@@ -1,3 +1,4 @@
+import { MACHINES } from '../lib/machine-guides';
 import { useEffect, useId, useState } from 'react';
 import type { CardFace, Settings } from '../lib/types';
 import { PRINT_DPI_OPTIONS, BACK_OUTER_BLEED_MM, fixedBleedMm } from '../lib/types';
@@ -151,13 +152,11 @@ export default function ProjectDefaultsEditor({
             Choose the paper and cutting layout new projects start with.
           </p>
           <div className="defaults-field-grid">
-            {select('machine', 'Cutting method', [
-              { value: 'maker', label: 'Cricut Maker series' },
-              { value: 'explore-5', label: 'Cricut Explore 5' },
-              { value: 'explore', label: 'Cricut Explore series' },
-              { value: 'joy-xtra', label: 'Cricut Joy Xtra' },
-              { value: 'manual', label: 'Manual cutting' },
-            ])}
+            {select(
+              'machine',
+              'Cutting method',
+              MACHINES.map(({ id, name }) => ({ value: id, label: name })),
+            )}
             {select('paper', 'Paper size', [
               { value: 'letter', label: 'US Letter' },
               { value: 'a4', label: 'A4' },

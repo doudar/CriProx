@@ -22,7 +22,9 @@ Undo/redo and clipboard shortcuts work in the active editor. Delete removes a se
 
 Choose a machine, Letter or A4 paper and material settings. **Print & cut** prepares marked pages and matching contours. Inspect the preview, print at actual size, and use the matching job.
 
-Windows Explore 5 USB support and the reusable material library are retained. Other machine guides support external workflows; direct device support is narrower. See [Print & cut](CRICUT-WORKFLOW.md).
+The machine selector lists individual Cricut models, including **Explore 5**, without putting the operating system in the model name. Explore 5 retains its verified USB workflow. Maker 5 has experimental direct connection and registered cutting; Joy 2 has experimental connection only. Other models remain selectable with an explanation of the missing driver or sheet format. Model-specific keys, materials and jobs cannot be substituted across cutters. Explore 5 also supports experimental macOS BLE connection and cutting using the inspected Design Space runtime. Connection, authentication and homing were physically verified on a Mac; registration, cutting, pause/resume and cancellation remain untested on Mac hardware. See [Print & cut](CRICUT-WORKFLOW.md).
+
+Cutters use a provider registry so other manufacturers, including Silhouette, can add their own transport, authentication and registration rules. Silhouette hardware support is not implemented yet. See [cutter providers](CUTTER-PROVIDERS.md).
 
 ## Material manager, pressure and passes
 

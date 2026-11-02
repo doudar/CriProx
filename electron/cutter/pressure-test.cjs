@@ -1,9 +1,9 @@
 // Material snapshots are validated again before creating native machine commands.
 const { materialForSettings, passPressures, directCutIssue } = require('./materials.cjs');
-function resolveCutSettings(settings) {
+function resolveCutSettings(settings, machine = settings?.machine ?? 'explore-5') {
   const profile = materialForSettings(settings || {}),
     pressures = passPressures(settings);
-  const issue = directCutIssue(settings);
+  const issue = directCutIssue(settings, machine);
   if (issue) throw Error(issue);
   return Object.freeze({
     material: settings.cutMaterial,
@@ -66,16 +66,17 @@ async function buildPressurePlot(api, settings, paths, scan) {
   const inch = T.LengthMeasurement.fromInches;
   const config = B.PressureMachinesPlotJobConfig.defaultConfig();
   config.materialAlignment = 'single';
+  const machine = require('./bifrost-device.cjs').bifrostMachine(settings.machine ?? 'explore-5');
   config.material = new B.PressureMachinesMaterial(
     'matted',
-    T.SizeMeasurement.fromInches(new G.Size(12, 12)),
+    T.SizeMeasurement.fromInches(new G.Size(machine.mat.width, machine.mat.height)),
     new B.Margins(inch(1), inch(0.5), inch(1), inch(0.5)),
     T.LengthMeasurement.fromValue(0, T.UnitLength.millimeters),
   );
   builder.setCanvasRectangle(config.material.canvasRectangle);
   config.builder = builder;
   config.tools = new Map([['fine-point', tool]]);
-  config.materialLengthToMeasure = inch(12);
+  config.materialLengthToMeasure = inch(machine.mat.height);
   config.materialMeasurementMovementSettings = new T.MovementSettings1D(
     new T.VelocityMeasurement(3.5),
     new T.AccelerationMeasurement(13),

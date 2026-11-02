@@ -1,6 +1,6 @@
 const { fork } = require('node:child_process');
-const path = require('node:path');
-const { prepareSheetJob } = require('./sheet-job.cjs');
+const { getMachine } = require('../cutters/catalog.cjs');
+const { getProvider } = require('../cutters/registry.cjs');
 const CAPABILITIES = Object.freeze({
   connect: true,
   home: true,
@@ -16,8 +16,11 @@ function createCutterController({
   onState = () => {},
   keyStore,
 } = {}) {
-  let child,
+  let connectionDone,
+    child,
     closing,
+    childProvider,
+    selectedMachine = getMachine('explore-5'),
     storageWork = Promise.resolve(),
     nextId = 0,
     pending,
@@ -25,8 +28,19 @@ function createCutterController({
     state = { status: 'disconnected', encrypted: false, message: 'Not connected' };
   const snapshot = () => ({
     ...state,
-    supported: platform === 'win32',
-    capabilities: { ...CAPABILITIES },
+    machine: selectedMachine.id,
+    provider: selectedMachine.provider,
+    supported:
+      selectedMachine.directConnect &&
+      getProvider(selectedMachine).platforms.includes(platform) &&
+      getProvider(selectedMachine).transports(selectedMachine, platform).length > 0,
+    transports: getProvider(selectedMachine).transports(selectedMachine, platform),
+    experimental: platform === 'darwin' || !selectedMachine.hardwareVerified,
+    capabilities: {
+      ...CAPABILITIES,
+      cut: selectedMachine.directCut,
+      registrationScan: selectedMachine.directCut,
+    },
   });
   const publish = (patch) => {
     state = { ...state, ...patch };
@@ -48,18 +62,27 @@ function createCutterController({
     }
   };
   function start() {
+    const provider = getProvider(selectedMachine);
+    if (child && childProvider !== provider.id) {
+      const previous = child;
+      child = undefined;
+      previous.disconnect();
+      previous.kill();
+    }
     if (child) return;
-    const current = forkProcess(path.join(__dirname, 'worker.cjs'), [], {
+    const current = forkProcess(provider.worker, [], {
       windowsHide: true,
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
     });
     child = current;
+    childProvider = provider.id;
     current.on('message', (event) => {
       if (child !== current || !event || typeof event !== 'object') return;
       if (event.type === 'key-store') {
         // Private worker IPC only; never publish the request or its result to the renderer.
         if (pending?.name !== 'connect' || !Number.isInteger(event.requestId)) return;
+        if ((event.machine ?? 'explore-5') !== selectedMachine.id) return;
         const connectionRequest = pending.id;
         storageWork = storageWork
           .then(async () => {
@@ -68,12 +91,13 @@ function createCutterController({
               error;
             try {
               if (event.operation === 'load')
-                result = (await keyStore?.load(event.applicationVersion)) ?? null;
+                result =
+                  (await keyStore?.load(event.applicationVersion, selectedMachine.id)) ?? null;
               else if (event.operation === 'save' && keyStore) {
-                await keyStore.save(event.applicationVersion, event.key);
+                await keyStore.save(event.applicationVersion, event.key, selectedMachine.id);
                 result = true;
               } else if (event.operation === 'clear' && keyStore) {
-                await keyStore.clear();
+                await keyStore.clear(selectedMachine.id);
                 result = true;
               } else throw Error('Unsupported storage operation.');
             } catch {
@@ -112,8 +136,6 @@ function createCutterController({
     current.on('exit', ended);
   }
   async function command(name, options = {}) {
-    if (platform !== 'win32')
-      throw new Error('Direct Explore 5 connection currently requires Windows.');
     if (
       ![
         'connect',
@@ -127,7 +149,27 @@ function createCutterController({
       ].includes(name)
     )
       throw Error('Unsupported cutter command.');
+    if (name === 'disconnect' && pending?.name === 'connect') {
+      child.send({ type: 'cancel-connect' }, () => {});
+      await connectionDone;
+      return snapshot();
+    }
     if (pending || forgetting) throw Error('The cutter is busy. Wait for the current operation.');
+    if (name === 'connect') {
+      if (!['usb', 'ble'].includes(options.transport) || options.authorized !== true)
+        throw Error('Choose USB or Bluetooth and authorize remembering the cutter key.');
+      const machine = getMachine(options.machine ?? 'explore-5');
+      if (!machine.directConnect) throw Error(machine.unavailableReason);
+      if (!getProvider(machine).platforms.includes(platform))
+        throw Error('This cutter provider requires the Windows or macOS desktop app.');
+      if (!getProvider(machine).transports(machine, platform).includes(options.transport))
+        throw Error(
+          'Choose a supported connection type. macOS currently supports Explore 5 over Bluetooth LE.',
+        );
+      if (!['disconnected', 'error'].includes(state.status))
+        throw Error('Disconnect the current cutter before connecting another machine.');
+      selectedMachine = machine;
+    }
     if (state.status === 'cutting' && !['cancelCut', 'pauseCut', 'resumeCut'].includes(name))
       throw Error('The cutter job is active. Cancel it before another operation.');
     if (name === 'forgetKey') {
@@ -137,7 +179,8 @@ function createCutterController({
       forgetting = true;
       try {
         await storageWork;
-        await keyStore?.clear();
+        const machine = getMachine(options.machine ?? selectedMachine.id);
+        await keyStore?.clear(machine.id);
         publish({
           status: 'disconnected',
           encrypted: false,
@@ -154,7 +197,8 @@ function createCutterController({
     if (name === 'cutSheet') {
       if (state.status !== 'connected' || !state.encrypted || options.materialReady !== true)
         throw Error('Connect securely and confirm the printed sheet and fine-point blade first.');
-      prepareSheetJob(options.job, options.sheetIndex);
+      if (!selectedMachine.directCut) throw Error(selectedMachine.unavailableReason);
+      getProvider(selectedMachine).validateJob(options.job, options.sheetIndex, selectedMachine);
     }
     if (
       ['cancelCut', 'pauseCut', 'resumeCut'].includes(name) &&
@@ -178,7 +222,7 @@ function createCutterController({
     }
     start();
     const id = ++nextId;
-    return new Promise((resolve, reject) => {
+    const completion = new Promise((resolve, reject) => {
       const timer = setTimeout(
         () => {
           rejectPending(
@@ -204,6 +248,7 @@ function createCutterController({
           ...(name === 'connect'
             ? {
                 transport: options.transport,
+                machine: selectedMachine.id,
                 authorized: true,
                 ...(options.savedOnly === true ? { savedOnly: true } : {}),
               }
@@ -218,6 +263,8 @@ function createCutterController({
         },
       );
     });
+    if (name === 'connect') connectionDone = completion.then(snapshot, snapshot);
+    return completion;
   }
   function close() {
     if (!closing)
@@ -227,6 +274,7 @@ function createCutterController({
     return closing;
   }
   async function finishClose() {
+    if (pending?.name === 'connect') await command('disconnect');
     // Let an in-flight bounded operation finish before the ordinary disconnect.
     if (pending || forgetting) {
       await new Promise((resolve) => {
@@ -279,10 +327,13 @@ function createCutterController({
       });
     }
   }
-  async function keyStatus() {
-    if (platform !== 'win32' || forgetting) return { available: false };
+  async function keyStatus(machineId = 'explore-5') {
+    const machine = getMachine(machineId);
+    if (!machine.directConnect || forgetting) return { available: false };
+    const provider = getProvider(machine);
+    if (!provider.platforms.includes(platform)) return { available: false };
     try {
-      return { available: !!(await keyStore?.load('10.8.81')) };
+      return { available: !!(await keyStore?.load(provider.applicationVersion, machine.id)) };
     } catch {
       return { available: false };
     }

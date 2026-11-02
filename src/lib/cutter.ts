@@ -1,4 +1,8 @@
 export type CutterState = {
+  transports?: ('usb' | 'ble')[];
+  experimental?: boolean;
+  machine?: string;
+  provider?: string;
   status:
     'disconnected' | 'connecting' | 'connected' | 'homing' | 'cutting' | 'disconnecting' | 'error';
   encrypted: boolean;
@@ -31,7 +35,7 @@ export const DISCONNECTED_CUTTER: CutterState = {
   status: 'disconnected',
   encrypted: false,
   supported: false,
-  message: 'Open the Windows desktop app to connect a cutter.',
+  message: 'Open the desktop app to connect a cutter.',
   capabilities: {
     connect: false,
     home: false,

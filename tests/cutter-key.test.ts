@@ -10,6 +10,25 @@ const { createProtectedKeyStore } = require('../electron/cutter/protected-key.cj
 const { connectionKey, authenticateWithKey } = require('../electron/cutter/connection-key.cjs');
 const version = '10.8.81';
 
+test('model keys remain isolated across saving, reloading and forgetting', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'skarix-model-keys-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const store = createProtectedKeyStore({
+    directory: () => dir,
+    platform: 'win32',
+    safeStorage: encryption(),
+  });
+  await store.save(version, 'explore-key');
+  await store.save(version, 'maker-key', 'maker-5');
+  assert.equal(await store.load(version), 'explore-key');
+  assert.equal(await store.load(version, 'maker-5'), 'maker-key');
+  assert.equal(await store.load(version, 'joy-2'), null);
+  await store.clear('maker-5');
+  assert.equal(await store.load(version, 'maker-5'), null);
+  assert.equal(await store.load(version), 'explore-key');
+  await assert.rejects(store.save(version, 'key', '../escape'));
+});
+
 // Authenticated encryption fixture exercises persistence/corruption without using real credentials.
 function encryption() {
   const secret = randomBytes(32);
@@ -214,4 +233,21 @@ test('automatic saved-key connections never read the account session or fetch a 
     /Open Design Space/,
   );
   assert.equal(fetches, 0);
+});
+
+test('macOS protected storage supports saving, loading and deletion; Keychain denial never returns plaintext', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'skarix-mac-key-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const options = { directory: () => dir, platform: 'darwin', safeStorage: encryption() };
+  const store = createProtectedKeyStore(options);
+  await store.save(version, 'synthetic-mac-key');
+  assert.equal(await store.load(version), 'synthetic-mac-key');
+  const denied = createProtectedKeyStore({
+    ...options,
+    safeStorage: { ...options.safeStorage, isAsyncEncryptionAvailable: async () => false },
+  });
+  assert.equal(await denied.load(version), null);
+  await assert.rejects(denied.save(version, 'never-written'), /unavailable/);
+  await store.clear();
+  assert.equal(await store.load(version), null);
 });

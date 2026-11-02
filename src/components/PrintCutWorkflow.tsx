@@ -1,4 +1,4 @@
-import { MACHINE_NAMES, type Machine } from '../lib/machine-guides';
+import { MACHINE_NAMES, getMachine, type Machine } from '../lib/machine-guides';
 import { useEffect, useState } from 'react';
 import { Download, ExternalLink } from 'lucide-react';
 import CutterPanel from './CutterPanel';
@@ -67,7 +67,7 @@ export default function PrintCutWorkflow({
             {MACHINE_NAMES[machine]} · {count} {kind} · {paper === 'a4' ? 'A4' : 'US Letter'}
           </p>
         </header>
-        <CutSettingsControls value={cutSettings} onChange={onCutSettingsChange} />
+        <CutSettingsControls machine={machine} value={cutSettings} onChange={onCutSettingsChange} />
         <GeneratedPrintPanel input={generatedInput} active={active} />
       </div>
     );
@@ -85,7 +85,11 @@ export default function PrintCutWorkflow({
         <li>
           <h3>Prepare the matching print and cut layout</h3>
           {machine !== 'manual' && (
-            <CutSettingsControls value={cutSettings} onChange={onCutSettingsChange} />
+            <CutSettingsControls
+              machine={machine}
+              value={cutSettings}
+              onChange={onCutSettingsChange}
+            />
           )}
           <p>
             {generated
@@ -145,17 +149,17 @@ export default function PrintCutWorkflow({
         </li>
         <li>
           <h3>Connect and check cut readiness</h3>
-          <CutterPanel active={active} />
-          {machine !== 'explore-5' && (
+          <CutterPanel active={active} machine={machine} />
+          {!getMachine(machine).directConnect && (
             <p>
-              Direct connection is currently verified only for Explore 5. Use Design Space to
-              connect to your selected {MACHINE_NAMES[machine]}.
+              Direct connection is unavailable for this model. Use Design Space to connect to your
+              selected {MACHINE_NAMES[machine]}.
             </p>
           )}
           <div className="cut-handoff">
             <strong>
               {generated
-                ? 'Generated sheets need their matching prepared Skarix cut job. Direct control is available for Explore 5 on Windows.'
+                ? 'Generated sheets need their matching prepared Skarix cut job. Direct control depends on the selected machine and installed provider.'
                 : 'Registration scanning and cutting currently finish in Design Space.'}
             </strong>
             <p>

@@ -88,6 +88,7 @@
       "category": "public.app-category.graphics-design",
       "hardenedRuntime": true,
       "extendInfo": {
+        "NSBluetoothAlwaysUsageDescription": "Skarix uses Bluetooth to connect to your selected cutter, read its status, and send cutting jobs.",
         "NSDocumentsFolderUsageDescription": "Skarix accesses the project folders you choose."
       },
       "target": [

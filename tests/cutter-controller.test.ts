@@ -226,9 +226,9 @@ test('closing terminates a helper that ignores IPC disconnect after a bounded gr
   assert.equal(killed, true);
 });
 
-test('browser and non-Windows hosts cannot start the native worker', async () => {
+test('browser and unsupported hosts cannot start the native worker', async () => {
   const c = createCutterController({
-    platform: 'darwin',
+    platform: 'linux',
     forkProcess: () => assert.fail('must not start'),
   });
   assert.equal(c.snapshot().supported, false);
@@ -299,4 +299,64 @@ test('machine key retrieval refuses missing consent and uninspected builds befor
     getMachineKey('unknown', { authorized: true, fetchImpl, profile: 'missing' }),
     /inspected/,
   );
+});
+
+test('connection cancellation is forwarded without racing a second worker request', async () => {
+  const f = fixture();
+  const connect = f.controller.command('connect', { transport: 'ble', authorized: true });
+  const id = f.sent[0].id;
+  const cancel = f.controller.command('disconnect');
+  assert.deepEqual(f.sent[1], { type: 'cancel-connect' });
+  f.child.emit('message', {
+    type: 'reply',
+    id,
+    state: { status: 'disconnected', encrypted: false, message: 'Connection cancelled.' },
+  });
+  await connect;
+  assert.equal((await cancel).status, 'disconnected');
+});
+
+test('macOS Explore 5 BLE exposes experimental cutting and scopes saved keys to the model', async () => {
+  let child: any;
+  const sent: any[] = [];
+  const c = createCutterController({
+    platform: 'darwin',
+    keyStore: { load: async () => 'synthetic' },
+    forkProcess: () => {
+      child = new EventEmitter();
+      child.send = (m: any, callback: Function) => {
+        sent.push(m);
+        callback();
+      };
+      return child;
+    },
+  });
+  assert.equal(c.snapshot().supported, true);
+  assert.equal(c.snapshot().capabilities.cut, true);
+  assert.equal(c.snapshot().experimental, true);
+  assert.deepEqual(c.snapshot().transports, ['ble']);
+  assert.deepEqual(await c.keyStatus('explore-5'), { available: true });
+  const connect = c.command('connect', {
+    transport: 'ble',
+    authorized: true,
+    machine: 'explore-5',
+  });
+  child.emit('message', {
+    type: 'reply',
+    id: sent[0].id,
+    state: { status: 'connected', encrypted: true },
+  });
+  await connect;
+  const cut = c.command('cutSheet', {
+    job: JSON.stringify(require('./fixtures/sheet-job.cjs')()),
+    sheetIndex: 0,
+    materialReady: true,
+  });
+  assert.equal(sent.at(-1).command, 'cutSheet');
+  child.emit('message', {
+    type: 'reply',
+    id: sent.at(-1).id,
+    state: { status: 'cutting', encrypted: true },
+  });
+  await cut;
 });

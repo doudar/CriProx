@@ -2,7 +2,14 @@ const { getMachineKey } = require('./session-key.cjs');
 
 async function connectionKey(
   applicationVersion,
-  { authorized, store, fresh = false, savedOnly = false, fetchKey = getMachineKey } = {},
+  {
+    authorized,
+    store,
+    fresh = false,
+    savedOnly = false,
+    fetchKey = getMachineKey,
+    machine = 'explore-5',
+  } = {},
 ) {
   if (authorized !== true) throw Error('Authorize the cutter connection first.');
   if (applicationVersion !== '10.8.81')
@@ -15,7 +22,7 @@ async function connectionKey(
       'Open Design Space, sign in and connect your cutter, then close it and connect in Skarix.',
     );
   return {
-    key: saved || (await fetchKey(applicationVersion, { authorized })),
+    key: saved || (await fetchKey(applicationVersion, { authorized, machine })),
     cached: !!saved,
   };
 }
