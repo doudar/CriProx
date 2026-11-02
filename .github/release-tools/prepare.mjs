@@ -1,7 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { GitHub, Manifest } from 'release-please';
-import { api, assertReleaseTarget, git } from './lib.mjs';
+import { api, assertReleaseTarget, git, pinHistory } from './lib.mjs';
 
 const base = process.env.BASE_SHA;
 function savePrepared(metadata, notes) {
@@ -65,7 +65,7 @@ const github = await GitHub.create({
   token: process.env.GH_TOKEN,
   defaultBranch: 'main',
 });
-const manifest = await Manifest.fromManifest(github, base, undefined, undefined, {
+const manifest = await Manifest.fromManifest(pinHistory(github, base), base, undefined, undefined, {
   separatePullRequests: true,
 });
 const candidates = await manifest.buildPullRequests();

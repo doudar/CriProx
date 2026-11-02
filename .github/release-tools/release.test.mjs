@@ -7,7 +7,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { Manifest } from 'release-please';
-import { assertReleaseTarget, checksumInstallers, installerNames } from './lib.mjs';
+import { assertReleaseTarget, checksumInstallers, installerNames, pinHistory } from './lib.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const source = 'a'.repeat(40);
@@ -32,15 +32,26 @@ async function candidates(commits) {
       yield { tagName: `v${version}`, sha: previous, notes: 'Previous release' };
     },
     async *mergeCommitIterator(ref) {
-      assert.equal(ref, source, 'history must use the tested SHA');
+      assert.equal(ref, 'main', 'the GraphQL reader requires a branch name');
+      yield {
+        sha: 'c'.repeat(40),
+        message: 'feat!: newer untested change',
+        files: ['src/App.tsx'],
+      };
       yield* commits.map((commit) => ({ sha: source, ...commit }));
       yield { sha: previous, message: 'chore(main): previous release', files: [] };
     },
   };
-  const manifest = await Manifest.fromManifest(github, source, undefined, undefined, {
-    separatePullRequests: true,
-    logger: quiet,
-  });
+  const manifest = await Manifest.fromManifest(
+    pinHistory(github, source),
+    source,
+    undefined,
+    undefined,
+    {
+      separatePullRequests: true,
+      logger: quiet,
+    },
+  );
   return manifest.buildPullRequests();
 }
 

@@ -7,6 +7,21 @@ export function git(...args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
 }
 
+export function pinHistory(github, sha) {
+  // Release Please's GraphQL history reader requires a branch name, while its
+  // file reader accepts a SHA. Skip any newer commits so both use one snapshot.
+  const history = github.mergeCommitIterator.bind(github);
+  github.mergeCommitIterator = async function* (_ref, options) {
+    let reachedSource = false;
+    for await (const commit of history('main', options)) {
+      if (commit.sha === sha) reachedSource = true;
+      if (reachedSource) yield commit;
+    }
+    if (!reachedSource) throw new Error('Tested source revision was not found in main history.');
+  };
+  return github;
+}
+
 export async function api(route, options = {}) {
   const response = await fetch(
     `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/${route}`,
