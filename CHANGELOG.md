@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.18.0](https://github.com/doudar/Skarix/compare/v0.17.1...v0.18.0) (2026-11-02)
+
+
+### Features
+
+* choose Cricut models and cut with Explore 5 on macOS ([54cf588](https://github.com/doudar/Skarix/commit/54cf588a9407461317fca999c430a1046a5a96bd))
+* make Skarix an open source cutting studio ([fc43996](https://github.com/doudar/Skarix/commit/fc4399642e97ce1e687f6abee55246f299dc126f))
+* make Skarix an open source cutting studio ([4d413b2](https://github.com/doudar/Skarix/commit/4d413b2ee8821bd5ef1ef74b92b5f37e4c6b1081))
+
+
+### Bug Fixes
+
+* await cutter helper shutdown before quitting ([454315d](https://github.com/doudar/Skarix/commit/454315d5ce6b32a0546321c4b9b1bf3d1d1ca3f3))
+* **ci:** read release history from the tested main revision ([7c2ae15](https://github.com/doudar/Skarix/commit/7c2ae15e3d25a30c864051b98c67635d1b17f838))
+* finish AI service cleanup before the app exits ([8270610](https://github.com/doudar/Skarix/commit/8270610645c1567069afe66c3eb994beda4fc6cc))
+* finish background service cleanup before the app exits ([3edf6ba](https://github.com/doudar/Skarix/commit/3edf6babd20fa2ef53b375d819b0ce4a75eae7f8))
+* load the cutter catalog in development ([2a30440](https://github.com/doudar/Skarix/commit/2a304406207a7e62ba8213c1c341519821379269))
+* recover autosaved card drafts and preserve customized starters ([dd103c2](https://github.com/doudar/Skarix/commit/dd103c23c5e20aad4bab53fbce8f8888b81b5d42))
+* recover autosaved card drafts and preserve customized starters ([79297fd](https://github.com/doudar/Skarix/commit/79297fdc3799c116507c32e940f38fee3c3585e0))
+* **release:** make Linux installers available to the app updater ([5cd11ef](https://github.com/doudar/Skarix/commit/5cd11ef5e5f3f111830c3055e00f6eaf5ab4fe07))
+
 ## [0.17.1](https://github.com/doudar/CriProx/compare/v0.17.0...v0.17.1) (2026-11-01)
 
 
