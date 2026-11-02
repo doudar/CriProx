@@ -3,8 +3,8 @@
 ## Living documentation
 
 For user-visible features, update `docs/FEATURES.md` and the relevant installation or print workflow
-guide in the same change. If a feature deserves a homepage summary, update the `Why CriProx?` table
-in `README.md`; the website reads that table directly. Keep the `From card list to cut` numbered
+guide in the same change. If a feature deserves a homepage summary, update the `Why Skarix?` table
+in `README.md`; the website reads that table directly. Keep the `From artwork to cut` numbered
 workflow and app screenshot current when the workflow or interface changes.
 
 The website lives in `site/` and publishes existing Markdown guides. Do not add a second copy of

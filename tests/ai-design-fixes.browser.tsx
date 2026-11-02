@@ -1,10 +1,11 @@
 import { createRoot } from 'react-dom/client';
-import { set } from 'idb-keyval';
+import { set, del } from 'idb-keyval';
+import { projectFromDefaults, FACTORY_PROJECT_DEFAULTS } from '../src/lib/project-defaults';
 import App from '../src/App';
 import { invokeAiDesign, registerAiWorkspace, previewAiProject } from '../src/lib/ai-design';
 import { newStickerProject, appendSticker, stickerSheets } from '../src/lib/stickers';
 import { renderStickerSheet, bytesToBase64 } from '../src/lib/sticker-output';
-import { DEFAULT_SETTINGS } from '../src/lib/types';
+
 import {
   rememberRecentProject,
   listRecentProjects,
@@ -92,57 +93,6 @@ export async function run() {
     );
   }
 
-  let cards: any = {
-    version: 1,
-    name: 'Catalog',
-    entries: [
-      {
-        id: 'catalog',
-        quantity: 1,
-        face: 0,
-        card: {
-          id: 'catalog',
-          name: 'Catalog',
-          set: 'test',
-          setName: 'Test',
-          collector: '1',
-          faces: [
-            {
-              name: 'Catalog',
-              image: 'https://cards.scryfall.io/normal/front/test.png',
-              preview: 'https://cards.scryfall.io/normal/front/test.png',
-            },
-          ],
-        },
-      },
-    ],
-    settings: structuredClone(DEFAULT_SETTINGS),
-  };
-  const stopCards = registerAiWorkspace('cards', {
-    read: () => cards,
-    write: (n) => (cards = n),
-    open: () => {},
-    busy: () => false,
-    undo: () => {},
-    redo: () => {},
-  });
-  await invokeAiDesign('edit_design', {
-    workspace: 'cards',
-    designId: 'catalog',
-    operations: [{ action: 'add', element: { kind: 'text', text: 'Edited catalog card' } }],
-  });
-  check(
-    cards.entries[0].card.faces[0].design.elements[0].image.startsWith('data:image/png;base64,'),
-    'Catalog artwork not embedded',
-  );
-  check(
-    cards.entries[0].card.faces[0].design.elements.some(
-      (e: any) => e.text === 'Edited catalog card',
-    ),
-    'Catalog edit missing',
-  );
-  stopCards();
-
   let busy = false,
     writes = 0,
     current = p;
@@ -187,10 +137,7 @@ export async function run() {
   // Creating and loading both replace the workspace, but must not reuse the prior recent ID.
   await invokeAiDesign('create_project', { workspace: 'stickers', name: 'AI new' });
   await tick();
-  check(
-    !JSON.parse(localStorage.getItem('criprox-recent-active')!).stickers,
-    'New project retained old recent ID',
-  );
+
   check(
     (await readRecentProject(original)).name === 'Original',
     'Original cached project was replaced',
@@ -200,19 +147,13 @@ export async function run() {
   const replacement = { ...structuredClone(p), name: 'AI loaded' };
   await invokeAiDesign('load_project', { workspace: 'stickers', project: replacement });
   await tick();
-  check(
-    !JSON.parse(localStorage.getItem('criprox-recent-active')!).stickers,
-    'Loaded project retained prior recent ID',
-  );
+
   const recents = await listRecentProjects();
   check(
     recents.some((r) => r.name === 'AI new') && recents.some((r) => r.name === 'Original'),
     'Replacement did not preserve separate prior snapshots',
   );
-  const select = document.querySelector('select[aria-label="Workspace"]') as HTMLSelectElement;
-  check(select, 'Workspace selector missing');
-  select.value = 'home';
-  select.dispatchEvent(new Event('change', { bubbles: true }));
+  (document.querySelector('button[aria-label="Skarix Home"]') as HTMLButtonElement).click();
   await until(async () => (await listRecentProjects()).some((r) => r.name === 'AI loaded'));
   const final = await listRecentProjects();
   check(
@@ -223,5 +164,47 @@ export async function run() {
   );
   check((await readRecentProject(original)).name === 'Original', 'Home save overwrote original');
   root.unmount();
-  return 'PASS: catalog artwork becomes editable, preview pixels match shared output with borders/cropping/transforms, late edits preserve the active designer, and real App create/load/Home keeps three separate recent projects.';
+  await tick();
+  await del('criprox-sticker-draft-v1');
+  const freshRoot = createRoot(document.getElementById('root')!);
+  freshRoot.render(<App />);
+  await until(
+    async () =>
+      (await invokeAiDesign('get_workspace', { workspace: 'stickers' })).name === 'Meet Skarix',
+  );
+  const starter = await invokeAiDesign('export_project', { workspace: 'stickers' });
+  check(
+    starter.project.items.length === 1 && starter.project.artwork[0].design.elements.length === 4,
+    'Editable starter missing',
+  );
+  check(
+    !document.body.textContent?.includes('Proxy Card Builder'),
+    'Gaming workspace still exposed',
+  );
+  freshRoot.unmount();
+  await tick();
+  const blank = { ...newStickerProject(), name: 'Intentionally blank' };
+  await set('criprox-sticker-draft-v1', blank);
+  const blankRoot = createRoot(document.getElementById('root')!);
+  blankRoot.render(<App />);
+  await until(
+    async () =>
+      (await invokeAiDesign('get_workspace', { workspace: 'stickers' })).name === blank.name,
+  );
+  check(
+    (await invokeAiDesign('export_project', { workspace: 'stickers' })).project.artwork.length ===
+      0,
+    'Starter overwrote blank draft',
+  );
+  blankRoot.unmount();
+  await tick();
+  const legacy = { ...projectFromDefaults(FACTORY_PROJECT_DEFAULTS), name: 'Preserved legacy' };
+  await rememberRecentProject(legacy, 'cards', 'legacy-sentinel');
+  for (let i = 0; i < 10; i++)
+    await rememberRecentProject({ ...p, name: 'Recent ' + i }, 'stickers');
+  check(
+    JSON.stringify(await readRecentProject('legacy-sentinel')) === JSON.stringify(legacy),
+    'Legacy project evicted or changed',
+  );
+  return 'PASS: fresh starter, existing and blank drafts, preserved legacy snapshots, preview pixels match shared output with borders/cropping/transforms, late edits preserve the active designer, and real App create/load/Home keeps three separate recent projects.';
 }

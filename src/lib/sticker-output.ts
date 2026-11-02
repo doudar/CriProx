@@ -180,7 +180,7 @@ export async function buildStickerPdf(
 ) {
   if (project.artwork.some((a) => hasCustomCuts(a.design)))
     throw Error(
-      'Custom cut paths need Prepare print sheets and the matching CriProx cut job. A captured template has different cuts.',
+      'Custom cut paths need Prepare print sheets and the matching Skarix cut job. A captured template has different cuts.',
     );
   if (project.poses)
     throw new Error(
@@ -232,7 +232,7 @@ export async function buildStickerHandoff(
 ) {
   if (project.artwork.some((a) => hasCustomCuts(a.design)))
     throw Error(
-      'Use Prepare print sheets for custom cut paths. Design Space image import does not preserve separate CriProx blade paths.',
+      'Use Prepare print sheets for custom cut paths. Design Space image import does not preserve separate Skarix blade paths.',
     );
   const sheets = stickerSheets(project).filter((s) => s.placements.length),
     zip = new JSZip();
@@ -296,7 +296,7 @@ export async function buildStickerHandoff(
   zip.file(
     'READ-ME.txt',
     `Requested cut settings: ${cutSettingsSummary(project.settings)}. Set these in Design Space for the chosen material; they are not applied automatically.\n\n` +
-      `${MACHINE_NAMES[project.machine]} sticker sheets\n\n${dimensions}\nLayout frame: ${project.poses ? project.settings.areaWidth : full.width} x ${project.poses ? project.settings.areaHeight : full.height} mm.\n\nUpload each PNG as a Flat Graphic / Print Then Cut image in Design Space. Set its occupied artwork dimensions above; check the cut contours. White backgrounds are intentional. PNG transparency supplies rounded rectangle cuts, not an outline traced around the artwork. The SVG is a reference only; do not enable both PNG contours and SVG cuts.\n\nSelect ${MACHINE_NAMES[project.machine]} and the correct paper. Design Space decides whether the arrangement fits; reduce the layout limits or sticker count if it does not, without rescaling finished stickers. Print and cut from the same Design Space job. Design Space supplies the sensor marks and directional arrow. Follow Design Space for mat placement. On Explore 5, place A4 landscape on the mat, arrow at upper left pointing up. Select material and pressure in Design Space, load the mat and press Go.\n\nFor reusable captured PDFs use CriProx's separate setup PNG, capture with bleed OFF, and keep that exact saved full-template job. Partial registered pages still use the full template and cut blank slots. Captured PDF reuse is experimental; physical registration scanning and cut alignment have not been validated.\n\nCriProx can connect to Explore 5 in the Windows desktop app and run a blade-free homing test. Registration scanning, cutting, pause, and cancel still use Design Space. Disconnect CriProx before opening Design Space.\n`,
+      `${MACHINE_NAMES[project.machine]} sticker sheets\n\n${dimensions}\nLayout frame: ${project.poses ? project.settings.areaWidth : full.width} x ${project.poses ? project.settings.areaHeight : full.height} mm.\n\nUpload each PNG as a Flat Graphic / Print Then Cut image in Design Space. Set its occupied artwork dimensions above; check the cut contours. White backgrounds are intentional. PNG transparency supplies rounded rectangle cuts, not an outline traced around the artwork. The SVG is a reference only; do not enable both PNG contours and SVG cuts.\n\nSelect ${MACHINE_NAMES[project.machine]} and the correct paper. Design Space decides whether the arrangement fits; reduce the layout limits or sticker count if it does not, without rescaling finished stickers. Print and cut from the same Design Space job. Design Space supplies the sensor marks and directional arrow. Follow Design Space for mat placement. On Explore 5, place A4 landscape on the mat, arrow at upper left pointing up. Select material and pressure in Design Space, load the mat and press Go.\n\nFor reusable captured PDFs use Skarix's separate setup PNG, capture with bleed OFF, and keep that exact saved full-template job. Partial registered pages still use the full template and cut blank slots. Captured PDF reuse is experimental; physical registration scanning and cut alignment have not been validated.\n\nSkarix can connect to Explore 5 in the Windows desktop app and run a blade-free homing test. Registration scanning, cutting, pause, and cancel still use Design Space. Disconnect Skarix before opening Design Space.\n`,
   );
   return zip.generateAsync({ type: 'uint8array' });
 }

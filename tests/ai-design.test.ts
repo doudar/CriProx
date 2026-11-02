@@ -5,12 +5,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
-import {
-  applyDesignOperations,
-  heroDesign,
-  invokeAiDesign,
-  registerAiWorkspace,
-} from '../src/lib/ai-design';
+import { applyDesignOperations, invokeAiDesign, registerAiWorkspace } from '../src/lib/ai-design';
 import { newDesign, newElement, designSvg, validateStickerDesign } from '../src/lib/sticker-design';
 import {
   newStickerProject,
@@ -18,8 +13,7 @@ import {
   validateStickerProject,
   type StickerProject,
 } from '../src/lib/stickers';
-import { validateProject } from '../src/lib/project';
-import { DEFAULT_SETTINGS } from '../src/lib/types';
+
 const require = createRequire(import.meta.url);
 const { DESIGN_TOOLS, designTool } = require('../electron/ai-tools.cjs');
 const { createAiServer } = require('../electron/ai-server.cjs');
@@ -37,7 +31,7 @@ test('AI catalogue has no printer/cutter/IPC execution tools and rejects unknown
     'ai-design-start',
   ])
     assert.throws(() => designTool(name), /Unknown design tool/);
-  assert.equal(DESIGN_TOOLS.length, 18);
+  assert.equal(DESIGN_TOOLS.length, 15);
   assert.throws(() =>
     designTool('update_project_settings').schema.parse({
       workspace: 'cards',
@@ -102,44 +96,7 @@ test('AI layer batches are atomic and preserve normalized filled paths, transfor
     /IDs/,
   );
 });
-test('detailed original hero cards retain editable layers through project validation', () => {
-  const d = heroDesign(63, 88, {
-    title: 'Mira, Keeper of Dawn',
-    subtitle: 'Original hero · Ranger',
-    rules: 'Dawncall — Restore 2 health.\nTrailblazer — Draw one card.',
-    stats: 'Health 24 · Power 4',
-  });
-  assert.equal(d.elements.filter((e) => e.kind === 'text').length, 4);
-  const p = validateProject({
-    version: 1,
-    name: 'Original heroes',
-    settings: structuredClone(DEFAULT_SETTINGS),
-    entries: [
-      {
-        id: 'hero',
-        quantity: 1,
-        face: 0,
-        card: {
-          id: 'hero',
-          name: 'Mira',
-          set: 'custom',
-          setName: 'Custom designs',
-          collector: '',
-          faces: [
-            {
-              name: 'Mira',
-              image: 'data:image/png;base64,AA==',
-              preview: 'data:image/png;base64,AA==',
-              design: d,
-            },
-          ],
-        },
-      },
-    ],
-  });
-  assert.equal(p.entries[0].card.faces[0].design?.elements.length, d.elements.length);
-  assert.match(designSvg(d), /Mira, Keeper of Dawn/);
-});
+
 test('complex illustrations are bounded by both layer and path-point limits', () => {
   const d = newDesign(80, 60);
   d.elements = Array.from({ length: 500 }, (_, i) => ({
@@ -213,7 +170,7 @@ test('local MCP requires authorization and rejects browser origins, bad hosts an
   try {
     await service.start(1);
     const c = JSON.parse(await readFile(file, 'utf8'));
-    const configuration = service.configuration('C:/CriProx.exe', 'C:/resources/ai-stdio.cjs');
+    const configuration = service.configuration('C:/Skarix.exe', 'C:/resources/ai-stdio.cjs');
     assert.equal(configuration.mcpServers.criprox.env.ELECTRON_RUN_AS_NODE, '1');
     assert.equal(configuration.mcpServers.criprox.args[0], 'C:/resources/ai-stdio.cjs');
     assert(
@@ -262,7 +219,7 @@ test('local MCP requires authorization and rejects browser origins, bad hosts an
     const initialized = await (await post(init)).json();
     assert.equal(initialized.result.serverInfo.name, 'criprox-design');
     const list = await (await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' })).json();
-    assert.equal(list.result.tools.length, 18);
+    assert.equal(list.result.tools.length, 15);
     const blocked = await (
       await post({
         jsonrpc: '2.0',
@@ -299,7 +256,7 @@ test('another app instance cannot replace or remove an active design connection'
   try {
     await first.start(1);
     const original = await readFile(file, 'utf8');
-    await assert.rejects(second.start(2), /Another CriProx/);
+    await assert.rejects(second.start(2), /Another Skarix/);
     await second.stop();
     assert.equal(await readFile(file, 'utf8'), original);
     assert.equal(first.status().running, true);
@@ -323,7 +280,7 @@ test('desktop MCP access starts off and client configuration is restricted to th
     clipboard: { writeText: (value: string) => (copied = value) },
     app: {
       getVersion: () => '1.0.0',
-      getPath: (name: string) => (name === 'exe' ? 'C:/CriProx.exe' : directory),
+      getPath: (name: string) => (name === 'exe' ? 'C:/Skarix.exe' : directory),
       isPackaged: false,
     },
     checkSender: (value: any) => {

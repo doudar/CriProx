@@ -1,29 +1,17 @@
-const { app, BrowserWindow, session } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const { buildSync } = require('esbuild');
 const fs = require('node:fs/promises'),
   path = require('node:path'),
   os = require('node:os');
-const { createCanvas } = require('@napi-rs/canvas');
+
 let dir,
   win,
   exitCode = 0;
 app.on('window-all-closed', () => {});
 (async () => {
-  dir = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-fixes-'));
+  dir = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-studio-'));
   app.setPath('userData', path.join(dir, 'profile'));
   await app.whenReady();
-  const c = createCanvas(120, 60),
-    ctx = c.getContext('2d');
-  ctx.fillStyle = 'blue';
-  ctx.fillRect(0, 0, 120, 60);
-  const png = c.toBuffer('image/png');
-  session.defaultSession.protocol.handle('https', (request) => {
-    if (request.url === 'https://cards.scryfall.io/normal/front/test.png')
-      return new Response(png, {
-        headers: { 'Content-Type': 'image/png', 'Access-Control-Allow-Origin': '*' },
-      });
-    return new Response('Unexpected test network request', { status: 403 });
-  });
   const bundle = buildSync({
     entryPoints: ['tests/ai-design-fixes.browser.tsx'],
     bundle: true,

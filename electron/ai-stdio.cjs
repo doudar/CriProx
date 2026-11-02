@@ -14,7 +14,7 @@ function validateConnection(value) {
     url.hash ||
     !/^[a-f0-9]{64}$/.test(value?.token)
   )
-    throw Error('Invalid local CriProx connection.');
+    throw Error('Invalid local Skarix connection.');
   return value;
 }
 async function relay({
@@ -23,7 +23,7 @@ async function relay({
   output = process.stdout,
   fetchImpl = fetch,
 }) {
-  if (!connectionFile) throw Error('Provide --connection-file from CriProx Settings → AI design.');
+  if (!connectionFile) throw Error('Provide --connection-file from Skarix Settings → AI design.');
   const connection = validateConnection(JSON.parse(await fs.readFile(connectionFile, 'utf8')));
   input.setEncoding('utf8');
   let buffer = '',
@@ -68,7 +68,7 @@ async function relay({
                     error: {
                       code: -32000,
                       message:
-                        'The local design server rejected the request. Restart AI design access in CriProx.',
+                        'The local design server rejected the request. Restart AI design access in Skarix.',
                     },
                   },
             );
@@ -82,7 +82,7 @@ async function relay({
               code: -32000,
               message:
                 error.message === 'fetch failed'
-                  ? 'Open CriProx and start AI design access in Settings.'
+                  ? 'Open Skarix and start AI design access in Settings.'
                   : error.message,
             },
           });

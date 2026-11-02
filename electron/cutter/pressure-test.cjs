@@ -148,10 +148,10 @@ async function startPressureTest({
     WaitingForMaterialMeasurement: 'Mat loaded. Preparing to measure it…',
     WaitingForPlotStart: autoStart
       ? 'Mat measured. Starting registration scan and cut…'
-      : 'Mat measured. Choose Cut test square in CriProx to start the cut.',
+      : 'Mat measured. Choose Cut test square in Skarix to start the cut.',
     MaterialMeasurementStarted: 'Measuring the loaded mat…',
     PlotStarted: `Cutting: ${resolved.pressureGrams} g, ${resolved.passes} pass(es)…`,
-    PlotPaused: 'Paused. Choose Resume or Cancel in CriProx.',
+    PlotPaused: 'Paused. Choose Resume or Cancel in Skarix.',
     WaitingForMaterialUnload: 'Unload the mat using the cutter’s button.',
     WaitingForUserAction: 'The cutter needs attention. Check the blade and machine indicators.',
   };
@@ -192,7 +192,7 @@ async function startPressureTest({
       if (E[name] && event instanceof E[name]) {
         paused = true;
         onPhase('paused');
-        onUpdate('Paused. Choose Resume or Cancel in CriProx.');
+        onUpdate('Paused. Choose Resume or Cancel in Skarix.');
       }
     }
     for (const name of [

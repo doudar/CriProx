@@ -145,7 +145,7 @@ function parseProjectData(data) {
     project.name.length > 100 ||
     !Array.isArray(project.entries)
   )
-    throw new Error('This is not a supported CriProx project.');
+    throw new Error('This is not a supported Skarix project.');
   return project;
 }
 

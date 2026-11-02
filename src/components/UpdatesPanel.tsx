@@ -76,7 +76,7 @@ export default function UpdatesPanel({
       <div className="settings-page-heading">
         <div>
           <h3>Updates</h3>
-          <p>You’re using CriProx {state.currentVersion}.</p>
+          <p>You’re using Skarix {state.currentVersion}.</p>
         </div>
         <button
           className="secondary compact"
@@ -94,7 +94,7 @@ export default function UpdatesPanel({
       <p className="hint">
         {state.lastChecked
           ? `Last checked ${new Date(state.lastChecked).toLocaleString()}.`
-          : 'Checks for stable releases when CriProx starts.'}
+          : 'Checks for stable releases when Skarix starts.'}
       </p>
       <div role="status" aria-live="polite">
         {state.status === 'up-to-date' && <p>You’re up to date.</p>}
@@ -115,7 +115,7 @@ export default function UpdatesPanel({
       {update && (
         <>
           <div className="update-release-summary">
-            <h4>CriProx {update.latestVersion} is available</h4>
+            <h4>Skarix {update.latestVersion} is available</h4>
             {update.installerName && (
               <p>
                 {update.installerName} · {megabytes(update.downloadSize || 0)}
@@ -177,15 +177,15 @@ export default function UpdatesPanel({
           </div>
           {state.status === 'ready' && !state.simulation && (
             <p className="hint">
-              Your workspace will be saved and CriProx will close to install the update.
+              Your workspace will be saved and Skarix will close to install the update.
             </p>
           )}
           {platform === 'darwin' && (
             <section className="update-mac-help" aria-label="macOS unblock command">
               <h4>If macOS blocks the updated app</h4>
-              <p>After replacing CriProx in Applications, paste this command in Terminal.</p>
+              <p>After replacing Skarix in Applications, paste this command in Terminal.</p>
               <pre>
-                <code>xattr -dr com.apple.quarantine "/Applications/CriProx.app"</code>
+                <code>xattr -dr com.apple.quarantine "/Applications/Skarix.app"</code>
               </pre>
               <div className="app-settings-actions">
                 <button
@@ -224,7 +224,7 @@ export default function UpdatesPanel({
             <article
               key={release.version}
               className="update-changelog"
-              aria-label={`CriProx ${release.version}`}
+              aria-label={`Skarix ${release.version}`}
             >
               <div className="update-release-meta">
                 <span className="update-version">{release.version}</span>
@@ -245,7 +245,7 @@ export default function UpdatesPanel({
               </div>
               <div className="update-release-body">
                 <h4 className="update-release-heading">
-                  {release.releaseHeading || `CriProx ${release.version}`}
+                  {release.releaseHeading || `Skarix ${release.version}`}
                 </h4>
                 <div
                   onClick={(event) => {

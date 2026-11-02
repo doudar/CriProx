@@ -33,7 +33,7 @@ function printHtml(settings) {
   const s = printSettings(settings);
   return `<!doctype html><html><head><meta charset="utf-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'">
-    <title>CriProx print sheets</title><style>
+    <title>Skarix print sheets</title><style>
     @page { size: ${s.widthMm}mm ${s.heightMm}mm; margin: 0; }
     * { box-sizing: border-box; } html, body { margin: 0; padding: 0; }
     img { display: block; width: ${s.widthMm}mm; height: ${s.heightMm}mm;

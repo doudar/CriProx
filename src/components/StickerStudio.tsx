@@ -1,3 +1,4 @@
+import { createStarterProject } from '../lib/starter-project';
 import { designOutputBounds } from '../lib/sticker-contours';
 import { createPortal } from 'react-dom';
 import { useWorkspaceHistory } from '../lib/use-workspace-history';
@@ -110,6 +111,7 @@ export default function StickerStudio({
   onDraft,
   onRemember,
   onAiOpen,
+  onBusyChange,
 }: {
   open: boolean;
   printRequest: number;
@@ -119,6 +121,7 @@ export default function StickerStudio({
   onDraft?: (project: StickerProject) => void;
   onRemember?: (project: StickerProject, fresh?: boolean | string) => Promise<void>;
   onAiOpen?: (fresh?: boolean) => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const clipboard = useRef<StickerClipboard | undefined>(undefined);
   const designClipboard = useRef<StickerArtwork | undefined>(undefined);
@@ -157,6 +160,9 @@ export default function StickerStudio({
     [saved, setSaved] = useState('Opening local draft…'),
     [view, setView] = useState<'edit' | 'print'>('edit'),
     [zoom, setZoom] = useState(100);
+  useEffect(() => {
+    onBusyChange?.(!loaded || !!busy || !!designer);
+  }, [loaded, busy, designer, onBusyChange]);
   const layoutTask = useRef<AbortController | undefined>(undefined);
   useAiWorkspace('stickers', {
     read: () => project,
@@ -331,7 +337,8 @@ export default function StickerStudio({
     let active = true;
     void (async () => {
       try {
-        const stored = await get<StickerProject>(draftKey);
+        const savedDraft = await get<StickerProject>(draftKey);
+        const stored = savedDraft === undefined ? await createStarterProject() : savedDraft;
         if (stored && active) {
           const next = validateStickerProject(stored);
           lastPersisted.current = next;
@@ -517,7 +524,7 @@ export default function StickerStudio({
     const data = JSON.stringify(validateStickerProject(project));
     if (new TextEncoder().encode(data).byteLength > MAX_STICKER_FILE_BYTES)
       throw new Error('Sticker project exceeds 90 MB.');
-    const name = `${filenameStem(project.name, 'stickers')}.stickers.criprox.json`;
+    const name = `${filenameStem(project.name, 'stickers')}.skarix.json`;
     if (window.criprox?.saveProject) {
       const result = await window.criprox.saveProject(name, data);
       setMessage(

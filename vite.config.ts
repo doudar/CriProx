@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { buildSync } from 'esbuild';
+import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
@@ -12,7 +14,37 @@ const packageVersion = JSON.parse(
 ).version;
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'shared-commonjs-development',
+      apply: 'serve',
+      transform(_code, id) {
+        if (
+          !/\/electron\/(?:ai-tools|cutter\/(?:materials|geometry))\.cjs$/.test(
+            id.replaceAll('\\\\', '/'),
+          )
+        )
+          return;
+        const names = Object.keys(createRequire(import.meta.url)(id));
+        const source =
+          'import shared from ' +
+          JSON.stringify(id) +
+          ';' +
+          names.map((name) => 'export const ' + name + ' = shared.' + name + ';').join('');
+        return {
+          code: buildSync({
+            stdin: { contents: source, resolveDir: path.dirname(id) },
+            bundle: true,
+            platform: 'browser',
+            format: 'esm',
+            write: false,
+          }).outputFiles[0].text,
+          map: null,
+        };
+      },
+    },
+  ],
   base: './',
   define: {
     __APP_VERSION__: JSON.stringify(packageVersion),

@@ -58,9 +58,9 @@ export default function GeneratedPrintPanel({
   }
   return (
     <section className="generated-print-panel">
-      <h3>Print with CriProx registration marks</h3>
+      <h3>Print with Skarix registration marks</h3>
       <p>
-        CriProx generates all four black corner marks and the directional arrow, then prints them
+        Skarix generates all four black corner marks and the directional arrow, then prints them
         with your artwork. No Design Space capture is needed.
       </p>
       <button className="primary" disabled={!!busy} onClick={() => void prepare()}>

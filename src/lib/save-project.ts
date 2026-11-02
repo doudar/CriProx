@@ -29,7 +29,7 @@ export async function saveProjectAs(project: Project): Promise<boolean> {
         suggestedName: defaultName,
         types: [
           {
-            description: 'CriProx project',
+            description: 'Skarix project',
             accept: { 'application/json': ['.criprox.json'] },
           },
         ],

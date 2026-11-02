@@ -84,7 +84,10 @@ export function rememberRecentProject(
       };
       const previous = await listRecentProjects(),
         ordered = [entry, ...previous.filter((p) => p.id !== id)];
-      const keep = pruneRecentProjects(ordered);
+      const keep = [
+        ...pruneRecentProjects(ordered.filter((p) => p.workspace !== 'cards')),
+        ...ordered.filter((p) => p.workspace === 'cards'),
+      ];
       await set(key(id), snapshot);
       await set(INDEX, keep);
       await Promise.all(

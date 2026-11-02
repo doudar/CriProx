@@ -359,7 +359,7 @@ function MaterialManager({
         <span>{profiles.length} profiles</span>
       </div>
       <p className="material-manager-help">
-        Import every cached cutting material from Design Space. Edits stay in CriProx; refresh keeps
+        Import every cached cutting material from Design Space. Edits stay in Skarix; refresh keeps
         your changes. Other machines and blades are labeled.
       </p>
       <div className="material-manager-body">

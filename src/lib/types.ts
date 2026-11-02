@@ -57,6 +57,7 @@ export type Settings = CutSettings & {
   manualGuideLengthMm: number;
   manualGuidePageStyle: 'none' | 'edge' | 'full';
   dpi: PrintDpi;
+  /** Legacy storage field retained for older projects; enhancement handles general artwork. */
   upscaleScryfall: boolean;
   upscaleBackend: 'built-in' | 'upscayl';
   proxyLabel: boolean;

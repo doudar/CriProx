@@ -238,7 +238,7 @@ export default function SettingsModal({
           </div>
           <div className="settings-library-location">
             <div>
-              <strong>{snapshot?.isDefault ? 'CriProx projects' : 'Custom projects folder'}</strong>
+              <strong>{snapshot?.isDefault ? 'Skarix projects' : 'Custom projects folder'}</strong>
               <span title={snapshot?.root}>
                 {snapshot?.root || 'Finding your projects folder…'}
               </span>

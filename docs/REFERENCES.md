@@ -1,35 +1,11 @@
-# References, services, and credits
+# References and credits
 
-CriProx combines local layout and export code with documented handoffs to third-party tools and optional artwork services. These links are provided for workflow verification and attribution; their availability and terms are controlled by their respective owners.
+Skarix is based on [CriProx](https://github.com/Go2Engle/CriProx), created by [Chris Engle (Go2Engle)](https://github.com/Go2Engle) and its original contributors.
 
-## Cricut documentation
+Original copyright and license notices remain in [NOTICE](../NOTICE), [LICENSE](../LICENSE) and [THIRD_PARTY_LICENSES.txt](../THIRD_PARTY_LICENSES.txt).
 
-Workflow references checked September 9, 2026:
+The Skarix mark and starter are original project artwork. Dependencies include React, Electron, TypeScript, PDF.js, pdf-lib, JSZip, Lucide and the official MCP SDK. Reusable enhancement modules retain their third-party notices.
 
-- [How to Print Then Cut in Design Space](https://help.cricut.com/hc/en-us/articles/360009387274-How-to-Print-Then-Cut-in-Design-Space)
-- [Print Then Cut usable-area guidance](https://help.cricut.com/hc/en-us/articles/360009429814-How-large-can-I-Print-Then-Cut)
-- [Unsupported SVG upload items](https://help.cricut.com/hc/en-us/articles/360009553213-Image-uploads-unsupported-items)
-- [Print Then Cut calibration](https://help.cricut.com/hc/en-us/articles/360009424974-Calibrating-your-machine-for-Print-Then-Cut)
+External workflow references: [Print Then Cut](https://help.cricut.com/hc/en-us/articles/360009387274-How-to-Print-Then-Cut-in-Design-Space), [area limits](https://help.cricut.com/hc/en-us/articles/360009429814-How-large-can-I-Print-Then-Cut), and [calibration](https://help.cricut.com/hc/en-us/articles/360009424974-Calibrating-your-machine-for-Print-Then-Cut).
 
-Cricut recommends completing printing and cutting in the same Design Space session. Its available Print Then Cut area varies with the machine, paper size, and image shape; CriProx's dashed rectangle is therefore a planning guide, not a firmware model or certified cuttable-area outline.
-
-CriProx's reusable registered-PDF workflow uses Design Space during one-time template capture
-and for the saved cut job. Finished card-sheet PDFs are printed from a dedicated PDF application
-at **100% / Actual size**. This differs from Cricut's recommended print flow and requires the
-measured tests in the [Cricut workflow guide](CRICUT-WORKFLOW.md).
-
-## Artwork and card data
-
-- [Scryfall](https://scryfall.com/) supplies card metadata and hosted image references. CriProx follows the [Scryfall API traffic requirements](https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17).
-- [MTGJSON](https://mtgjson.com/) supplies the [preconstructed deck catalog](https://mtgjson.com/data-models/deck-list/) and [deck contents](https://mtgjson.com/data-models/deck/) used for Commander precon browsing. Exact printings are resolved through their Scryfall identifiers.
-- Optional local image enhancement uses [UpscalerJS](https://upscalerjs.com/) and its ESRGAN Thick model (MIT), with [TensorFlow.js](https://www.tensorflow.org/js) (Apache-2.0). Model weights load from the UpscalerJS package CDN only when the user enables enhancement. Review [Scryfall's imagery guidelines](https://scryfall.com/docs/api/images) before distributing enhanced images.
-- [MPC Autofill](https://mpcfill.com/) supplies optional community-art search and full-resolution image references through its official image CDN. Its API implementation is [open source](https://github.com/chilli-axe/mpc-autofill).
-- [Proxxied](https://proxxied.com/) was the original product reference for deck import and printing selection.
-
-Card data and artwork remain the property of their respective owners. Users are responsible for ensuring they have permission to print imported or selected artwork.
-
-## Independence
-
-CriProx is an independent playtesting utility. It is not affiliated with, endorsed by, or sponsored by Cricut, Wizards of the Coast, Scryfall, MPC Autofill, or their contributors.
-
-Third-party names and marks belong to their respective owners and are used only to describe compatibility and data sources.
+Skarix is independently maintained and is not affiliated with Cricut.

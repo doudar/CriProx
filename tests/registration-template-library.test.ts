@@ -88,7 +88,7 @@ test('new captures use readable names and retain distinct geometry', async (t) =
   const saved = await saveRegistrationTemplate(root, { ...readableIdentity, pdf: bytes });
   assert.equal(
     saved.name,
-    'CriProx-maker-US-Letter-6-card-expanded-63x88mm-gap-1mm-radius-2.5mm-cricut-template.pdf',
+    'Skarix-maker-US-Letter-6-card-expanded-63x88mm-gap-1mm-radius-2.5mm-cricut-template.pdf',
   );
   assert.deepEqual(await fs.readdir(root), [saved.name]);
   const loaded = await loadRegistrationTemplate(root, readableIdentity);
@@ -128,10 +128,10 @@ test('readable template names reject traversal, reserved punctuation, and oversi
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   for (const templateName of [
     '../escape',
-    'CriProx-../escape',
-    'CriProx-test.pdf/elsewhere',
-    'CriProx-test:name',
-    'CriProx-' + 'x'.repeat(181),
+    'Skarix-../escape',
+    'Skarix-test.pdf/elsewhere',
+    'Skarix-test:name',
+    'Skarix-' + 'x'.repeat(181),
   ]) {
     await assert.rejects(
       saveRegistrationTemplate(root, {

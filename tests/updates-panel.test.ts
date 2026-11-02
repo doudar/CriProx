@@ -35,7 +35,7 @@ test('release history is visible before checking, when up to date, and after a f
       error: status === 'error' ? 'Offline' : '',
     });
     assert.match(html, /aria-label="Changelog"/);
-    assert.match(html, /aria-label="CriProx 0.15.0"/);
+    assert.match(html, /aria-label="Skarix 0.15.0"/);
     assert.match(html, />Installed<\/span>/);
     assert.doesNotMatch(html, />New<\/span>|Download update|Install update/);
   }
@@ -54,6 +54,6 @@ test('new releases are labeled separately from the installed version without req
   assert.match(html, />Installed<\/span>/);
   assert.match(html, /Browse the changelog anytime/);
   assert.ok(
-    html.indexOf('aria-label="CriProx 0.16.0"') < html.indexOf('aria-label="CriProx 0.15.0"'),
+    html.indexOf('aria-label="Skarix 0.16.0"') < html.indexOf('aria-label="Skarix 0.15.0"'),
   );
 });

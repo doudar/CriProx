@@ -122,8 +122,6 @@ declare global {
         resume: () => Promise<import('./lib/cutter').CutterState>;
         onState: (callback: (state: import('./lib/cutter').CutterState) => void) => () => void;
       };
-      mpcRequest: (path: string, method: 'GET' | 'POST', body?: unknown) => Promise<unknown>;
-      deckRequest?: (provider: 'moxfield' | 'archidekt', id: string) => Promise<unknown>;
       saveProject?: (defaultName: string, data: string) => Promise<boolean>;
       cricut?: {
         inspect: () => Promise<{

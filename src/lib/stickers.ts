@@ -56,7 +56,7 @@ export function newStickerProject(): StickerProject {
     kind: 'criprox-stickers',
     version: 1,
     machine: 'explore-5',
-    name: 'Untitled stickers',
+    name: 'Untitled design',
     settings: {
       ...DEFAULT_CUT_SETTINGS,
       layout: 'grid',
@@ -211,7 +211,7 @@ export function validateStickerProject(value: unknown): StickerProject {
     !Array.isArray(p.items) ||
     p.items.length > MAX_STICKERS
   )
-    throw new Error('This is not a supported CriProx sticker project.');
+    throw new Error('This is not a supported Skarix sticker project.');
   const settings = validateStickerSettings(p.settings),
     ids = new Set<string>();
   let imageBytes = 0;

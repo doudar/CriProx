@@ -11,7 +11,7 @@ function mcpServer(invoke, version = '1.0.0') {
     { name: 'criprox-design', version },
     {
       instructions:
-        'Create editable proxy cards and sticker illustrations in the live CriProx editor. Read get_design_capabilities first. All distances are millimeters. Printing and cutter control are human-only and are not exposed.',
+        'Create editable proxy cards and sticker illustrations in the live Skarix editor. Read get_design_capabilities first. All distances are millimeters. Printing and cutter control are human-only and are not exposed.',
       maxToolInputElements: 500000,
       supportedProtocolVersions: ['2025-11-25', '2025-06-18', '2025-03-26'],
     },
@@ -100,7 +100,7 @@ function createAiServer({ invoke, version, connectionFile }) {
   async function start(windowId) {
     if (starting) throw Error('The AI design server is starting.');
     if (listener) {
-      if (windowId !== owner) throw Error('The AI server belongs to another CriProx window.');
+      if (windowId !== owner) throw Error('The AI server belongs to another Skarix window.');
       return status();
     }
     starting = true;
@@ -189,11 +189,11 @@ function createAiServer({ invoke, version, connectionFile }) {
             });
           } catch {}
           if (response?.ok)
-            throw Error('Another CriProx window has AI design access on. Stop access there first.');
+            throw Error('Another Skarix window has AI design access on. Stop access there first.');
           if ((await fs.readFile(connectionFile, 'utf8')) === existing) await fs.rm(connectionFile);
         } catch (error) {
           if (
-            error.message?.startsWith('Another CriProx') ||
+            error.message?.startsWith('Another Skarix') ||
             (error.code && error.code !== 'ENOENT')
           )
             throw error;

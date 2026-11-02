@@ -8,6 +8,7 @@ import {
 import { availableSheetProfiles } from './paper-workflow';
 import { readCutSettings } from './cut-settings';
 import { validateStickerDesign } from './sticker-design';
+// Legacy image references are recognized for export-only recovery; catalog adapters are removed.
 const supportedImage = (url: unknown) =>
   typeof url === 'string' &&
   /^(https:\/\/(cards\.scryfall\.io\/|cdn\.mpcautofill\.com\/images\/google_drive\/(full|large)\/)|data:image\/(png|jpeg|webp);base64,)/.test(
@@ -23,7 +24,7 @@ export function validateProject(value: unknown): Project {
     !Array.isArray(p.entries) ||
     !p.settings
   )
-    throw new Error('This is not a supported CriProx project.');
+    throw new Error('This is not a supported Skarix project.');
   const s = p.settings;
   Object.assign(s, readCutSettings(s));
   // Older projects stay valid. The removed four-slot profile migrates to the
@@ -35,7 +36,7 @@ export function validateProject(value: unknown): Project {
   s.units ??= s.paper === 'letter' ? 'in' : 'mm';
   s.bleed ??= 0;
   // Projects created with the previous 3 mm default should follow the corrected
-  // physical Magic card geometry without requiring manual JSON edits.
+  // legacy rounded-card geometry without requiring manual JSON edits.
   if (s.radius === 3) s.radius = STANDARD_CARD_RADIUS_MM;
   if (Number.isFinite(s.bleed) && s.bleed > 0) s.bleed = fixedBleedMm(s);
   s.backBleedEnabled ??= true;

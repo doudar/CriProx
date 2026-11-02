@@ -10,7 +10,7 @@ import { newStickerProject } from '../src/lib/stickers';
 import { projectFromDefaults, FACTORY_PROJECT_DEFAULTS } from '../src/lib/project-defaults';
 
 test('Home and navigation share named workspace definitions', () => {
-  assert.equal(workspaceName('cards'), 'Proxy Card Builder');
+  assert.equal(workspaceName('cards'), 'Preserved CriProx project');
   assert.equal(new Set(WORKSPACES.map((w) => w.id)).size, WORKSPACES.length);
   for (const w of WORKSPACES) assert.ok(w.name && w.description && w.action);
 });

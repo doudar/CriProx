@@ -114,7 +114,7 @@ test('macOS help copies only the fixed command and opens Terminal without execut
   };
   const help = createMacUpdateHelp({ platform: 'darwin', ...dependencies });
   help.copyCommand();
-  assert.deepEqual(copied, ['xattr -dr com.apple.quarantine "/Applications/CriProx.app"']);
+  assert.deepEqual(copied, ['xattr -dr com.apple.quarantine "/Applications/Skarix.app"']);
   assert.equal(copied[0], MAC_UNBLOCK_COMMAND);
   await help.openTerminal();
   assert.deepEqual(opened, ['/System/Applications/Utilities/Terminal.app']);

@@ -67,7 +67,7 @@ test('all supported layouts use the actual capacity and output paper', () => {
 test('templates describe geometry independently of the deck and artwork settings', () => {
   assert.equal(
     templateFilename(DEFAULT_SETTINGS, 'setup', 'png'),
-    'CriProx-maker-US-Letter-6-card-expanded-63x88mm-gap-1mm-radius-2.5mm-setup.png',
+    'Skarix-maker-US-Letter-6-card-expanded-63x88mm-gap-1mm-radius-2.5mm-setup.png',
   );
   assert.equal(
     templateFilenameStem({ ...DEFAULT_SETTINGS, dpi: 1200, backOffsetX: 2, bleed: 0, units: 'mm' }),
@@ -123,9 +123,9 @@ test('Cricut manual PDFs describe cut offsets in readable directions', () => {
 test('user names are safe, bounded, and preserve international letters', () => {
   assert.equal(filenameStem('  ../My deck: <v2> / ?  '), 'My-deck-v2');
   assert.equal(filenameStem('Éowyn 日本語'), 'Éowyn-日本語');
-  assert.equal(filenameStem('...'), 'CriProx');
-  assert.equal(filenameStem('CON'), 'CriProx-CON');
-  assert.equal(filenameStem('nul'), 'CriProx-nul');
+  assert.equal(filenameStem('...'), 'Skarix');
+  assert.equal(filenameStem('CON'), 'Skarix-CON');
+  assert.equal(filenameStem('nul'), 'Skarix-nul');
   assert.equal(filenameStem('x'.repeat(200)).length, 80);
   assert.ok(new TextEncoder().encode(filenameStem('界'.repeat(200))).length <= 80);
 });

@@ -24,7 +24,7 @@ function registrationTemplateFilename(templateId, slotCount, templateName) {
     if (
       typeof templateName !== 'string' ||
       templateName.length > 180 ||
-      !/^CriProx-[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*$/.test(templateName)
+      !/^(?:Skarix|CriProx)-[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*$/.test(templateName)
     )
       throw new Error('Invalid registration template filename.');
     return `${templateName}-cricut-template.pdf`;

@@ -94,7 +94,7 @@ test('simulation overrides the production quit callback and explains its safe ha
   assert.equal(await options.openInstaller('/unused/test-file'), '');
   options.onInstallerOpened();
   assert.equal(quits, 0);
-  assert.match(detail, /keeps CriProx open/);
+  assert.match(detail, /keeps Skarix open/);
   assert.equal(paths.get('sessionData'), paths.get('userData'));
 });
 
