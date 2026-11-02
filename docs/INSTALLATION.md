@@ -16,7 +16,7 @@ Fresh profiles show Home and an editable Skarix sticker. An existing draft takes
 
 The app reuses an existing Skarix, CriProx, or criprox user-data directory, in that order. Installation ID and storage keys remain compatible. User project files are not moved or deleted.
 
-Open prior sticker/design JSON files normally. Expand **Preserved CriProx projects** on Home to export legacy card project copies or open their original folder. Use CriProx to edit that legacy format.
+Open prior sticker/design JSON files normally. Expand **Preserved CriProx projects** on Home to export legacy card project copies or open their original folder. **Export last autosaved card draft** recovers the latest card edits from the old workspace even when they were never saved in Recents or the library; exporting does not alter that stored draft. Use CriProx to edit that legacy format. Reopening **Meet Skarix** creates a distinct starter and preserves your customized starter in Recents.
 
 ## Updates and offline work
 
