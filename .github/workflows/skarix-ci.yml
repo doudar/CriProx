@@ -37,6 +37,7 @@ jobs:
         run: npx --no-install electron tests/ai-design-fixes.electron.cjs
       - name: Verify actual app shutdown with AI access off and on
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           npx --no-install electron tests/app-shutdown.electron.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
