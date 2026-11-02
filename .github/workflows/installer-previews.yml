@@ -1,0 +1,57 @@
+name: Skarix installer previews
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: skarix-installers-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  installers:
+    name: Installer / ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-latest
+            script: package:windows
+            files: release/*.exe
+          - platform: macos
+            runner: macos-latest
+            script: package:mac
+            files: release/*.dmg
+          - platform: linux
+            runner: ubuntu-latest
+            script: package:linux
+            files: release/*.AppImage
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build unsigned installer without publishing
+        run: npm run ${{ matrix.script }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Record checksums and exact source revision
+        run: node scripts/installer-manifest.cjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: skarix-${{ matrix.platform }}-${{ github.sha }}
+          path: |
+            ${{ matrix.files }}
+            release/SHA256SUMS.txt
+            release/SOURCE.txt
+          if-no-files-found: error
+          retention-days: 14

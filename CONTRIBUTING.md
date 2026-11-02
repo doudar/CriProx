@@ -26,7 +26,7 @@ docs: clarify the Cricut handoff
 chore(deps): update Electron
 ```
 
-Use `feat!:` or a `BREAKING CHANGE:` footer when a change is incompatible. `feat` produces a minor release, `fix` produces a patch release, and a breaking change produces a major release. Other commit types appear in project history but do not normally trigger a release by themselves.
+Use `feat!:` or a `BREAKING CHANGE:` footer when a change is incompatible. `feat` describes a minor change, `fix` a patch, and a breaking change a major version boundary; publication remains a separate maintainer decision. Other commit types appear in project history but do not normally trigger a release by themselves.
 
 Pull requests should describe the implementation, validation, and any user-facing or compatibility impact. A maintainer may squash-merge a pull request, so its title must also be a valid Conventional Commit.
 
@@ -45,10 +45,14 @@ for the source mapping, documentation-check exemption, and local website preview
 
 By submitting a contribution, you agree to license it under the project's GNU General Public License v3.0 only and confirm that you have the right to do so.
 
-## Releases
+## CI and installer previews
 
-Release Please maintains the release pull request, application version, package lock, and changelog from commits on `main`. Do not bump those files by hand. When a maintainer merges the release pull request, GitHub Actions builds the macOS, Windows, and Linux installers, attaches them to a draft GitHub release, and publishes the release only after every build succeeds.
+Skarix CI tests and builds the studio on Windows, macOS and Linux, checks desktop packaging, and verifies the Windows Electron renderer and existing-project preservation. It also tests the website, builds an offline preview, checks feature documentation and validates all workflows with a pinned, checksum-verified actionlint. Code scanning analyzes JavaScript and TypeScript separately.
 
-Repository maintainers must enable **Allow GitHub Actions to create and approve pull requests** under **Settings → Actions → General** so Release Please can maintain its release pull request.
+All workflows use pinned action revisions and fresh hosted runners. Build jobs have read-only repository access, checkouts do not retain credentials, and pull requests never publish packages, releases or Pages. The code-scanning job has only its additional security-results permission.
 
-For a feature build, run **Actions → Test installers → Run workflow** on `main` and enter the pushed feature branch in `build_branch`. The completed run holds macOS, Windows, and Linux installer artifacts for up to 30 days; share its link with testers. See the [installation guide](docs/INSTALLATION.md#test-installers-from-a-branch) for download steps and access requirements.
+After the workflow is on the default branch, select **Actions → Skarix installer previews → Run workflow** and choose the branch to build. It packages the selected commit for Windows x64, macOS universal and Linux x64, and uploads unsigned artifacts for 14 days with SHA256SUMS.txt and SOURCE.txt. The workflow never creates a tag, overwrites release assets, or publishes a release.
+
+The inherited automatic Release Please/publishing and Pages deployment workflows have been removed. Existing version files and changelog remain intact; this change publishes no release. A maintainer must separately approve and prepare a release and its version changes. Website publication likewise requires a separate reviewed deployment setup.
+
+Funding is copied from [doudar/.github/FUNDING.yml](https://github.com/doudar/.github/blob/main/FUNDING.yml): GitHub Sponsors doudar, Buy Me a Coffee anthonydouv, and the existing SmartSpin2K PayPal URL.
