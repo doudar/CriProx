@@ -13,7 +13,7 @@ function prepareSheetJob(text, sheetIndex) {
   const job = JSON.parse(text);
   const machine = getMachine(job?.machine);
   if (
-    job?.kind !== 'criprox-cut-job' ||
+    !['skarix-cut-job', 'criprox-cut-job'].includes(job?.kind) ||
     ![1, 2].includes(job.version) ||
     !machine.directCut ||
     generatedSheetIssue(machine.id, job.paper) ||

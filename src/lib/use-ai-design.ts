@@ -29,10 +29,10 @@ export function useAiWorkspace(mode: AiMode, workspace: AiWorkspace) {
   );
 }
 export function useAiDesignBridge() {
-  useEffect(() => window.criprox?.ai?.onCancel(cancelAiDesignRequests), []);
+  useEffect(() => window.skarix?.ai?.onCancel(cancelAiDesignRequests), []);
   useEffect(
     () =>
-      window.criprox?.ai?.onRequest(async (request) => {
+      window.skarix?.ai?.onRequest(async (request) => {
         try {
           return { value: await invokeAiDesign(request.name, request.args) };
         } catch (error) {

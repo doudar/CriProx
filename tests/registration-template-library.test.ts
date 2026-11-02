@@ -29,7 +29,7 @@ const { loadRegistrationTemplate, registrationTemplateFilename, saveRegistration
 const identity = { templateId: 'CP-1234ABCD', slotCount: 6 };
 
 test('registration templates are saved and replaced at the project library root', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-template-library-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-template-library-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const first = new TextEncoder().encode('%PDF-1.7\nfirst');
   const second = new TextEncoder().encode('%PDF-1.7\nreplacement');
@@ -62,7 +62,7 @@ test('registered templates have distinct path-safe names', () => {
 });
 
 test('registration template storage rejects non-PDF data', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-template-library-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-template-library-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
 
   await assert.rejects(
@@ -82,7 +82,7 @@ const readableIdentity = {
 };
 
 test('new captures use readable names and retain distinct geometry', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-template-names-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-template-names-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const bytes = new TextEncoder().encode('%PDF-1.7\nreadable');
   const saved = await saveRegistrationTemplate(root, { ...readableIdentity, pdf: bytes });
@@ -108,7 +108,7 @@ test('new captures use readable names and retain distinct geometry', async (t) =
 });
 
 test('readable template lookup falls back to existing captures and prefers replacements', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-template-legacy-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-template-legacy-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const legacy = new TextEncoder().encode('%PDF-1.7\nlegacy');
   const replacement = new TextEncoder().encode('%PDF-1.7\nreplacement');
@@ -124,7 +124,7 @@ test('readable template lookup falls back to existing captures and prefers repla
 });
 
 test('readable template names reject traversal, reserved punctuation, and oversized names', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-template-safe-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-template-safe-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   for (const templateName of [
     '../escape',

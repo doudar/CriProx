@@ -41,7 +41,7 @@ test('print geometry uses physical page dimensions, no margins, full scale, and 
     assert.throws(() => printSettings({ ...settings, ...patch }), /Invalid/);
 });
 async function fixture(outcome = 'submitted') {
-  const directory = await mkdtemp(path.join(tmpdir(), 'criprox-print-test-'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'skarix-print-test-'));
   const owner = new EventEmitter();
   let options: any,
     loaded = false,

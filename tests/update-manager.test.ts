@@ -54,7 +54,7 @@ async function fixture(
     openInstaller?: (file: string) => Promise<string | null>;
   } = {},
 ) {
-  const root = await mkdtemp(path.join(tmpdir(), 'criprox-update-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'skarix-update-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const directory = path.join(root, 'downloads');
   let opened = '',

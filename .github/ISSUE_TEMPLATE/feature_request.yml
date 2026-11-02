@@ -19,7 +19,7 @@ body:
   - type: textarea
     attributes:
       label: Proposed solution
-      description: Describe the experience you would like CriProx to provide.
+      description: Describe the experience you would like Skarix to provide.
     validations:
       required: true
   - type: textarea

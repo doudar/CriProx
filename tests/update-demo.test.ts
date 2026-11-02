@@ -11,7 +11,7 @@ const { createUpdateManager } = require('../electron/update-manager.cjs');
 
 for (const scenario of ['success', 'checksum-failure', 'network-failure', 'up-to-date']) {
   test(`local simulation exercises the real update manager: ${scenario}`, async (t) => {
-    const directory = await mkdtemp(path.join(tmpdir(), 'criprox-demo-test-'));
+    const directory = await mkdtemp(path.join(tmpdir(), 'skarix-demo-test-'));
     t.after(() => rm(directory, { recursive: true, force: true }));
     const fixture = createDemoRelease({
       currentVersion: '0.13.0',
@@ -100,12 +100,12 @@ test('simulation overrides the production quit callback and explains its safe ha
 
 test('the simulation launcher cleans the temporary profile after the child exits', async (t) => {
   const fs = await import('node:fs/promises');
-  const directory = await mkdtemp(path.join(tmpdir(), 'criprox-demo-launch-test-'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'skarix-demo-launch-test-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const fixture = path.join(directory, 'child.cjs');
   await fs.writeFile(
     fixture,
-    'require("node:fs").writeFileSync(require("node:path").join(process.env.CRIPROX_UPDATE_DEMO_PROFILE,"session"),"test")',
+    'require("node:fs").writeFileSync(require("node:path").join(process.env.SKARIX_UPDATE_DEMO_PROFILE,"session"),"test")',
   );
   const { launchUpdateDemo } = require('../scripts/update-demo.cjs');
   const { child, profile } = launchUpdateDemo({

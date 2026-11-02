@@ -70,7 +70,7 @@ export async function generateMarkedPrint(
     input.kind === 'stickers' && input.project.artwork.some((a) => hasCustomCuts(a.design));
   let upscaylCacheKey = '';
   if (cardSettings?.upscaleScryfall && cardSettings.upscaleBackend === 'upscayl') {
-    upscaylCacheKey = (await globalThis.window?.criprox?.upscayl?.detect())?.cacheKey || '';
+    upscaylCacheKey = (await globalThis.window?.skarix?.upscayl?.detect())?.cacheKey || '';
     if (!upscaylCacheKey)
       throw Error('Upscayl is not detected. Choose Built-in ESRGAN or turn off upscaling.');
   }
@@ -169,7 +169,7 @@ export async function generateMarkedPrint(
   );
   const job = JSON.stringify(
     {
-      kind: 'criprox-cut-job',
+      kind: 'skarix-cut-job',
       version: customCuts ? 2 : 1,
       name: project.name,
       machine,
@@ -253,7 +253,7 @@ export async function generatedPrintBundle(result: GeneratedPrintResult) {
     cutProfile: job.cutSettings?.profile,
   });
   zip.file('print-with-registration-marks.pdf', result.pdf);
-  zip.file('matching-cut-job.criprox.json', result.job);
+  zip.file('matching-cut-job.skarix.json', result.job);
   if (result.backPdf) zip.file('card-backs.pdf', result.backPdf);
   zip.file(
     'READ-ME.txt',

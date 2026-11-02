@@ -10,7 +10,7 @@ const { createAiServer } = require('../electron/ai-server.cjs');
 const { landscapeLayers, heroLayers } = require('../examples/ai-design-scenes.cjs');
 let directory, window, service;
 (async () => {
-  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-mcp-'));
+  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-mcp-'));
   app.setPath('userData', path.join(directory, 'profile'));
   await app.whenReady();
   const bundle = buildSync({
@@ -124,11 +124,11 @@ let directory, window, service;
   const cards = (await call('export_project', { workspace: 'cards' })).structuredContent.project;
   assert.equal(cards.entries[0].card.faces[0].design.cropToCuts, false);
   assert(cards.entries[0].card.faces[0].design.elements.some((e) => e.id === 'hero-face'));
-  await fs.writeFile('tmp/mcp-hero.cards.criprox.json', JSON.stringify(cards));
+  await fs.writeFile('tmp/mcp-hero.cards.skarix.json', JSON.stringify(cards));
   const stickers = (await call('export_project', { workspace: 'stickers' })).structuredContent
     .project;
   assert.equal(stickers.items.length, 2);
-  await fs.writeFile('tmp/mcp-landscape.stickers.criprox.json', JSON.stringify(stickers));
+  await fs.writeFile('tmp/mcp-landscape.stickers.skarix.json', JSON.stringify(stickers));
   const cancelled = await window.webContents.executeJavaScript(
     `(async()=>{const m=window.designTest;const before=await m.invokeAiDesign('get_workspace',{workspace:'stickers'});const pending=m.invokeAiDesign('create_design',{workspace:'stickers',name:'cancelled',copies:0});m.cancelAiDesignRequests();let rejected=false;try{await pending;}catch(e){rejected=/stopped/.test(e.message);}const after=await m.invokeAiDesign('get_workspace',{workspace:'stickers'});return {rejected,before:before.artwork.length,after:after.artwork.length};})()`,
   );

@@ -157,7 +157,7 @@ test('AI project commands are undoable, settings are validated, and invalid acti
   }
 });
 test('local MCP requires authorization and rejects browser origins, bad hosts and forbidden tools', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'criprox-ai-'));
+  const directory = await mkdtemp(join(tmpdir(), 'skarix-ai-'));
   const file = join(directory, 'connection.json'),
     calls: any[] = [];
   const service = createAiServer({
@@ -171,8 +171,8 @@ test('local MCP requires authorization and rejects browser origins, bad hosts an
     await service.start(1);
     const c = JSON.parse(await readFile(file, 'utf8'));
     const configuration = service.configuration('C:/Skarix.exe', 'C:/resources/ai-stdio.cjs');
-    assert.equal(configuration.mcpServers.criprox.env.ELECTRON_RUN_AS_NODE, '1');
-    assert.equal(configuration.mcpServers.criprox.args[0], 'C:/resources/ai-stdio.cjs');
+    assert.equal(configuration.mcpServers.skarix.env.ELECTRON_RUN_AS_NODE, '1');
+    assert.equal(configuration.mcpServers.skarix.args[0], 'C:/resources/ai-stdio.cjs');
     assert(
       !JSON.stringify(configuration).includes(c.token),
       'client configuration contains no bearer token',
@@ -217,7 +217,7 @@ test('local MCP requires authorization and rejects browser origins, bad hosts an
     assert.equal(badHost, 403);
     assert.equal(calls.length, 0);
     const initialized = await (await post(init)).json();
-    assert.equal(initialized.result.serverInfo.name, 'criprox-design');
+    assert.equal(initialized.result.serverInfo.name, 'skarix-design');
     const list = await (await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' })).json();
     assert.equal(list.result.tools.length, 15);
     const blocked = await (
@@ -275,7 +275,7 @@ test('concurrent AI shutdown callers both await connection-file cleanup before r
 });
 
 test('another app instance cannot replace or remove an active design connection', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'criprox-ai-owner-')),
+  const directory = await mkdtemp(join(tmpdir(), 'skarix-ai-owner-')),
     file = join(directory, 'connection.json');
   const first = createAiServer({ connectionFile: file, invoke: async () => ({ ok: true }) });
   const second = createAiServer({ connectionFile: file, invoke: async () => ({ ok: true }) });
@@ -293,7 +293,7 @@ test('another app instance cannot replace or remove an active design connection'
   }
 });
 test('desktop MCP access starts off and client configuration is restricted to the owning main frame', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'criprox-ai-ipc-')),
+  const directory = await mkdtemp(join(tmpdir(), 'skarix-ai-ipc-')),
     handlers = new Map<string, Function>();
   let copied = '';
   const frame = {},
@@ -318,7 +318,7 @@ test('desktop MCP access starts off and client configuration is restricted to th
     assert.throws(() => handlers.get('ai-design-copy-config')!(event), /Start AI/);
     await handlers.get('ai-design-start')!(event);
     handlers.get('ai-design-copy-config')!(event);
-    assert.equal(JSON.parse(copied).mcpServers.criprox.env.ELECTRON_RUN_AS_NODE, '1');
+    assert.equal(JSON.parse(copied).mcpServers.skarix.env.ELECTRON_RUN_AS_NODE, '1');
     assert.throws(
       () => handlers.get('ai-design-stop')!({ ...event, senderFrame: {} }),
       /main workspace/,
@@ -338,7 +338,7 @@ test('stdio relay validates local-only connection targets and never sends tokens
   assert.throws(() =>
     validateConnection({ url: 'http://127.0.0.1:123/mcp?secret=1', token: 'a'.repeat(64) }),
   );
-  const directory = await mkdtemp(join(tmpdir(), 'criprox-relay-')),
+  const directory = await mkdtemp(join(tmpdir(), 'skarix-relay-')),
     file = join(directory, 'connection.json');
   const { writeFile } = await import('node:fs/promises');
   await writeFile(file, JSON.stringify({ url: 'http://127.0.0.1:123/mcp', token: 'a'.repeat(64) }));

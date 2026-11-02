@@ -1,8 +1,8 @@
 # Experimental eight-card Tabloid capture to US Letter
 
-This magenta template is the eight-card setup image for CriProx's experimental
+This magenta template is the eight-card setup image for Skarix's experimental
 registered-print profile. Design Space creates a complete portrait Tabloid PDF;
-CriProx checks its slots and marks, then reframes the page content onto portrait
+Skarix checks its slots and marks, then reframes the page content onto portrait
 US Letter without scaling the cards.
 
 ## Geometry
@@ -13,11 +13,11 @@ US Letter without scaling the cards.
 - Transparent gap: 1 mm
 - Complete image size: 177 × 255 mm (6.9685 × 10.0394 in)
 - PNG: 4181 × 6024 px at 600 DPI
-- Color: CriProx capture magenta, `#e600c8`
+- Color: Skarix capture magenta, `#e600c8`
 
 ## Design Space capture
 
-1. Select the eight-card profile in CriProx. Upload its setup PNG (or the
+1. Select the eight-card profile in Skarix. Upload its setup PNG (or the
    matching PNG in this folder) to Design Space as one flat Print Then Cut
    image. Keep the transparent background and all eight slots together.
 2. Set both Canvas dimensions to **6.9685 × 10.0394 in** (177 × 255 mm).
@@ -25,7 +25,7 @@ US Letter without scaling the cards.
 3. Select **portrait Tabloid (11 × 17 in)** in Design Space and the system
    printer dialog. Save one complete Tabloid PDF at **100% / Actual size** with
    bleed off. Check all four sensor marks in its preview.
-4. Import that PDF into CriProx's **Create print PDF** flow. CriProx rejects it
+4. Import that PDF into Skarix's **Create print PDF** flow. Skarix rejects it
    if the card pattern, scale, marks, or complete printed footprint do not
    pass its Letter fit checks. Export a US Letter size-check PDF.
 5. Print the size-check page at actual size on plain paper. Confirm that the

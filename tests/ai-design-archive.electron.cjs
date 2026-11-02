@@ -6,7 +6,7 @@ const fs = require('node:fs/promises'),
   assert = require('node:assert/strict');
 let directory, service;
 (async () => {
-  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-mcp-archive-'));
+  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-mcp-archive-'));
   app.setPath('userData', path.join(directory, 'profile'));
   await app.whenReady();
   const { createAiServer } = require(

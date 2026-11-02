@@ -24,7 +24,7 @@ export async function printPdf(
   const renderer = await pdfRenderer();
   signal.throwIfAborted();
   const task = renderer.getDocument({ data: pdf.slice() });
-  const api = window.criprox?.printing;
+  const api = window.skarix?.printing;
   let id: string | undefined;
   let frame: HTMLIFrameElement | undefined;
   const urls: string[] = [];

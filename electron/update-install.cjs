@@ -40,7 +40,7 @@ function createInstallerHandoff({
     const parent = await fs.realpath(path.dirname(destination));
     if (parent === cacheRoot || parent.startsWith(`${cacheRoot}${path.sep}`))
       throw new Error('Choose a permanent location outside the update cache.');
-    const staged = path.join(parent, `.criprox-update-${crypto.randomUUID()}.AppImage`);
+    const staged = path.join(parent, `.skarix-update-${crypto.randomUUID()}.AppImage`);
     try {
       await fs.copyFile(file, staged, fs.constants.COPYFILE_EXCL);
       await fs.chmod(staged, 0o700);

@@ -65,3 +65,5 @@ The Aurora logo appears throughout the app, README and website. **Meet Skarix** 
 Text on a closed path wraps across the 0%/100% position, keeping letters visible as they cross the start of a circle or polygon. Artwork outside the canvas or cut outline is still clipped.
 
 The desktop app checks GitHub for newer stable releases at startup and every 15 minutes, and refreshes its cached check when you return to the app. When an update is available, an **Update [version]** button appears in the header and opens **Settings → Updates** for release notes and download options. You can also use **Check now** there. Downloads and installation remain manual.
+
+The app and built-in MCP server use Skarix names, including exported project files and client configuration. Existing projects, drafts, and settings remain readable through migration support. Original upstream attribution is retained.

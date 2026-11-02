@@ -52,12 +52,12 @@ export default function CutSettingsControls({
         if (active) setError(String(e));
       }
     };
-    window.addEventListener('criprox-materials-changed', refresh);
+    window.addEventListener('skarix-materials-changed', refresh);
     window.addEventListener('storage', refresh);
     try {
       const next = readMaterialLibrary();
       setLibrary(next);
-      if (!next.imported && window.criprox?.materials) {
+      if (!next.imported && window.skarix?.materials) {
         setBusy(true);
         void importMaterialLibrary()
           .then((result) => {
@@ -78,7 +78,7 @@ export default function CutSettingsControls({
     }
     return () => {
       active = false;
-      window.removeEventListener('criprox-materials-changed', refresh);
+      window.removeEventListener('skarix-materials-changed', refresh);
       window.removeEventListener('storage', refresh);
     };
   }, []);
@@ -336,7 +336,7 @@ function MaterialManager({
         </button>
       </header>
       <div className="material-manager-toolbar">
-        <button type="button" disabled={busy || !window.criprox?.materials} onClick={onImport}>
+        <button type="button" disabled={busy || !window.skarix?.materials} onClick={onImport}>
           {busy ? 'Importing…' : 'Refresh from Design Space'}
         </button>
         <button

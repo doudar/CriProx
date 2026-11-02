@@ -10,7 +10,7 @@ const require = createRequire(import.meta.url);
 const { findUpscayl, runUpscayl } = require('../electron/upscayl.cjs');
 
 test('detects a desktop installation only when its engine and Ultramix model are present', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-detect-test-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-detect-test-'));
   try {
     await fs.mkdir(path.join(root, 'bin'));
     await fs.mkdir(path.join(root, 'models'));
@@ -27,7 +27,7 @@ test('detects a desktop installation only when its engine and Ultramix model are
 });
 
 test('runs the installed engine with explicit model paths and returns its PNG', async () => {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-engine-test-'));
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-engine-test-'));
   const binary = path.join(root, 'fake-engine.cjs');
   const models = path.join(root, 'models');
   try {

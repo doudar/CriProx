@@ -39,7 +39,7 @@ export type StickerSheet = Omit<Sheet, 'placements'> & {
   placements: (Placement & { sticker: StickerPose; itemIndex: number })[];
 };
 export type StickerProject = {
-  kind: 'criprox-stickers';
+  kind: 'skarix-stickers';
   version: 1 | 2;
   machine: Exclude<Settings['machine'], 'manual'>;
   name: string;
@@ -53,7 +53,7 @@ export const MAX_STICKER_FILE_BYTES = 90_000_000;
 export const MAX_STICKERS = 500;
 export function newStickerProject(): StickerProject {
   return {
-    kind: 'criprox-stickers',
+    kind: 'skarix-stickers',
     version: 1,
     machine: 'explore-5',
     name: 'Untitled design',
@@ -201,7 +201,7 @@ export function validateStickerProject(value: unknown): StickerProject {
   const p = value as StickerProject;
   if (
     !p ||
-    p.kind !== 'criprox-stickers' ||
+    !['skarix-stickers', 'criprox-stickers'].includes(p.kind) ||
     ![1, 2].includes(p.version) ||
     !isMachine(p.machine) ||
     (p.machine as string) === 'manual' ||
@@ -267,7 +267,7 @@ export function validateStickerProject(value: unknown): StickerProject {
     capture = { key: c.key, name: c.name, pdf: c.pdf };
   }
   return {
-    kind: 'criprox-stickers',
+    kind: 'skarix-stickers',
     version: p.version,
     machine: p.machine,
     name: p.name,

@@ -62,7 +62,7 @@ test('release config overrides unsigned previews without changing their configur
   assert.equal(config.mac.notarize, true);
   assert.equal(config.mac.hardenedRuntime, true);
   assert.equal(config.dmg.sign, true);
-  assert.equal(config.appId, 'com.criprox.studio');
+  assert.equal(config.appId, 'com.skarix.studio');
   assert.equal(pkg.build.mac.identity, null);
 });
 
@@ -81,7 +81,7 @@ test('electron-builder loads the release config without inheriting identity:null
 });
 
 const signed =
-  'Identifier=com.criprox.studio\nTeamIdentifier=ABCDE12345\nAuthority=Developer ID Application: Test\nCodeDirectory v=20500 size=123 flags=0x10000(runtime) hashes=12\n';
+  'Identifier=com.skarix.studio\nTeamIdentifier=ABCDE12345\nAuthority=Developer ID Application: Test\nCodeDirectory v=20500 size=123 flags=0x10000(runtime) hashes=12\n';
 test('verification checks both slices, notarization ticket, and Gatekeeper', () => {
   const calls: string[][] = [];
   verifyApp('/mount/Skarix.app', credentials.APPLE_TEAM_ID, (command: string, args: string[]) => {
@@ -98,7 +98,7 @@ test('verification checks both slices, notarization ticket, and Gatekeeper', () 
 
 test('verification rejects the observed Electron signature and wrong or incomplete release identities', () => {
   for (const bad of [
-    signed.replace('Identifier=com.criprox.studio', 'Identifier=Electron'),
+    signed.replace('Identifier=com.skarix.studio', 'Identifier=Electron'),
     signed.replace('TeamIdentifier=ABCDE12345', 'TeamIdentifier=OTHER12345'),
     signed.replace('Authority=Developer ID Application:', 'Authority=Apple Development:'),
     signed.replace('0x10000(runtime)', '0x0(none)'),

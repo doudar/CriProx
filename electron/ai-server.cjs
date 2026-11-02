@@ -8,7 +8,7 @@ const { DESIGN_TOOLS, designTool } = require('./ai-tools.cjs');
 const MAX_BODY = 64_000_000;
 function mcpServer(invoke, version = '1.0.0') {
   const server = new McpServer(
-    { name: 'criprox-design', version },
+    { name: 'skarix-design', version },
     {
       instructions:
         'Create editable proxy cards and sticker illustrations in the live Skarix editor. Read get_design_capabilities first. All distances are millimeters. Printing and cutter control are human-only and are not exposed.',
@@ -226,7 +226,7 @@ function createAiServer({ invoke, version, connectionFile }) {
     if (!listener) throw Error('Start AI design access first.');
     return {
       mcpServers: {
-        criprox: {
+        skarix: {
           command: executable,
           args: [relayPath, '--connection-file', connectionFile],
           env: { ELECTRON_RUN_AS_NODE: '1' },

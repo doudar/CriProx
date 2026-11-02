@@ -1,5 +1,7 @@
 # Software validation — September 20, 2026
 
+Historical validation entries retain the original upstream build names and artifact paths as provenance. Current builds and MCP tools use Skarix.
+
 ## Design-only MCP server — November 1, 2026
 
 - The local HTTP server and bundled-Node stdio relay expose a closed catalogue of 18 design tools.
@@ -181,7 +183,7 @@ for all scenarios. No GitHub release needs to be published.
 2. Start a download, close Settings, reopen **Settings → Updates**, and confirm progress continues.
 3. Cancel and retry. A complete download should become **Download verified and ready to install**.
 4. Choose **Test installer handoff**. Expect a confirmation dialog, no real installation, and
-   CriProx to remain open. On macOS, check **Copy command** and **Open Terminal**; these are real
+   Skarix to remain open. On macOS, check **Copy command** and **Open Terminal**; these are real
    desktop actions, but the command runs only when you paste and execute it yourself.
 5. Run the checksum-failure and network-failure scenarios. Confirm the first attempt fails and
    the retry succeeds; run the up-to-date scenario to check the no-update state.

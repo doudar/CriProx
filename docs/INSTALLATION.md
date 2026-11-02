@@ -26,21 +26,21 @@ In **doudar/Skarix → Settings → Secrets and variables → Actions → Reposi
 | `APPLE_APP_SPECIFIC_PASSWORD` | An app-specific password for that account, not its regular login password. |
 | `APPLE_TEAM_ID` | Ten-character Apple Developer team identifier matching the signing certificate. |
 
-Export the certificate and private key from Keychain Access, then encode the `.p12` as one line before storing it as the secret. Keep the export and password out of Git and chat. GitHub maps `MAC_CSC_LINK` / `MAC_CSC_KEY_PASSWORD` to electron-builder's `CSC_LINK` / `CSC_KEY_PASSWORD`; credentials are exposed only to the Mac release step, never preview or pull-request builds. Use the same team and app identifier (`com.criprox.studio`) across releases so macOS can recognize updates. See [electron-builder signing](https://www.electron.build/v26/docs/mac/) and [notarization](https://www.electron.build/v26/docs/features/code-signing/notarization/).
+Export the certificate and private key from Keychain Access, then encode the `.p12` as one line before storing it as the secret. Keep the export and password out of Git and chat. GitHub maps `MAC_CSC_LINK` / `MAC_CSC_KEY_PASSWORD` to electron-builder's `CSC_LINK` / `CSC_KEY_PASSWORD`; credentials are exposed only to the Mac release step, never preview or pull-request builds. Use the same team and app identifier (`com.skarix.studio`) across releases so macOS can recognize updates. See [electron-builder signing](https://www.electron.build/v26/docs/mac/) and [notarization](https://www.electron.build/v26/docs/features/code-signing/notarization/).
 
 After configuring secrets, merge the signing change through normal CI. Release Please prepares the version; Release builds and verifies all installers before publishing. Do not manually edit version files or the changelog. If Apple rejects notarization or is unavailable, fix the reported issue and retry the failed workflow; do not bypass verification.
 
 Release packaging pins electron-builder 26.16.1, which fixes temporary signing-keychain password handling. Earlier 26.15.3 builds could import the certificate successfully and then fail at `security set-key-partition-list` with `SecKeychainUnlock`: they incorrectly supplied the certificate export password instead of the temporary keychain password. For that failure, build the updated revision rather than changing the certificate or notarization secrets. Rerunning a workflow on the old revision retains its old lockfile.
 
-For an upgrade from an unsigned build with a stale Bluetooth permission, quit Skarix, install the signed app in `/Applications`, then, if necessary, run `tccutil reset BluetoothAlways com.criprox.studio`. Reopen Skarix and allow Bluetooth when prompted. This resets only Skarix's Bluetooth permission. Validate a real BLE connection, Keychain save/reload, and a subsequent signed update before claiming hardware or permission persistence is verified.
+For an upgrade from an unsigned build with a stale Bluetooth permission, quit Skarix, install the signed app in `/Applications`, then, if necessary, run `tccutil reset BluetoothAlways com.skarix.studio`. Reopen Skarix and allow Bluetooth when prompted. This resets only Skarix's Bluetooth permission. Validate a real BLE connection, Keychain save/reload, and a subsequent signed update before claiming hardware or permission persistence is verified.
 
 ## First launch and existing data
 
 Fresh profiles show Home and an editable Skarix sticker. An existing draft takes precedence, including a blank draft. **Meet Skarix** is also available as an explicit new-project action.
 
-The app reuses an existing Skarix, CriProx, or criprox user-data directory, in that order. Installation ID and storage keys remain compatible. User project files are not moved or deleted.
+The app reuses an existing Skarix, CriProx, or criprox user-data directory, in that order. Existing drafts, recent projects, and settings are migrated automatically when read. New exports and MCP configuration use Skarix names. Windows keeps its existing installer upgrade identity. The macOS app identifier is now `com.skarix.studio`; macOS may request Bluetooth permission again after this upgrade. User project files are not moved or deleted.
 
-Open prior sticker/design JSON files normally. Expand **Preserved CriProx projects** on Home to export legacy card project copies or open their original folder. **Export last autosaved card draft** recovers the latest card edits from the old workspace even when they were never saved in Recents or the library; exporting does not alter that stored draft. Use CriProx to edit that legacy format. Reopening **Meet Skarix** creates a distinct starter and preserves your customized starter in Recents.
+Open prior sticker/design JSON files normally. Expand **Preserved legacy projects** on Home to export legacy card project copies or open their original folder. **Export last autosaved card draft** recovers the latest card edits from the old workspace even when they were never saved in Recents or the library; exporting does not alter that stored draft. Use CriProx to edit that legacy format. Reopening **Meet Skarix** creates a distinct starter and preserves your customized starter in Recents.
 
 ## Updates and offline work
 
@@ -63,3 +63,5 @@ Skarix includes a Bluetooth usage description. Signed releases use hardened runt
 The installed application uses the Aurora rounded-square icon with mint and coral chevrons. **Meet Skarix** opens the matching editable logo project.
 
 The desktop app checks GitHub for newer stable releases at startup and every 15 minutes, and refreshes its cached check when you return to the app. When an update is available, an **Update [version]** button appears in the header and opens **Settings → Updates** for release notes and download options. You can also use **Check now** there. Downloads and installation remain manual.
+
+The MCP server identifies itself as **skarix-design**. Copy the updated **skarix** configuration from Settings → AI access into your MCP client and remove the previous server entry to avoid duplicates.

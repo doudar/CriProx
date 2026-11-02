@@ -1,7 +1,7 @@
 const { registrationGeometry } = require('../../electron/cutter/geometry.cjs');
 module.exports = function sheetJob() {
   return {
-    kind: 'criprox-cut-job',
+    kind: 'skarix-cut-job',
     version: 1,
     machine: 'explore-5',
     paper: 'letter',

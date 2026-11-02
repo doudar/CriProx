@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const { buildSync } = require('esbuild');
 let directory, window;
 (async () => {
-  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-sticker-render-'));
+  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-sticker-render-'));
   app.setPath('userData', path.join(directory, 'profile'));
   await app.whenReady();
   const code = buildSync({

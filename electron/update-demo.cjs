@@ -98,13 +98,13 @@ function startUpdateDemo(app, dialog) {
     arch: process.arch,
     scenario,
   });
-  const requestedProfile = process.env.CRIPROX_UPDATE_DEMO_PROFILE;
+  const requestedProfile = process.env.SKARIX_UPDATE_DEMO_PROFILE;
   const profile = requestedProfile
     ? fs.realpathSync(requestedProfile)
-    : fs.mkdtempSync(path.join(app.getPath('temp'), 'criprox-update-demo-'));
+    : fs.mkdtempSync(path.join(app.getPath('temp'), 'skarix-update-demo-'));
   if (
     path.dirname(fs.realpathSync(profile)) !== fs.realpathSync(app.getPath('temp')) ||
-    !path.basename(profile).startsWith('criprox-update-demo-')
+    !path.basename(profile).startsWith('skarix-update-demo-')
   ) {
     throw new Error('The simulation requires its own temporary profile.');
   }

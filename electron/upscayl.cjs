@@ -56,7 +56,7 @@ async function runUpscayl(input, installation, { signal, spawnProcess = spawn } 
   if (!(input instanceof Uint8Array) || !input.byteLength || input.byteLength > MAX_INPUT_BYTES)
     throw new Error('Upscayl input must be a PNG smaller than 50 MB.');
   if (!installation) throw new Error('Upscayl is not installed in a supported location.');
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-upscayl-'));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-upscayl-'));
   const source = path.join(directory, 'input.png');
   const output = path.join(directory, 'output.png');
   try {

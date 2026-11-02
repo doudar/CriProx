@@ -13,10 +13,10 @@ application version**: after its automatic startup update, the app and its archi
 10.8.81 while that marker remains unchanged. Its `resources/app.asar`
 contains an Electron main process, renderer bundles, and a preload bridge. The installation also
 contains separate native processes, including `CricutDeviceIO.exe` and `CricutDevice.exe`.
-CriProx did not modify installed application files; Design Space updated itself when launched.
+Skarix did not modify installed application files; Design Space updated itself when launched.
 The discovery probe starts its own native process,
 enumerates adapters/devices, and shuts that process down. No proprietary source, WASM, or native
-executables are distributed with CriProx. The research loader reads four hash-verified components
+executables are distributed with Skarix. The research loader reads four hash-verified components
 from the user's installation into a temporary directory, runs the isolated engine wrapper, and
 removes that directory.
 
@@ -113,7 +113,7 @@ Credentials stay in the isolated worker memory and are neither persisted nor sen
 `CricutDeviceIO.exe` starts with **no arguments**, hidden, with piped standard input/output. Each
 message is a **4-byte unsigned little-endian byte length**, followed by a protobuf `Message`.
 The observed schema has no general request ID: responses are matched by response field and,
-for adapter messages, adapter ID. CriProx serializes requests and abandons the session after a timeout.
+for adapter messages, adapter ID. Skarix serializes requests and abandons the session after a timeout.
 
 | Envelope | Field | Payload / meaning |
 | --- | ---: | --- |
@@ -179,7 +179,7 @@ state callback to repeat the handshake after reconnection. The normal flow is th
 on session/service information, not just having the executable installed. The October 31 test
 used an explicitly authorized existing Cricut session to obtain the key in memory. The desktop
 session provider and subsequent protected-key storage are described below. No account token or machine key is stored in source
-or distributed with CriProx.
+or distributed with Skarix.
 
 ## FreeKnife comparison
 
@@ -256,13 +256,13 @@ Maker, and Joy Xtra share these print geometry values in PDF points: arm length 
 material-edge inset 36, inner clearance 18, and bleed radius 2. The upper-left mark has two shortened
 bars and a small directional triangle. No session tokens or machine keys are needed for this geometry.
 
-CriProx independently constructs those shapes in millimeters, sharing them between canvas guides,
+Skarix independently constructs those shapes in millimeters, sharing them between canvas guides,
 vector PDF marks, and saved cut-job metadata. It uses its own page-relative frame, fixed at
 12.7 mm from each paper edge. The former dense-layout adjustment could reduce the inset to 1 mm
 (about 3.85 mm for eight cards on Letter); it was removed on October 31, 2026. Inspection of
 `_calculateTightFiducialRectangle` in the installed composition code confirms that Design Space
 clamps its frame against the material-edge boundary rather than expanding it beyond that boundary
-to fit artwork. Generated geometry now identifies its placement as `criprox-page-frame-v2`.
+to fit artwork. Generated geometry now identifies its placement as `skarix-page-frame-v2`.
 Overlapping artwork is rejected without scaling; eight cards can use A4 instead. This does not duplicate Design Space's
 artwork-dependent frame placement. PDF pixel checks verify marks, arrow gaps, physical page sizes,
 54-label positions, card backs, and multi-page output. Sensor acquisition and cut alignment still
@@ -287,7 +287,7 @@ transport aborts the local job; abort is not an acknowledged physical stop.
 
 The event callback must return a Promise: a synchronous callback crashes the native Promise
 bridge on the first event. `WaitingForMaterialMeasurement` also requires `plotJob.resume()` after
-mat loading; the physical Go button does not release that barrier. CriProx resumes measurement
+mat loading; the physical Go button does not release that barrier. Skarix resumes measurement
 automatically. `WaitingForPlotStart` requires a second resume from the app's **Cut test square**
 command; a physical Go press alone did not advance this step in the hardware test. That command is
 accepted only once per test and only after measurement has reached the waiting-for-start state.
@@ -353,7 +353,7 @@ Direct printing rasterizes the prepared PDF at 300 DPI, streams validated PNG pa
 
 ## First successful registered sheet — October 31, 2026
 
-The user printed the generated marked sheet from CriProx and ran the Explore 5 scan-and-cut workflow. They reported that it worked on the first try and produced usable stickers. The active job used Letter, white sticker paper, fine-point blade, Medium / 80 g, and one pass over authenticated USB. This confirms that complete workflow on this setup; it does not establish A4 placement, other materials/forces, multi-pass results, pause/resume, or repeatability.
+The user printed the generated marked sheet from Skarix and ran the Explore 5 scan-and-cut workflow. They reported that it worked on the first try and produced usable stickers. The active job used Letter, white sticker paper, fine-point blade, Medium / 80 g, and one pass over authenticated USB. This confirms that complete workflow on this setup; it does not establish A4 placement, other materials/forces, multi-pass results, pause/resume, or repeatability.
 
 ## macOS BLE handoff — November 2, 2026
 

@@ -11,5 +11,5 @@ export const WORKSPACES = [
 // 'cards' is retained only to read preserved legacy project metadata.
 export type WorkspaceId = 'cards' | 'stickers';
 export function workspaceName(id: WorkspaceId) {
-  return id === 'cards' ? 'Preserved CriProx project' : 'Design studio';
+  return id === 'cards' ? 'Preserved legacy project' : 'Design studio';
 }

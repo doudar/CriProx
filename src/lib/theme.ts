@@ -1,10 +1,11 @@
+import { readLocalSetting } from './storage';
 export type ColorTheme = 'light' | 'dark';
 
-const THEME_STORAGE_KEY = 'criprox-color-theme';
+const THEME_STORAGE_KEY = 'skarix-color-theme';
 
 export function getInitialColorTheme(): ColorTheme {
   try {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    const saved = readLocalSetting(THEME_STORAGE_KEY);
     if (saved === 'light' || saved === 'dark') return saved;
   } catch {
     // Storage can be unavailable in a locked-down browser context.

@@ -53,6 +53,31 @@ async function pixels(source: string) {
 }
 
 export async function run() {
+  const storage = await import('../src/lib/storage');
+  await set('criprox-migration-test', { name: 'Saved draft' });
+  check(
+    (await storage.get<{ name: string }>('skarix-migration-test'))?.name === 'Saved draft',
+    'Legacy draft was lost',
+  );
+  await storage.set('skarix-migration-test', { name: 'New draft' });
+  check(
+    (await storage.get<{ name: string }>('skarix-migration-test'))?.name === 'New draft',
+    'Legacy draft overwrote current data',
+  );
+  await storage.del('skarix-migration-test');
+  check(
+    (await storage.get('skarix-migration-test')) === undefined,
+    'Deleted draft was resurrected',
+  );
+  localStorage.setItem('criprox-migration-test', 'dark');
+  check(storage.readLocalSetting('skarix-migration-test') === 'dark', 'Legacy preference was lost');
+  localStorage.setItem('skarix-migration-test', 'light');
+  check(
+    storage.readLocalSetting('skarix-migration-test') === 'light',
+    'Legacy preference overwrote current value',
+  );
+  localStorage.removeItem('criprox-migration-test');
+  localStorage.removeItem('skarix-migration-test');
   const image = artwork();
   let p = newStickerProject();
   p.name = 'Original';
@@ -125,15 +150,15 @@ export async function run() {
   );
   stop();
 
-  await set('criprox-sticker-draft-v1', p);
+  await set('skarix-sticker-draft-v1', p);
   const original = (await rememberRecentProject(p, 'stickers'))[0].id;
-  localStorage.setItem('criprox-recent-active', JSON.stringify({ stickers: original }));
+  localStorage.setItem('skarix-recent-active', JSON.stringify({ stickers: original }));
   const unsavedLegacy = {
     ...projectFromDefaults(FACTORY_PROJECT_DEFAULTS),
     name: 'Unsaved card edits',
     recoverySentinel: 'raw fields survive',
   };
-  await set('criprox-project', unsavedLegacy);
+  await set('skarix-project', unsavedLegacy);
   const root = createRoot(document.getElementById('root')!);
   root.render(<App />);
   await until(
@@ -169,7 +194,7 @@ export async function run() {
     'Unsaved legacy draft export lost latest or unknown fields',
   );
   check(
-    JSON.stringify(await get('criprox-project')) === JSON.stringify(unsavedLegacy),
+    JSON.stringify(await get('skarix-project')) === JSON.stringify(unsavedLegacy),
     'Recovery altered stored card draft',
   );
   // Creating and loading both replace the workspace, but must not reuse the prior recent ID.
@@ -203,7 +228,7 @@ export async function run() {
   check((await readRecentProject(original)).name === 'Original', 'Home save overwrote original');
   root.unmount();
   await tick();
-  await del('criprox-sticker-draft-v1');
+  await del('skarix-sticker-draft-v1');
   const freshRoot = createRoot(document.getElementById('root')!);
   freshRoot.render(<App />);
   await until(
@@ -274,7 +299,7 @@ export async function run() {
   freshRoot.unmount();
   await tick();
   const blank = { ...newStickerProject(), name: 'Intentionally blank' };
-  await set('criprox-sticker-draft-v1', blank);
+  await set('skarix-sticker-draft-v1', blank);
   const blankRoot = createRoot(document.getElementById('root')!);
   blankRoot.render(<App />);
   await until(
@@ -297,7 +322,7 @@ export async function run() {
     'Legacy project evicted or changed',
   );
   // Exercise the visible update notification with the real App and IPC state events.
-  const originalBridge = window.criprox;
+  const originalBridge = window.skarix;
   let listener: ((state: UpdateState) => void) | undefined;
   let checks = 0;
   let downloads = 0;
@@ -327,7 +352,7 @@ export async function run() {
     checks++;
     return available;
   };
-  window.criprox = {
+  window.skarix = {
     ...originalBridge,
     releases: {
       check: checkRelease,
@@ -350,7 +375,7 @@ export async function run() {
       open: async () => {},
       openLink: async () => {},
     },
-  } as typeof window.criprox;
+  } as typeof window.skarix;
   const updateRoot = createRoot(document.getElementById('root')!);
   try {
     updateRoot.render(<App />);
@@ -370,7 +395,7 @@ export async function run() {
     check(downloads === 0, 'Checking updates started a download');
   } finally {
     updateRoot.unmount();
-    window.criprox = originalBridge;
+    window.skarix = originalBridge;
   }
   check(unsubscribed, 'Update subscription leaked after unmount');
   const checksAfterUnmount = checks;

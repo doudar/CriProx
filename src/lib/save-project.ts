@@ -13,13 +13,13 @@ type SaveFilePicker = (options: {
 }) => Promise<SaveFileHandle>;
 
 export function projectFilename(name: string) {
-  return `${filenameStem(name, 'project')}.criprox.json`;
+  return `${filenameStem(name, 'project')}.skarix.json`;
 }
 
 export async function saveProjectAs(project: Project): Promise<boolean> {
   const data = JSON.stringify(project, null, 2);
   const defaultName = projectFilename(project.name);
-  if (window.criprox?.saveProject) return window.criprox.saveProject(defaultName, data);
+  if (window.skarix?.saveProject) return window.skarix.saveProject(defaultName, data);
 
   const picker = (window as typeof window & { showSaveFilePicker?: SaveFilePicker })
     .showSaveFilePicker;
@@ -30,7 +30,7 @@ export async function saveProjectAs(project: Project): Promise<boolean> {
         types: [
           {
             description: 'Skarix project',
-            accept: { 'application/json': ['.criprox.json'] },
+            accept: { 'application/json': ['.skarix.json'] },
           },
         ],
       });

@@ -34,7 +34,7 @@ test('macOS and Windows hand the verified package to the OS and propagate launch
 });
 
 test('Linux saves an executable AppImage, launches the saved path, and supports cancellation and retry', async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), 'criprox-handoff-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'skarix-handoff-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const cache = path.join(root, 'cache');
   await mkdir(cache);
@@ -79,7 +79,7 @@ test('Linux saves an executable AppImage, launches the saved path, and supports 
 });
 
 test('Linux refuses destinations in the private cache, including a symlinked directory', async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), 'criprox-handoff-'));
+  const root = await mkdtemp(path.join(tmpdir(), 'skarix-handoff-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const cache = path.join(root, 'cache');
   await mkdir(cache);

@@ -1,3 +1,4 @@
+import { readLocalSetting } from '../lib/storage';
 import { getMachine, type Machine } from '../lib/machine-guides';
 import { useEffect, useMemo, useState } from 'react';
 import { Cable, Unplug, CheckCircle2, Scissors, ExternalLink } from 'lucide-react';
@@ -15,12 +16,12 @@ export default function CutterPanel({
   machine?: Machine;
 }) {
   const model = getMachine(machine);
-  const mac = window.criprox?.platform === 'darwin';
+  const mac = window.skarix?.platform === 'darwin';
   const [state, setState] = useState<CutterState>(DISCONNECTED_CUTTER);
   const [transport, setTransport] = useState<'usb' | 'ble'>(() => {
     try {
       if (mac) return 'ble';
-      return localStorage.getItem('criprox-cutter-transport') === 'ble' ? 'ble' : 'usb';
+      return readLocalSetting('skarix-cutter-transport') === 'ble' ? 'ble' : 'usb';
     } catch {
       return 'usb';
     }
@@ -61,7 +62,7 @@ export default function CutterPanel({
     setPrinted(false);
     setMaterialReady(false);
   }, [sheetIndex]);
-  const api = window.criprox?.cutter;
+  const api = window.skarix?.cutter;
   const materialIssue = prepared ? directCutIssue(prepared.settings, machine) : '';
   useEffect(() => {
     setSavedKey(undefined);
@@ -125,12 +126,12 @@ export default function CutterPanel({
     });
   }
   async function openSetup() {
-    if (!api || !window.criprox?.cricut) return;
+    if (!api || !window.skarix?.cricut) return;
     setPending(true);
     setError('');
     try {
       setState(await api.disconnect());
-      await window.criprox.cricut.open();
+      await window.skarix.cricut.open();
       setSetupOpened(true);
     } catch (error) {
       setError(error instanceof Error ? error.message : String(error));
@@ -206,7 +207,7 @@ export default function CutterPanel({
               </p>
               <button
                 className="secondary"
-                disabled={busy || !window.criprox?.cricut}
+                disabled={busy || !window.skarix?.cricut}
                 onClick={() => void openSetup()}
               >
                 <ExternalLink size={16} />
@@ -225,7 +226,7 @@ export default function CutterPanel({
                   const value = e.target.value as 'usb' | 'ble';
                   setTransport(value);
                   try {
-                    localStorage.setItem('criprox-cutter-transport', value);
+                    localStorage.setItem('skarix-cutter-transport', value);
                   } catch {}
                 }}
               >

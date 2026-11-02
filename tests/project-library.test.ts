@@ -113,7 +113,7 @@ test('project folder names and identifiers are portable and path-safe', () => {
 });
 
 test('managed projects save custom artwork as assets and hydrate it when opened', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-library-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-library-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
 
   const first = await saveProject(root, { projectId: null, data: JSON.stringify(project) });
@@ -148,7 +148,7 @@ test('managed projects save custom artwork as assets and hydrate it when opened'
 });
 
 test('incremental project saves externalize assets before committing the manifest', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-incremental-library-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-incremental-library-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
 
   const session = await beginProjectSave(root, { projectId: null, name: project.name });
@@ -167,7 +167,7 @@ test('incremental project saves externalize assets before committing the manifes
 });
 
 test('aborting a new incremental save removes its incomplete project folder', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-aborted-library-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-aborted-library-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
 
   const session = await beginProjectSave(root, { projectId: null, name: project.name });
@@ -178,7 +178,7 @@ test('aborting a new incremental save removes its incomplete project folder', as
 });
 
 test('managed projects allocate a non-destructive suffix for duplicate names', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-library-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-library-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
 
   const first = await saveProject(root, { projectId: null, data: JSON.stringify(project) });
@@ -188,8 +188,8 @@ test('managed projects allocate a non-destructive suffix for duplicate names', a
 });
 
 test('legacy project import copies hydrated projects and keeps the originals', async (t) => {
-  const sourceRoot = await fs.mkdtemp(path.join(tmpdir(), 'criprox-documents-library-'));
-  const destinationRoot = await fs.mkdtemp(path.join(tmpdir(), 'criprox-app-library-'));
+  const sourceRoot = await fs.mkdtemp(path.join(tmpdir(), 'skarix-documents-library-'));
+  const destinationRoot = await fs.mkdtemp(path.join(tmpdir(), 'skarix-app-library-'));
   t.after(() =>
     Promise.all([
       fs.rm(sourceRoot, { recursive: true, force: true }),
@@ -215,7 +215,7 @@ test(
   'managed project reads reject symlinked project and artwork files',
   { skip: process.platform === 'win32' },
   async (t) => {
-    const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-library-'));
+    const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-library-'));
     t.after(() => fs.rm(root, { recursive: true, force: true }));
     const saved = await saveProject(root, { projectId: null, data: JSON.stringify(project) });
     const directory = path.join(root, saved.id);
@@ -238,7 +238,7 @@ test(
 );
 
 test('project deletion delegates the validated project folder to a recoverable trash action', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-library-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-library-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'unrelated-folder'));
   let unrelatedWasDeleted = false;
@@ -263,7 +263,7 @@ test('project deletion delegates the validated project folder to a recoverable t
 });
 
 test('nested library folders save, discover, move, reopen and delete projects with artwork', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-folders-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-folders-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await createFolder(root, '', 'Commander');
   const folder = await createFolder(root, 'Commander', 'Budget decks');
@@ -300,7 +300,7 @@ test('nested library folders save, discover, move, reopen and delete projects wi
 });
 
 test('empty library folders can be deleted, one level at a time, while the root is protected', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-empty-folders-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-empty-folders-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await createFolder(root, '', 'Commander');
   await createFolder(root, 'Commander', 'Budget decks');
@@ -318,7 +318,7 @@ test('empty library folders can be deleted, one level at a time, while the root 
 });
 
 test('folder deletion preserves projects, hidden files and contents added after a refresh', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-folder-contents-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-folder-contents-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await createFolder(root, '', 'Hidden files');
   await fs.writeFile(path.join(root, 'Hidden files', '.keep'), 'keep me');
@@ -352,7 +352,7 @@ test('folder deletion preserves projects, hidden files and contents added after 
 });
 
 test('folder validation rejects traversal, project interiors, excessive depth and duplicate names', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-folder-validation-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-folder-validation-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   for (const name of [
     '../escape',
@@ -393,8 +393,8 @@ test(
   'library traversal and nested operations skip symlinked ancestors and damaged projects',
   { skip: process.platform === 'win32' },
   async (t) => {
-    const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-folder-links-'));
-    const outside = await fs.mkdtemp(path.join(tmpdir(), 'criprox-outside-library-'));
+    const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-folder-links-'));
+    const outside = await fs.mkdtemp(path.join(tmpdir(), 'skarix-outside-library-'));
     t.after(() =>
       Promise.all([
         fs.rm(root, { recursive: true, force: true }),
@@ -420,8 +420,8 @@ test(
 );
 
 test('legacy import preserves nested folders and empty folders alongside their artwork', async (t) => {
-  const source = await fs.mkdtemp(path.join(tmpdir(), 'criprox-import-source-'));
-  const destination = await fs.mkdtemp(path.join(tmpdir(), 'criprox-import-dest-'));
+  const source = await fs.mkdtemp(path.join(tmpdir(), 'skarix-import-source-'));
+  const destination = await fs.mkdtemp(path.join(tmpdir(), 'skarix-import-dest-'));
   t.after(() =>
     Promise.all([
       fs.rm(source, { recursive: true, force: true }),
@@ -449,7 +449,7 @@ test('legacy import preserves nested folders and empty folders alongside their a
 });
 
 test('Windows project moves preserve artwork and the saved date; failed moves retain the source', async (t) => {
-  const root = await fs.mkdtemp(path.join(tmpdir(), 'criprox-windows-move-'));
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-windows-move-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await createFolder(root, '', 'Destination');
   const source = await saveProject(root, { projectId: null, data: JSON.stringify(project) });
@@ -498,4 +498,21 @@ test('Windows project moves preserve artwork and the saved date; failed moves re
     tinyPng,
   );
   await assert.rejects(openProject(root, source.id));
+});
+
+test('legacy project manifests remain readable and save under the Skarix filename', async (t) => {
+  const root = await fs.mkdtemp(path.join(tmpdir(), 'skarix-legacy-library-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const saved = await saveProject(root, { projectId: null, data: JSON.stringify(project) });
+  const current = path.join(root, saved.id, PROJECT_FILE);
+  await fs.rename(current, path.join(root, saved.id, 'project.criprox.json'));
+  assert.equal((await listProjects(root)).length, 1);
+  const opened = (await openProject(root, saved.id)) as typeof project;
+  assert.equal(opened.entries[0].card.faces[0].image, tinyPng);
+  await saveProject(root, {
+    projectId: saved.id,
+    data: JSON.stringify({ ...opened, name: 'Migrated' }),
+  });
+  assert.equal(JSON.parse(await fs.readFile(current, 'utf8')).name, 'Migrated');
+  assert.equal((await listProjects(root))[0].name, 'Migrated');
 });

@@ -6,7 +6,7 @@ const fs = require('node:fs/promises'),
   assert = require('node:assert/strict');
 let directory, window;
 (async () => {
-  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-fit-cut-'));
+  directory = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-fit-cut-'));
   app.setPath('userData', path.join(directory, 'profile'));
   await app.whenReady();
   const code = buildSync({

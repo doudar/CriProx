@@ -115,9 +115,9 @@ export default function SettingsModal({
     }
   }
   const fileExplorerName =
-    window.criprox?.platform === 'darwin'
+    window.skarix?.platform === 'darwin'
       ? 'Finder'
-      : window.criprox?.platform === 'win32'
+      : window.skarix?.platform === 'win32'
         ? 'File Explorer'
         : 'file manager';
   return (

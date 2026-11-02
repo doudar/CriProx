@@ -57,7 +57,7 @@ function createPrintService({ BrowserWindow, nativeImage, showPreview, tempRoot 
     // Only remove a directory that this service created directly inside its temp root.
     if (
       path.dirname(job.directory) !== path.resolve(tempRoot) ||
-      !path.basename(job.directory).startsWith('criprox-print-')
+      !path.basename(job.directory).startsWith('skarix-print-')
     )
       throw Error('Unexpected print temporary directory.');
     await fs.rm(job.directory, { recursive: true, force: true });
@@ -67,7 +67,7 @@ function createPrintService({ BrowserWindow, nativeImage, showPreview, tempRoot 
       if ([...jobs.values()].some((j) => j.owner === owner))
         throw Error('Finish or cancel the current print first.');
       const settings = printSettings(input);
-      const directory = await fs.mkdtemp(path.join(path.resolve(tempRoot), 'criprox-print-'));
+      const directory = await fs.mkdtemp(path.join(path.resolve(tempRoot), 'skarix-print-'));
       const job = {
         id: randomUUID(),
         owner,

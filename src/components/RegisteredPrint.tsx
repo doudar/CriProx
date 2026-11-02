@@ -1,6 +1,6 @@
 import GeneratedPrintPanel from './GeneratedPrintPanel';
 import { useEffect, useRef, useState } from 'react';
-import { get, set } from 'idb-keyval';
+import { get, set } from '../lib/storage';
 import {
   CheckCircle2,
   CircleHelp,
@@ -103,11 +103,11 @@ export default function RegisteredPrint({
     doubleSidedCount = doubleSidedCardCount(project.entries),
     sharedBackRequired = needsSharedCardBack(project.entries),
     onlyDoubleSided = doubleSidedCount > 0 && !sharedBackRequired,
-    registrationTemplates = window.criprox?.registrationTemplates,
+    registrationTemplates = window.skarix?.registrationTemplates,
     slotCount = full.placements.length;
   useEffect(() => {
     let active = true;
-    void window.criprox?.upscayl
+    void window.skarix?.upscayl
       ?.detect()
       .then((installation) => {
         if (active) setUpscaylCacheKey(installation?.cacheKey || '');

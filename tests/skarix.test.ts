@@ -27,7 +27,7 @@ test('existing data directory takes precedence and no user files are moved', () 
     compatibleUserData(base, () => false),
     join(base, 'Skarix'),
   );
-  for (const name of ['CriProx', 'criprox', 'Skarix'])
+  for (const name of ['Skarix', 'CriProx', 'criprox'])
     assert.equal(
       compatibleUserData(base, (p: string) => p === join(base, name)),
       join(base, name),
@@ -78,4 +78,13 @@ test('updates stay inside the renamed repository and recognize existing release 
     })),
   };
   assert.ok(selectReleaseAssets(release, 'win32', 'x64'));
+});
+
+test('legacy design exports reopen with the current Skarix file identifier', async () => {
+  const { newStickerProject, validateStickerProject } = await import('../src/lib/stickers');
+  const current = newStickerProject();
+  assert.equal(current.kind, 'skarix-stickers');
+  const migrated = validateStickerProject({ ...current, kind: 'criprox-stickers' });
+  assert.equal(migrated.kind, 'skarix-stickers');
+  assert.equal(migrated.name, current.name);
 });

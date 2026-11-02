@@ -21,7 +21,7 @@ app.on('browser-window-created', (_event, window) => {
     if (closing) return;
     closing = true;
     if (process.argv.includes('--ai')) {
-      const state = await window.webContents.executeJavaScript('window.criprox.ai.start()');
+      const state = await window.webContents.executeJavaScript('window.skarix.ai.start()');
       if (!state.running) throw Error('AI listener did not start');
       const socket = net.createConnection({
         host: '127.0.0.1',

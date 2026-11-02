@@ -181,9 +181,9 @@ test('the 54-label sheet prints generated marks without a capture and saves matc
   const first = job.sheets[0].contours[0];
   assert.deepEqual(pixel(canvas, first.x + 21, first.y + 7), [255, 0, 0, 255]);
   const zip = await JSZip.loadAsync(await generatedPrintBundle(result));
-  assert.ok(zip.file('matching-cut-job.criprox.json'));
+  assert.ok(zip.file('matching-cut-job.skarix.json'));
   assert.match(await zip.file('READ-ME.txt')!.async('string'), /Hard pressure · 3 passes/);
-  if (process.env.CRIPROX_RENDER_QA) {
+  if (process.env.SKARIX_RENDER_QA) {
     writeFileSync('tmp/generated-54-labels.pdf', result.pdf);
     writeFileSync('tmp/generated-54-labels.png', canvas.toBuffer('image/png'));
   }
@@ -342,7 +342,7 @@ test('enlarging sticker layout limits does not move preview or PDF registration 
     p = editSticker(p, 0, { x: 70, y: 70 });
     const result = await generateMarkedPrint({ kind: 'stickers', project: p });
     const registration = JSON.parse(result.job).sheets[0].registration;
-    assert.equal(registration.placement, 'criprox-page-frame-v2');
+    assert.equal(registration.placement, 'skarix-page-frame-v2');
     assert.equal(registration.frame.x, 12.7);
     assert.equal(registration.frame.y, 12.7);
     assert.deepEqual(registration.marks, machineGuide(p.machine, paper).marks);

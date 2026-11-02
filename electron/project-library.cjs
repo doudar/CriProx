@@ -3,7 +3,22 @@ const { constants: fsConstants } = require('node:fs');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
-const PROJECT_FILE = 'project.criprox.json';
+const PROJECT_FILE = 'project.skarix.json';
+const LEGACY_PROJECT_FILE = 'project.criprox.json';
+async function existingProjectFile(directory) {
+  for (const name of [PROJECT_FILE, LEGACY_PROJECT_FILE]) {
+    const file = path.join(directory, name);
+    try {
+      await fs.lstat(file);
+      return file;
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
+    }
+  }
+  const error = new Error('Project file not found.');
+  error.code = 'ENOENT';
+  throw error;
+}
 const MAX_PROJECT_BYTES = 100_000_000;
 const MAX_ARTWORK_BYTES = 20_000_000;
 const projectIdPattern = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
@@ -89,7 +104,7 @@ async function assertLibraryFolder(root, folder) {
     if (!stat.isDirectory() || stat.isSymbolicLink())
       throw new Error('Library folder is unavailable.');
     try {
-      await fs.lstat(path.join(directory, PROJECT_FILE));
+      await existingProjectFile(directory);
     } catch (error) {
       if (error?.code === 'ENOENT') continue;
       throw error;
@@ -385,7 +400,7 @@ function projectSummary(projectId, project, stat) {
 }
 
 async function readProjectFile(projectDirectory) {
-  const filePath = path.join(projectDirectory, PROJECT_FILE);
+  const filePath = await existingProjectFile(projectDirectory);
   const { contents, stat } = await readRegularFile(filePath, {
     minBytes: 1,
     maxBytes: MAX_PROJECT_BYTES,
@@ -419,7 +434,7 @@ async function listLibrary(root) {
       } catch {
         // Never browse assets inside incomplete or damaged project folders.
         try {
-          await fs.lstat(path.join(child, PROJECT_FILE));
+          await existingProjectFile(child);
           continue;
         } catch (error) {
           if (error?.code !== 'ENOENT') continue;

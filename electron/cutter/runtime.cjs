@@ -102,7 +102,7 @@ async function loadInstalledRuntime() {
     end = source.indexOf(updated ? 'var At,qi,uo' : 'var Ut,Ji');
   if (start < 0 || end <= start) throw new Error('Cannot isolate the inspected WASM wrapper');
   const scratchParent = path.resolve(os.tmpdir());
-  const scratch = await fs.mkdtemp(path.join(scratchParent, 'criprox-cutter-runtime-'));
+  const scratch = await fs.mkdtemp(path.join(scratchParent, 'skarix-cutter-runtime-'));
   try {
     await fs.writeFile(path.join(scratch, 'package.json'), '{"type":"module"}');
     for (const name of ['chunk-2ZBRDBX3.js', 'chunk-IN2AQKOL.js'])
@@ -146,7 +146,7 @@ async function loadInstalledRuntime() {
     const resolved = path.resolve(scratch);
     if (
       path.dirname(resolved) !== scratchParent ||
-      !path.basename(resolved).startsWith('criprox-cutter-runtime-')
+      !path.basename(resolved).startsWith('skarix-cutter-runtime-')
     )
       throw new Error('Unexpected runtime scratch directory');
     await fs.rm(resolved, { recursive: true, force: true });

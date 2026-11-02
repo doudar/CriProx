@@ -10,10 +10,10 @@ function launchUpdateDemo({
   args = process.argv.slice(2),
   electronPath = require('electron'),
 } = {}) {
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'criprox-update-demo-'));
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'skarix-update-demo-'));
   const child = spawn(electronPath, [appPath, '--simulate-updates', ...args], {
     cwd: path.resolve(__dirname, '..'),
-    env: { ...process.env, CRIPROX_UPDATE_DEMO_PROFILE: profile },
+    env: { ...process.env, SKARIX_UPDATE_DEMO_PROFILE: profile },
     stdio: 'inherit',
   });
   const cleanup = () =>

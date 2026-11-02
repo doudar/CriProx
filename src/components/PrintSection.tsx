@@ -1,3 +1,4 @@
+import { readLocalSetting } from '../lib/storage';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CheckCircle2, ChevronDown } from 'lucide-react';
 
@@ -23,7 +24,7 @@ export default function PrintSection({
   busy?: boolean;
   children: ReactNode;
 }) {
-  const storageKey = `criprox:print-section:${layoutKey}:${section}`;
+  const storageKey = `skarix:print-section:${layoutKey}:${section}`;
   // Artwork can be a large data URL. Store a compact fingerprint rather than duplicating it.
   const fingerprint = useMemo(() => {
     let first = 2166136261,
@@ -36,7 +37,7 @@ export default function PrintSection({
   }, [version]);
   const [doneVersion, setDoneVersion] = useState(() => {
     try {
-      return localStorage.getItem(storageKey);
+      return readLocalSetting(storageKey);
     } catch {
       return null;
     }

@@ -1,3 +1,4 @@
+import { readLocalSetting } from './storage';
 import { BUILTIN_MATERIALS, validateMaterial, type MaterialProfile } from './cut-settings';
 export type MaterialLibrary = {
   version: 1;
@@ -5,7 +6,7 @@ export type MaterialLibrary = {
   originals: MaterialProfile[];
   edits: MaterialProfile[];
 };
-export const MATERIAL_LIBRARY_KEY = 'criprox-material-library-v1';
+export const MATERIAL_LIBRARY_KEY = 'skarix-material-library-v1';
 export const emptyMaterialLibrary = (): MaterialLibrary => ({
   version: 1,
   imported: false,
@@ -59,22 +60,22 @@ export function resetLibraryMaterial(library: MaterialLibrary, id: string): Mate
   return { ...library, edits: library.edits.filter((p) => p.id !== id) };
 }
 export function readMaterialLibrary(): MaterialLibrary {
-  const saved = localStorage.getItem(MATERIAL_LIBRARY_KEY);
+  const saved = readLocalSetting(MATERIAL_LIBRARY_KEY);
   return saved ? validateLibrary(JSON.parse(saved)) : emptyMaterialLibrary();
 }
 export function saveMaterialLibrary(library: MaterialLibrary) {
   localStorage.setItem(MATERIAL_LIBRARY_KEY, JSON.stringify(validateLibrary(library)));
-  window.dispatchEvent(new Event('criprox-materials-changed'));
+  window.dispatchEvent(new Event('skarix-materials-changed'));
 }
 let importing: Promise<{ library: MaterialLibrary; message: string }> | undefined;
 export function importMaterialLibrary() {
   if (!importing)
     importing = (async () => {
-      if (!window.criprox?.materials)
+      if (!window.skarix?.materials)
         throw Error(
           'Import from Design Space is available in the desktop app. You can create custom materials here.',
         );
-      const result = await window.criprox.materials.import();
+      const result = await window.skarix.materials.import();
       const library = mergeImportedMaterials(readMaterialLibrary(), result.profiles);
       saveMaterialLibrary(library);
       return {

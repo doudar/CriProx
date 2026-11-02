@@ -15,13 +15,13 @@ const { projectLibraryPaths } = require('../electron/project-library-paths.cjs')
 
 test('the default project library stays inside app data instead of Documents', () => {
   const paths = projectLibraryPaths({
-    userData: '/Users/example/Library/Application Support/CriProx',
+    userData: '/Users/example/Library/Application Support/Skarix',
     documents: '/Users/example/Documents',
   });
 
   assert.equal(
     paths.defaultRoot,
-    path.join('/Users/example/Library/Application Support/CriProx', 'projects'),
+    path.join('/Users/example/Library/Application Support/Skarix', 'projects'),
   );
   assert.equal(paths.legacyRoot, path.join('/Users/example/Documents', 'CriProx'));
   assert.equal(path.dirname(paths.settingsFile), path.dirname(paths.defaultRoot));
@@ -35,7 +35,7 @@ test('project library base folders must be absolute', () => {
   );
   assert.throws(() =>
     projectLibraryPaths({
-      userData: '/Users/example/Library/Application Support/CriProx',
+      userData: '/Users/example/Library/Application Support/Skarix',
       documents: 'relative/documents',
     }),
   );

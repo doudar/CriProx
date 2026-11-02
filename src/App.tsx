@@ -1,5 +1,6 @@
+import { readLocalSetting } from './lib/storage';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { get } from 'idb-keyval';
+import { get } from './lib/storage';
 import {
   FolderOpen,
   Home,
@@ -31,7 +32,7 @@ import './studio.css';
 
 function readActiveRecent() {
   try {
-    const id = JSON.parse(localStorage.getItem('criprox-recent-active') || '{}').stickers;
+    const id = JSON.parse(readLocalSetting('skarix-recent-active') || '{}').stickers;
     return typeof id === 'string' ? id : undefined;
   } catch {
     return undefined;
@@ -39,7 +40,7 @@ function readActiveRecent() {
 }
 function saveActiveRecent(id?: string) {
   try {
-    localStorage.setItem('criprox-recent-active', JSON.stringify({ stickers: id }));
+    localStorage.setItem('skarix-recent-active', JSON.stringify({ stickers: id }));
   } catch {}
 }
 const initialUpdate: UpdateState = {
@@ -83,8 +84,8 @@ export default function App() {
   }, [settings]);
   useEffect(() => {
     // The old card workspace autosaved independently of Recents and the library.
-    // Keep this raw snapshot export-only; never migrate, overwrite or remove it.
-    void get('criprox-project')
+    // Keep this raw snapshot export-only; never modify or remove the original.
+    void get('skarix-project')
       .then(setLegacyDraft)
       .catch(() =>
         setMessage('The preserved card draft could not be read. Its storage is unchanged.'),
@@ -92,11 +93,11 @@ export default function App() {
     void listRecentProjects()
       .then(setRecent)
       .catch(() => setMessage('Recent projects could not be read. Saved files are unchanged.'));
-    void window.criprox?.projects
+    void window.skarix?.projects
       ?.list()
       .then(setLibrary)
       .catch(() => {});
-    const api = window.criprox?.releases;
+    const api = window.skarix?.releases;
     if (!api) return;
     let active = true;
     const receive = (state: UpdateState) => {
@@ -148,12 +149,12 @@ export default function App() {
   function exportLegacy(value: unknown, name: string) {
     download(
       new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }),
-      name.replace(/[^a-zA-Z0-9 -]/g, '') + '.criprox.json',
+      name.replace(/[^a-zA-Z0-9 -]/g, '') + '.skarix.json',
     );
     setMessage('Project copy exported. Use CriProx to edit this legacy format.');
   }
   async function updateAction(action: 'checkNow' | 'download' | 'cancel' | 'viewRelease') {
-    const api = window.criprox?.releases;
+    const api = window.skarix?.releases;
     if (!api) return;
     if (action === 'viewRelease') {
       if (update.update) await api.open(update.update.releaseUrl);
@@ -167,7 +168,7 @@ export default function App() {
     setView('home');
   }
   const legacy = recent.filter((item) => item.workspace === 'cards');
-  const controls = window.criprox?.windowControls;
+  const controls = window.skarix?.windowControls;
   return (
     <div className="skarix-app">
       <header className="skarix-header">
@@ -329,7 +330,7 @@ export default function App() {
           </section>
           {(legacyDraft !== undefined || legacy.length > 0 || !!library?.projects.length) && (
             <details className="skarix-legacy">
-              <summary>Preserved CriProx projects</summary>
+              <summary>Preserved legacy projects</summary>
               <p>
                 Your existing project files remain intact. Export a copy to continue editing the
                 legacy format in CriProx.
@@ -360,7 +361,7 @@ export default function App() {
                   onClick={() =>
                     void run(async () =>
                       exportLegacy(
-                        await openManagedProject(window.criprox!.projects!, item.id),
+                        await openManagedProject(window.skarix!.projects!, item.id),
                         item.name,
                       ),
                     )
@@ -369,7 +370,7 @@ export default function App() {
                   <Download size={15} /> {item.name}
                 </button>
               ))}
-              <button onClick={() => void window.criprox?.projects?.reveal()}>
+              <button onClick={() => void window.skarix?.projects?.reveal()}>
                 Open original library folder
               </button>
             </details>
@@ -427,7 +428,7 @@ export default function App() {
             void run(async () => {
               if (file.size > 90_000_000) throw Error('Project exceeds 90 MB.');
               const value = JSON.parse(await file.text());
-              if (value.kind !== 'criprox-stickers')
+              if (!['skarix-stickers', 'criprox-stickers'].includes(value.kind))
                 throw Error(
                   'This legacy project is preserved. Open it in CriProx; Skarix opens design projects.',
                 );
@@ -489,7 +490,7 @@ export default function App() {
               openInstaller={() =>
                 void run(async () => {
                   if (draft) await remember(draft);
-                  const state = await window.criprox?.releases?.openInstaller();
+                  const state = await window.skarix?.releases?.openInstaller();
                   if (state) setUpdate(state);
                 })
               }

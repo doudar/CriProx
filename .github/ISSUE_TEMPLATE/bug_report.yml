@@ -1,23 +1,23 @@
 name: Bug report
-description: Report a reproducible problem in CriProx.
+description: Report a reproducible problem in Skarix.
 title: 'fix: '
 labels:
   - bug
 body:
   - type: markdown
     attributes:
-      value: Thanks for helping improve CriProx. Please remove private card artwork from attachments and logs.
+      value: Thanks for helping improve Skarix. Please remove private card artwork from attachments and logs.
   - type: checkboxes
     attributes:
       label: Before filing
       options:
         - label: I searched existing issues for this problem.
           required: true
-        - label: I can reproduce this on the latest CriProx release.
+        - label: I can reproduce this on the latest Skarix release.
           required: true
   - type: input
     attributes:
-      label: CriProx version
+      label: Skarix version
       description: Shown at the bottom of the app, for example 0.2.0.
       placeholder: 0.2.0
     validations:

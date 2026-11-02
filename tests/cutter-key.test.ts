@@ -51,7 +51,7 @@ function encryption() {
   };
 }
 test('protected cutter key persists as ciphertext, survives a new store, and can be forgotten', async (t) => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'criprox-key-test-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'skarix-key-test-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const options = { directory: () => dir, platform: 'win32', safeStorage: encryption() };
   const store = createProtectedKeyStore(options);
@@ -69,7 +69,7 @@ test('protected cutter key persists as ciphertext, survives a new store, and can
 });
 
 test('unavailable protection, corrupt files, foreign users and wrong scopes never return a key', async (t) => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'criprox-key-test-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'skarix-key-test-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const safeStorage = encryption(),
     options = { directory: () => dir, platform: 'win32', safeStorage };

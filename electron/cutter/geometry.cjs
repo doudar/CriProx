@@ -59,7 +59,7 @@ function registrationGeometry(machine, paper) {
     marks,
     keepOuts,
     source: 'cricut-machine-metrics-10.8.81',
-    placement: 'criprox-page-frame-v2',
+    placement: 'skarix-page-frame-v2',
   };
 }
 function registrationOrigin(paper, area) {

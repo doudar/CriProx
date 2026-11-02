@@ -62,7 +62,7 @@ declare global {
   };
 
   interface Window {
-    criprox?: {
+    skarix?: {
       ai?: {
         status: () => Promise<{
           running: boolean;

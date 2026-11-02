@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Report a security vulnerability
-    url: https://github.com/Go2Engle/CriProx/security/advisories/new
+    url: https://github.com/doudar/Skarix/security/advisories/new
     about: Please report security issues privately instead of opening a public issue.

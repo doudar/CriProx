@@ -41,7 +41,7 @@ export default function UpdatesPanel({
   const [macError, setMacError] = useState('');
   const downloading = state.status === 'downloading' || state.status === 'verifying';
   const busy = downloading || state.status === 'checking';
-  const platform = window.criprox?.platform;
+  const platform = window.skarix?.platform;
   const percent = state.total
     ? Math.min(100, Math.floor((state.transferred / state.total) * 100))
     : 0;
@@ -51,7 +51,7 @@ export default function UpdatesPanel({
     setMacAction(action);
     setMacError('');
     try {
-      const releases = window.criprox?.releases;
+      const releases = window.skarix?.releases;
       if (!releases) throw new Error('Updates are unavailable.');
       await releases[action]();
       if (action === 'copyMacCommand') setCommandCopied(true);
@@ -253,7 +253,7 @@ export default function UpdatesPanel({
                     if (!anchor) return;
                     event.preventDefault();
                     setLinkError(null);
-                    void window.criprox?.releases?.openLink(anchor.href).catch(() =>
+                    void window.skarix?.releases?.openLink(anchor.href).catch(() =>
                       setLinkError({
                         version: release.version,
                         message:

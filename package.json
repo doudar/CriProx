@@ -61,7 +61,7 @@
     "esbuild": "^0.28.2"
   },
   "build": {
-    "appId": "com.criprox.studio",
+    "appId": "com.skarix.studio",
     "productName": "Skarix",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "files": [
@@ -108,6 +108,9 @@
         "AppImage"
       ]
     },
-    "icon": "build/icon.png"
+    "icon": "build/icon.png",
+    "nsis": {
+      "guid": "911f3104-241d-5d45-b390-b5f4568af6c3"
+    }
   }
 }

@@ -1,5 +1,5 @@
 export type ProjectSort = 'updated' | 'name' | 'cards';
-export const PROJECT_DRAG_TYPE = 'application/x-criprox-project';
+export const PROJECT_DRAG_TYPE = 'application/x-skarix-project';
 
 export function projectFolder(projectId: string): string {
   return projectId.split('/').slice(0, -1).join('/');

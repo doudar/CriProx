@@ -48,8 +48,8 @@ export default function PrintCutWorkflow({
     setOpening(true);
     setError('');
     try {
-      if (window.criprox?.cutter) await window.criprox.cutter.disconnect();
-      if (window.criprox?.cricut) await window.criprox.cricut.open();
+      if (window.skarix?.cutter) await window.skarix.cutter.disconnect();
+      if (window.skarix?.cricut) await window.skarix.cricut.open();
       else window.open('https://design.cricut.com', '_blank', 'noopener,noreferrer');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

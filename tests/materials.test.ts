@@ -96,7 +96,7 @@ test('all cached cutting blades import with stable distinct IDs and no account d
 });
 
 test('local discovery reads every machine cache, deduplicates, and reports unavailable data', async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'criprox-material-test-'));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'skarix-material-test-'));
   try {
     for (const [machine, materials] of [
       ['a', [raw('paper')]],

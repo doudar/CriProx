@@ -1,4 +1,4 @@
-import { get, set, del } from 'idb-keyval';
+import { get, set, del } from './storage';
 import type { Project } from './types';
 import type { StickerProject } from './stickers';
 import type { WorkspaceId } from './workspaces';
@@ -13,11 +13,11 @@ export type RecentProject = {
   preview?: string;
   identity?: string;
 };
-const INDEX = 'criprox-recent-projects-v1',
-  key = (id: string) => `criprox-recent-project:${id}`;
+const INDEX = 'skarix-recent-projects-v1',
+  key = (id: string) => `skarix-recent-project:${id}`;
 let queue = Promise.resolve();
 export function projectSummary(project: Project | StickerProject, workspace: WorkspaceId) {
-  const stickers = 'kind' in project && project.kind === 'criprox-stickers';
+  const stickers = 'kind' in project && ['skarix-stickers', 'criprox-stickers'].includes(project.kind);
   const count = stickers
     ? project.items.length
     : (project as Project).entries.reduce((sum, e) => sum + e.quantity, 0);

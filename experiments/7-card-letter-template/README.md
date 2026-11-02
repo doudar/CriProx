@@ -1,6 +1,6 @@
 # Experimental seven-card US Letter template
 
-This is the Design Space acceptance test used to develop CriProx's experimental
+This is the Design Space acceptance test used to develop Skarix's experimental
 seven-card 2-3-2 layout profile. The Tabloid-to-Letter system preview produced
 one page with all seven slots and four sensor marks; physical sensor acquisition
 and cutting still require validation.
@@ -13,7 +13,7 @@ and cutting still require validation.
 - Transparent gap: 0.1 mm
 - Complete image size: 189.2 × 214.2 mm (7.4488 × 8.4331 in)
 - PNG: 4469 × 5060 px at 600 DPI
-- Color: CriProx capture magenta, `#e600c8`
+- Color: Skarix capture magenta, `#e600c8`
 
 The widest portion is the three-card center row. The top and bottom rows are
 only 176.1 mm (6.9331 in) wide, leaving more room for the four corner sensor

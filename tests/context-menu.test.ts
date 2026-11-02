@@ -35,7 +35,7 @@ test('editable fields expose standard editing actions with the browser-provided 
 });
 
 test('selected read-only text exposes copy without an unrelated page menu', () => {
-  assert.deepEqual(contextMenuTemplate({ selectionText: 'CriProx' }), [
+  assert.deepEqual(contextMenuTemplate({ selectionText: 'Skarix' }), [
     { role: 'copy', enabled: true },
   ]);
   assert.deepEqual(contextMenuTemplate(), []);

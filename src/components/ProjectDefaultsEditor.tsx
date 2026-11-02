@@ -97,7 +97,7 @@ export default function ProjectDefaultsEditor({
     change({ ...draft, settings: updateDefaultSettings(s, patch) });
   useEffect(() => {
     let active = true;
-    void window.criprox?.upscayl
+    void window.skarix?.upscayl
       ?.detect()
       .then((installation) => {
         if (active) setUpscaylAvailable(!!installation?.cacheKey);

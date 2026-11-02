@@ -25,7 +25,7 @@ export function previewCacheEvictions(
 }
 
 export function indexedDbPreviewStorage(
-  store: UseStore = createStore('criprox-preview-images-v1', 'images'),
+  store: UseStore = createStore('skarix-preview-images-v1', 'images'),
 ): PreviewImageStorage {
   return {
     async read(source) {

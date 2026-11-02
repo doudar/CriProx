@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld(
-  'criprox',
+  'skarix',
   Object.freeze({
     platform: process.platform,
     ai: Object.freeze({

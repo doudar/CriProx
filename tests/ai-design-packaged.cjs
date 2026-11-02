@@ -1,4 +1,4 @@
-// Optional smoke check: node tests/ai-design-packaged.cjs path/to/CriProx.exe
+// Optional smoke check: node tests/ai-design-packaged.cjs path/to/Skarix.exe
 const fs = require('node:fs/promises'),
   os = require('node:os'),
   path = require('node:path'),
@@ -7,7 +7,7 @@ const fs = require('node:fs/promises'),
   { createInterface } = require('node:readline');
 const { createAiServer } = require('../electron/ai-server.cjs');
 (async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'criprox-packaged-mcp-')),
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'skarix-packaged-mcp-')),
     file = path.join(directory, 'connection.json');
   let child;
   const service = createAiServer({
@@ -78,7 +78,7 @@ const { createAiServer } = require('../electron/ai-server.cjs');
       capabilities: {},
       clientInfo: { name: 'packaged-regression', version: '1' },
     });
-    assert.equal(init.result.serverInfo.name, 'criprox-design');
+    assert.equal(init.result.serverInfo.name, 'skarix-design');
     child.stdin.write(
       JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n',
     );

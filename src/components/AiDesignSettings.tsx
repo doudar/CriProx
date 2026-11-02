@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 export default function AiDesignSettings() {
-  const api = window.criprox?.ai;
+  const api = window.skarix?.ai;
   const [state, setState] = useState<{ running: boolean; url: string }>({
       running: false,
       url: '',

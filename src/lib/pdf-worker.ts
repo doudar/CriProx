@@ -148,7 +148,7 @@ export async function preparePdfJob(
 ): Promise<PreparedPdfJob> {
   if (signal?.aborted) throw new DOMException('PDF preparation cancelled.', 'AbortError');
   const job = { ...request, id: crypto.randomUUID() } as PdfWorkerRequest;
-  const upscayl = window.criprox?.upscayl;
+  const upscayl = window.skarix?.upscayl;
   if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') {
     setUpscaylRunner(upscayl ? (id, input) => upscayl.run(id, input) : undefined);
     await nextPaint();

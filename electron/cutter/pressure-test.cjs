@@ -48,7 +48,7 @@ async function buildPressurePlot(api, settings, paths, scan) {
   for (const [index, svg] of paths.entries())
     builder.addPath(
       T.PressurePathSettings.create(
-        `criprox-contour-${index}`,
+        `skarix-contour-${index}`,
         T.PathMeasurement.fromValue(G.Path.withSVGString(svg), T.UnitLength.millimeters),
         createPressurePassSettings(T, settings),
         cutting,

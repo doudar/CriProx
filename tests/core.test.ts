@@ -459,8 +459,8 @@ test('A4 export instructions require Tabloid setup and actual-size A4 printing',
   }
 });
 test('project Save As names are portable across desktop platforms', () => {
-  assert.equal(projectFilename('My Commander: Deck / 2026'), 'My-Commander-Deck-2026.criprox.json');
-  assert.equal(projectFilename('...'), 'project.criprox.json');
+  assert.equal(projectFilename('My Commander: Deck / 2026'), 'My-Commander-Deck-2026.skarix.json');
+  assert.equal(projectFilename('...'), 'project.skarix.json');
 });
 test('PNG metadata contains one correctly ordered physical density chunk', () => {
   const source = new Uint8Array(

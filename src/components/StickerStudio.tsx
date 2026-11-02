@@ -18,7 +18,7 @@ import { MACHINE_NAMES } from '../lib/machine-guides';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { runStickerLayout } from '../lib/sticker-layout-task';
 import WorkspaceContextMenu, { type WorkspaceMenuTarget } from './WorkspaceContextMenu';
-import { get, set } from 'idb-keyval';
+import { get, set } from '../lib/storage';
 import { Download, FolderOpen, Plus, Save, Layers3, SlidersHorizontal } from 'lucide-react';
 import { type RegistrationProfile } from '../lib/registration';
 import { setupPng } from '../lib/registered-pdf';
@@ -71,7 +71,7 @@ import {
   type StickerPose,
 } from '../lib/stickers';
 
-const draftKey = 'criprox-sticker-draft-v1';
+const draftKey = 'skarix-sticker-draft-v1';
 function DimensionInput({
   value,
   change,
@@ -525,8 +525,8 @@ export default function StickerStudio({
     if (new TextEncoder().encode(data).byteLength > MAX_STICKER_FILE_BYTES)
       throw new Error('Sticker project exceeds 90 MB.');
     const name = `${filenameStem(project.name, 'stickers')}.skarix.json`;
-    if (window.criprox?.saveProject) {
-      const result = await window.criprox.saveProject(name, data);
+    if (window.skarix?.saveProject) {
+      const result = await window.skarix.saveProject(name, data);
       setMessage(
         result ? 'Saved sticker file with embedded artwork and captured marks.' : 'Save cancelled.',
       );
