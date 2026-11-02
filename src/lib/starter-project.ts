@@ -73,13 +73,12 @@ export function starterDesign() {
 export async function createStarterProject() {
   const design = starterDesign();
   const image = await renderStickerDesign(design);
+  const artworkId = crypto.randomUUID();
   const project = {
     ...newStickerProject(),
     name: 'Meet Skarix',
     settings: { ...newStickerProject().settings, width: 76, height: 42, radius: 4 },
-    artwork: [{ id: 'skarix-starter', name: 'Skarix sticker', image, design }],
+    artwork: [{ id: artworkId, name: 'Skarix sticker', image, design }],
   };
-  return validateStickerProject(
-    appendSticker(project, 'skarix-starter', { width: 76, height: 42 }),
-  );
+  return validateStickerProject(appendSticker(project, artworkId, { width: 76, height: 42 }));
 }

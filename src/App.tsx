@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { get } from 'idb-keyval';
 import {
   FolderOpen,
   Home,
@@ -60,6 +61,7 @@ export default function App() {
   const [settingsPage, setSettingsPage] = useState('Appearance');
   const [recent, setRecent] = useState<RecentProject[]>([]);
   const [library, setLibrary] = useState<ProjectLibrarySnapshot | null>(null);
+  const [legacyDraft, setLegacyDraft] = useState<unknown>();
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [studioBusy, setStudioBusy] = useState(true);
@@ -80,6 +82,13 @@ export default function App() {
     if (settings) dialog.current?.showModal();
   }, [settings]);
   useEffect(() => {
+    // The old card workspace autosaved independently of Recents and the library.
+    // Keep this raw snapshot export-only; never migrate, overwrite or remove it.
+    void get('criprox-project')
+      .then(setLegacyDraft)
+      .catch(() =>
+        setMessage('The preserved card draft could not be read. Its storage is unchanged.'),
+      );
     void listRecentProjects()
       .then(setRecent)
       .catch(() => setMessage('Recent projects could not be read. Saved files are unchanged.'));
@@ -125,7 +134,7 @@ export default function App() {
       new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }),
       name.replace(/[^a-zA-Z0-9 -]/g, '') + '.criprox.json',
     );
-    setMessage('Original project exported unchanged. Use CriProx to edit this legacy format.');
+    setMessage('Project copy exported. Use CriProx to edit this legacy format.');
   }
   async function updateAction(action: 'checkNow' | 'download' | 'cancel' | 'viewRelease') {
     const api = window.criprox?.releases;
@@ -290,13 +299,21 @@ export default function App() {
               <p>Open or save a project to keep a recent copy on this device.</p>
             )}
           </section>
-          {(legacy.length > 0 || !!library?.projects.length) && (
+          {(legacyDraft !== undefined || legacy.length > 0 || !!library?.projects.length) && (
             <details className="skarix-legacy">
               <summary>Preserved CriProx projects</summary>
               <p>
                 Your existing project files remain intact. Export a copy to continue editing the
                 legacy format in CriProx.
               </p>
+              {legacyDraft !== undefined && (
+                <button
+                  disabled={busy || studioBusy}
+                  onClick={() => exportLegacy(legacyDraft, 'Recovered autosaved card draft')}
+                >
+                  <Download size={15} /> Export last autosaved card draft
+                </button>
+              )}
               {legacy.map((item) => (
                 <button
                   disabled={busy || studioBusy}

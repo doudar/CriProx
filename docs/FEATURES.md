@@ -8,7 +8,7 @@ Home offers a blank canvas, **Meet Skarix**, the continuing draft, and recent pr
 
 The starter loads automatically only when no saved draft exists. Opening it explicitly preserves the previous project in Recents. Blank projects stay blank when reopened. Save portable `.skarix.json` files for durable storage.
 
-Existing sticker projects remain readable. Legacy card projects can be exported from Home; their editing workspace and online catalogs are removed. User files, prior application storage and installation identifiers are preserved.
+Existing sticker projects remain readable. Legacy card projects can be exported from Home, including the last autosaved card draft even if it never appeared in Recents or the managed library. Recovery exports leave the stored draft unchanged. Their editing workspace and online catalogs are removed. User files, prior application storage and installation identifiers are preserved.
 
 ## Artwork and layout
 
