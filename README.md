@@ -1,10 +1,8 @@
-<p align="center"><img src="public/brand/skarix-logo.svg" alt="Skarix — Open Source Cutting Studio" width="510"></p>
+<p align="center"><img src="public/brand/skarix-logo.svg" alt="Skarix — Open Source Cutting Studio" width="320"></p>
 
 # Skarix — Open Source Cutting Studio
 
 Make artwork, labels, decals and cut-ready designs in a local desktop studio.
-
-Skarix is based on [CriProx](https://github.com/Go2Engle/CriProx), created by [Chris Engle (Go2Engle)](https://github.com/Go2Engle) and its original contributors. Original copyright notices and GPL-3.0-only licensing remain in [NOTICE](NOTICE) and [LICENSE](LICENSE).
 
 This branch introduces Skarix. Published v0.17.1 installers still contain the earlier CriProx interface; a Skarix release has not been published.
 
@@ -51,5 +49,7 @@ The gaming-card workspace and its catalog integrations are removed. Existing use
 Storage identifiers and the installation ID remain unchanged for continuity. An existing draft always takes precedence over the starter. New portable files use `.skarix.json`.
 
 ## License and credits
+
+Skarix is based on [CriProx](https://github.com/Go2Engle/CriProx), created by [Chris Engle (Go2Engle)](https://github.com/Go2Engle) and its original contributors. Original copyright notices and GPL-3.0-only licensing remain in [NOTICE](NOTICE) and [LICENSE](LICENSE).
 
 Please preserve upstream attribution and copyright notices. Skarix is licensed under GPL-3.0-only. See [CONTRIBUTING.md](CONTRIBUTING.md), [LICENSE](LICENSE), [NOTICE](NOTICE), and [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt). Skarix is independently maintained and not affiliated with Cricut.

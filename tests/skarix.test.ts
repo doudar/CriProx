@@ -9,10 +9,10 @@ const { compatibleUserData } = require('../electron/user-data-path.cjs');
 const { DESIGN_TOOLS, designTool } = require('../electron/ai-tools.cjs');
 test('Skarix starter uses original editable layers within its physical canvas', () => {
   const d = validateStickerDesign(starterDesign());
-  assert.equal(d.width, 76);
-  assert.equal(d.height, 42);
-  assert.equal(d.elements.length, 4);
-  assert.equal(d.elements.filter((e) => e.kind === 'draw' && e.closed).length, 2);
+  assert.equal(d.width, 100);
+  assert.equal(d.height, 100);
+  assert.equal(d.elements.length, 10);
+  assert.equal(d.elements.filter((e) => e.kind === 'draw' && e.closed).length, 4);
   assert.ok(d.elements.some((e) => e.kind === 'text' && e.text === 'skarix'));
   assert.ok(
     d.elements.every(
