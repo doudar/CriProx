@@ -1,5 +1,3 @@
-<p align="center"><img src="public/brand/skarix-logo.svg" alt="Skarix — Open Source Cutting Studio" width="320"></p>
-
 # Skarix — Open Source Cutting Studio
 
 Make artwork, labels, decals and cut-ready designs in a local desktop studio.
