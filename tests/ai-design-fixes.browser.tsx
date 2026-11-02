@@ -212,7 +212,7 @@ export async function run() {
   );
   const starter = await invokeAiDesign('export_project', { workspace: 'stickers' });
   check(
-    starter.project.items.length === 1 && starter.project.artwork[0].design.elements.length === 4,
+    starter.project.items.length === 1 && starter.project.artwork[0].design.elements.length === 10,
     'Editable starter missing',
   );
   check(
