@@ -1,0 +1,11 @@
+{
+  "name": "skarix-release-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test *.test.mjs"
+  },
+  "dependencies": {
+    "release-please": "17.11.2"
+  }
+}

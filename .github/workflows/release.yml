@@ -1,0 +1,165 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [Skarix CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: skarix-release-main
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare tested application release
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    if: >-
+      github.repository == 'doudar/Skarix' &&
+      ((github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository) ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      created: ${{ steps.prepare.outputs.created }}
+      sha: ${{ steps.prepare.outputs.sha }}
+      tag: ${{ steps.prepare.outputs.tag }}
+      base: ${{ steps.source.outputs.sha }}
+    steps:
+      - name: Select the successful CI revision
+        id: source
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: echo "sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ steps.source.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: .github/release-tools/package-lock.json
+      - run: npm ci --prefix .github/release-tools --ignore-scripts
+      - name: Generate versions and notes with Release Please
+        id: prepare
+        run: node .github/release-tools/prepare.mjs
+        env:
+          BASE_SHA: ${{ steps.source.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+          PREPARED_DIR: ${{ runner.temp }}/prepared
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: steps.prepare.outputs.created == 'true'
+        with:
+          name: prepared-release
+          path: ${{ runner.temp }}/prepared
+          if-no-files-found: error
+          retention-days: 14
+
+  installers:
+    name: Release installer / ${{ matrix.platform }}
+    needs: prepare
+    if: needs.prepare.outputs.created == 'true'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-latest
+            script: package:windows
+            files: release/*.exe
+          - platform: macos
+            runner: macos-latest
+            script: package:mac
+            files: release/*.dmg
+          - platform: linux
+            runner: ubuntu-latest
+            script: package:linux
+            files: release/*.AppImage
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.prepare.outputs.base }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: prepared-release
+          path: ${{ runner.temp }}/prepared
+      - name: Check out the prepared version commit
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+        run: |
+          git fetch "$RUNNER_TEMP/prepared/release.bundle" HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$RELEASE_SHA"
+          git checkout --detach "$RELEASE_SHA"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build unsigned installer
+        run: npm run ${{ matrix.script }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: release-installer-${{ matrix.platform }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Tag and publish completed release
+    needs: [prepare, installers]
+    if: needs.prepare.outputs.created == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.prepare.outputs.base }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: prepared-release
+          path: ${{ runner.temp }}/prepared
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: release-installer-*
+          path: ${{ runner.temp }}/release-assets
+          merge-multiple: true
+      - name: Check out the built revision
+        env:
+          RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+        run: |
+          git fetch "$RUNNER_TEMP/prepared/release.bundle" HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$RELEASE_SHA"
+          git checkout --detach "$RELEASE_SHA"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+      - name: Verify installers, push version and tag, and publish assets
+        run: node .github/release-tools/publish.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PREPARED_DIR: ${{ runner.temp }}/prepared
+          ASSETS_DIR: ${{ runner.temp }}/release-assets

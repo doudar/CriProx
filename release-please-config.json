@@ -6,7 +6,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "CriProx",
+      "package-name": "Skarix",
       "exclude-paths": ["site", "docs/assets"],
       "include-component-in-tag": false,
       "include-v-in-tag": true
