@@ -13,7 +13,7 @@ npm run preview --prefix site
 
 Preview the default repository path at http://127.0.0.1:4174/Skarix/. Offline mode uses bundled changelog data and is for local review; published builds fetch current GitHub releases and exclude drafts/prereleases.
 
-Defaults are `SITE_ORIGIN=https://doudar.github.io` and `SITE_BASE_PATH=/Skarix/`. Override both for another destination. This change does not enable Pages, change DNS, or deploy a website. A maintainer can configure GitHub Pages with the existing Actions workflow after reviewing the site.
+Defaults are `SITE_ORIGIN=https://doudar.github.io` and `SITE_BASE_PATH=/Skarix/`. Override both for another destination. This change does not enable Pages, change DNS, or deploy a website. Skarix CI builds an offline preview artifact; the inherited automatic Pages workflow has been removed. A maintainer must separately review and configure deployment before publishing.
 
 ## Sources of truth
 
