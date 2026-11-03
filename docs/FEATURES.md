@@ -21,6 +21,10 @@ The compact designer keeps shape presets behind **Add shape**. Drawing tools, ca
 - **Masks and textures:** clip artwork or groups to a shape, feather edges or fade them directionally; fill shapes and text with embedded photo tiles or seeded grain, paper, stone and brushed-metal textures.
 - **Paths and text:** create cubic Bézier paths and drag their nodes/handles. Text can follow an existing shape or closed polygon with Inner, Middle or Outer placement and adjustable position along the path.
 - **Layers:** group artwork, transform groups, collapse their layer rows, lock edits and hide output. Shift-click canvas objects or layer rows to align edges/centers or distribute centers evenly. Group effects apply to the combined artwork; reset those effects before ungrouping.
+- **Layer organization:** name layers and nested groups, browse their hierarchy, select parent groups from breadcrumbs and inspect a zoomed close-up of a selected part. Locked groups protect descendants; ungrouping preserves hidden state.
+- **Reference overlay:** embed a photo as a movable, resizable, adjustable-opacity editor guide. It is saved with the project but never printed or included in cut geometry.
+- **Repeat patterns:** reuse one editable source in grids, radial patterns or seeded scatter. Variation controls rotate and fade repeated details without adding hundreds of saved layers (200 copies per source; 2,000 rendered layers per design). Fit Cut encloses all visible copies, including repeats inside transformed groups.
+- **Artwork materials:** apply Painted metal, Rubber or Soft grass, or save a named procedural style for reuse across shapes/text/closed paths and group contents. Geometry and locked layers are preserved.
 - **Images:** adjust exposure, contrast, saturation, temperature and sharpening without replacing the source image.
 - **Grid:** show/hide the non-printing guide, choose spacing and snap drawing/movement/resizing to the grid.
 
@@ -67,3 +71,5 @@ Text on a closed path wraps across the 0%/100% position, keeping letters visible
 The desktop app checks GitHub for newer stable releases at startup and every 15 minutes, and refreshes its cached check when you return to the app. When an update is available, an **Update [version]** button appears in the header and opens **Settings → Updates** for release notes and download options. You can also use **Check now** there. Downloads and installation remain manual.
 
 The app and built-in MCP server use Skarix names, including exported project files and client configuration. Existing projects, drafts, and settings remain readable through migration support. Original upstream attribution is retained.
+
+AI clients can preflight numeric design limits, inspect editor state during human edits, and explicitly save/cancel the identified draft with confirmation. Mutation guards remain in place; read-only inspection sees the last saved project.

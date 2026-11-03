@@ -1,4 +1,5 @@
 import { layerHidden, layerLocked } from './design-layer-tools';
+import { repeatTransforms } from './design-repeat';
 import { transformPoint, multiply } from './design-appearance';
 import {
   designSvg,
@@ -149,27 +150,13 @@ export function fittedDesignFromHull(
   return result;
 }
 
-function transformedRect(
-  e: DesignElement,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): PointMm[] {
-  const a = (e.rotation * Math.PI) / 180,
-    c = Math.cos(a),
-    s = Math.sin(a);
+function rect(x: number, y: number, width: number, height: number): PointMm[] {
   return [
     { x, y },
     { x: x + width, y },
     { x: x + width, y: y + height },
     { x, y: y + height },
-  ].map((p) => {
-    const x = (p.x - e.width / 2) * (e.flipX ? -1 : 1),
-      y = (p.y - e.height / 2) * (e.flipY ? -1 : 1);
-    const result = { x: e.x + e.width / 2 + x * c - y * s, y: e.y + e.height / 2 + x * s + y * c };
-    return e.matrix ? transformPoint(e.matrix, result) : result;
-  });
+  ];
 }
 export async function fitDesignCut(
   design: StickerDesign,
@@ -205,8 +192,7 @@ export async function fitDesignCut(
         const baseline = e.fontSize! * (1 + i * 1.2),
           pad = e.strokeWidth / 2;
         extents.push(
-          ...transformedRect(
-            e,
+          ...rect(
             anchor - m.actualBoundingBoxLeft - pad,
             baseline - m.actualBoundingBoxAscent - pad,
             m.actualBoundingBoxLeft + m.actualBoundingBoxRight + pad * 2,
@@ -215,30 +201,46 @@ export async function fitDesignCut(
         );
       }
     } else if (e.kind === 'image' || e.kind === 'group')
-      extents.push(...transformedRect(e, 0, 0, e.width, e.height));
+      extents.push(...rect(0, 0, e.width, e.height));
     else {
-      const p = cutElementPoints(e);
+      const p = cutElementPoints({
+        ...e,
+        x: 0,
+        y: 0,
+        rotation: 0,
+        flipX: false,
+        flipY: false,
+        matrix: undefined,
+      });
       const b = bounds(p),
         pad = e.strokeWidth / 2;
-      extents.push(
-        { x: b.x - pad, y: b.y - pad },
-        { x: b.x + b.width + pad, y: b.y + b.height + pad },
-      );
+      extents.push(...rect(b.x - pad, b.y - pad, b.width + pad * 2, b.height + pad * 2));
     }
     const pad = Math.max(
       (e.effects?.blur ?? 0) * 4,
       ...(e.effects?.shadows ?? []).map((s) => s.blur * 4 + Math.max(Math.abs(s.x), Math.abs(s.y))),
     );
     const local = extents.splice(startIndex);
-    const m = parentMatrix(design, e);
-    extents.push(
-      ...local
-        .flatMap((p) => [
-          { x: p.x - pad, y: p.y - pad },
-          { x: p.x + pad, y: p.y + pad },
-        ])
-        .map((p) => transformPoint(m, p)),
-    );
+    const m = multiply(parentMatrix(design, e), elementMatrix(e));
+    // Repeats wrap the local artwork (including its effects) before the element
+    // and ancestor transforms, exactly as in renderDesignContent.
+    for (const copy of repeatTransforms(e.repeat)) {
+      const copyMatrix = elementMatrix({
+        ...e,
+        x: copy.x,
+        y: copy.y,
+        rotation: copy.rotation,
+        flipX: false,
+        flipY: false,
+        matrix: undefined,
+      });
+      const world = multiply(m, copyMatrix);
+      extents.push(
+        ...local
+          .flatMap((p) => rect(p.x - pad, p.y - pad, pad * 2, pad * 2))
+          .map((p) => transformPoint(world, p)),
+      );
+    }
   }
   if (!extents.length) throw Error('Add visible artwork before fitting a cut.');
   const raw = bounds(extents),

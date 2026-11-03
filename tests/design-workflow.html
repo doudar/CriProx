@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Design workflow regression checks</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <pre id="result">Running workflow checks…</pre>
+    <script type="module">
+      import { run } from './design-workflow.browser.tsx';
+      run()
+        .then((results) => (document.getElementById('result').textContent = results.join('\n')))
+        .catch((error) => (document.getElementById('result').textContent = `FAIL ${error.stack}`));
+    </script>
+  </body>
+</html>

@@ -1,3 +1,4 @@
+import { repeatTransforms } from './design-repeat';
 import {
   elementMatrix,
   parentMatrix,
@@ -25,12 +26,25 @@ export const layerLocked = (d: StickerDesign, e: DesignElement) => inheritedFlag
 export const layerHidden = (d: StickerDesign, e: DesignElement) => inheritedFlag(d, e, 'hidden');
 export function layerBounds(design: StickerDesign, e: DesignElement) {
   const m = multiply(parentMatrix(design, e), elementMatrix(e));
-  const p = [
+  const corners = [
     { x: 0, y: 0 },
     { x: e.width, y: 0 },
     { x: 0, y: e.height },
     { x: e.width, y: e.height },
-  ].map((p) => transformPoint(m, p));
+  ];
+  const p = repeatTransforms(e.repeat).flatMap((copy) => {
+    const a = (copy.rotation * Math.PI) / 180,
+      cos = Math.cos(a),
+      sin = Math.sin(a);
+    return corners.map((p) => {
+      const x = p.x - e.width / 2,
+        y = p.y - e.height / 2;
+      return transformPoint(m, {
+        x: copy.x + e.width / 2 + x * cos - y * sin,
+        y: copy.y + e.height / 2 + x * sin + y * cos,
+      });
+    });
+  });
   const left = Math.min(...p.map((p) => p.x)),
     top = Math.min(...p.map((p) => p.y)),
     right = Math.max(...p.map((p) => p.x)),

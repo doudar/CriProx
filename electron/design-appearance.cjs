@@ -65,6 +65,21 @@ const adjustments = z
   })
   .nullable();
 const appearance = {
+  name: z.string().max(100).optional(),
+  repeat: z
+    .strictObject({
+      mode: z.enum(['grid', 'radial', 'scatter']),
+      count: z.number().int().min(1).max(200),
+      columns: z.number().int().min(1).max(200),
+      spacingX: bounded(-250, 250),
+      spacingY: bounded(-250, 250),
+      angle: bounded(-360, 360),
+      seed: z.number().int().min(0).max(65535),
+      rotationJitter: bounded(0, 180),
+      opacityJitter: bounded(0, 1),
+    })
+    .nullable()
+    .optional(),
   hidden: z.boolean().optional(),
   locked: z.boolean().optional(),
   textPath: z

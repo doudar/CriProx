@@ -83,7 +83,7 @@ const { createAiServer } = require('../electron/ai-server.cjs');
       JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n',
     );
     const listed = await request('tools/list');
-    assert.equal(listed.result.tools.length, 18);
+    assert.equal(listed.result.tools.length, 19);
     const blocked = await request('tools/call', { name: 'cut_sheet', arguments: {} });
     assert(blocked.error || blocked.result?.isError);
     const read = await request('tools/call', {

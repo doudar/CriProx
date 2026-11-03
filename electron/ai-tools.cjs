@@ -44,6 +44,18 @@ const element = z.strictObject({
     .optional(),
 });
 const canvas = z.strictObject({
+  reference: z
+    .strictObject({
+      image: raster,
+      opacity: z.number().min(0).max(1),
+      visible: z.boolean(),
+      x: z.number().min(-500).max(500),
+      y: z.number().min(-500).max(500),
+      width: z.number().min(0.1).max(500),
+      height: z.number().min(0.1).max(500),
+    })
+    .nullable()
+    .optional(),
   grid: z
     .strictObject({ visible: z.boolean(), snap: z.boolean(), spacing: z.number().min(0.5).max(50) })
     .optional(),
@@ -63,6 +75,40 @@ const pose = z.strictObject({
   radius: z.number().min(0).max(125).optional(),
 });
 const tools = [
+  [
+    'list_material_presets',
+    'List built-in illustration materials and optionally saved materials for a design. These are artwork styles, not cutter settings.',
+    z.strictObject({ workspace: mode, designId: id.optional() }),
+    true,
+  ],
+  [
+    'resolve_editor_operation',
+    'Explicitly save or discard the active designer draft. First read get_editor_state and obtain human authorization; confirm must be true and operationId must match. Never automatically discard human work to unblock AI edits.',
+    z.strictObject({
+      workspace: mode,
+      action: z.enum(['save', 'cancel']),
+      operationId: id,
+      confirm: z.literal(true),
+    }),
+    false,
+  ],
+  [
+    'get_editor_state',
+    'Inspect editor activity and safe recovery actions, including while a human is editing. Does not change or discard drafts.',
+    z.strictObject({ workspace: mode }),
+    true,
+  ],
+  [
+    'preflight_design',
+    'Read-only diagnostics before creation: actual counts, limits, render dimensions and actionable reductions. Provide a designId or proposed canvas/elements. Does not render or mutate the workspace; compressed PNG size remains unknown.',
+    z.strictObject({
+      workspace: mode,
+      designId: id.optional(),
+      canvas: z.record(z.string(), z.unknown()).optional(),
+      elements: z.array(z.record(z.string(), z.unknown())).max(1000).optional(),
+    }),
+    true,
+  ],
   [
     'manage_design',
     'Duplicate or delete a sticker-library design. Deleting a sticker design also removes its placed copies; Undo restores them.',
@@ -176,6 +222,17 @@ const tools = [
               dx: z.number().min(-500).max(500).default(1),
               dy: z.number().min(-500).max(500).default(1),
             }),
+            z.strictObject({
+              action: z.literal('apply_material'),
+              ids: z.array(id).min(1).max(500),
+              presetId: id,
+              includeDescendants: z.boolean().default(false),
+            }),
+            z.strictObject({
+              action: z.literal('save_material'),
+              id,
+              name: z.string().min(1).max(100),
+            }),
             z.strictObject({ action: z.literal('reorder'), ids: z.array(id).max(500) }),
           ]),
         )
@@ -234,6 +291,7 @@ const tools = [
     z.strictObject({
       workspace: mode,
       designId: id.optional(),
+      layerId: id.optional(),
       sheet: z.number().int().min(0).max(23).default(0),
       showCuts: z.boolean().default(false),
       maxPixels: z.number().int().min(256).max(2048).default(1200),

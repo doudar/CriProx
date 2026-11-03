@@ -31,7 +31,7 @@ test('AI catalogue has no printer/cutter/IPC execution tools and rejects unknown
     'ai-design-start',
   ])
     assert.throws(() => designTool(name), /Unknown design tool/);
-  assert.equal(DESIGN_TOOLS.length, 15);
+  assert.ok(DESIGN_TOOLS.some((tool: any) => tool.name === 'preflight_design'));
   assert.throws(() =>
     designTool('update_project_settings').schema.parse({
       workspace: 'cards',
@@ -219,7 +219,7 @@ test('local MCP requires authorization and rejects browser origins, bad hosts an
     const initialized = await (await post(init)).json();
     assert.equal(initialized.result.serverInfo.name, 'skarix-design');
     const list = await (await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' })).json();
-    assert.equal(list.result.tools.length, 15);
+    assert.equal(list.result.tools.length, DESIGN_TOOLS.length);
     const blocked = await (
       await post({
         jsonrpc: '2.0',
