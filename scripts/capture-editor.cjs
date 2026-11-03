@@ -22,10 +22,13 @@ app.on('window-all-closed', () => {});
   const result = await win.webContents.executeJavaScript(`(async () => {
     const pause = () => new Promise(r => setTimeout(r, 100));
     const find = label => [...document.querySelectorAll('button')].find(b => b.textContent.trim() === label && !b.disabled && b.getClientRects().length);
-    const until = async (fn, label) => { for (let i=0;i<200;i++) { const value=fn(); if(value) return value; await pause(); } throw Error('Timed out: '+label); };
+    const until = async (fn, label) => { for (let i=0;i<200;i++) { const value=fn(); if(value) return value; await pause(); } throw Error('Timed out: '+label+'; '+document.body.innerText.slice(-6000)); };
     (await until(() => [...document.querySelectorAll('button')].find(b => b.querySelector('strong')?.textContent === 'Meet Skarix' && !b.disabled), 'starter')).click();
     await until(() => [...document.querySelectorAll('nav button')].some(b => b.textContent.trim() === 'Design studio' && b.getAttribute('aria-current') === 'page'), 'visible design studio');
+    // Let the new-project request finish before selecting its artwork.
+    await new Promise(r => setTimeout(r, 1000));
     (await until(() => document.querySelector('.sticker-artwork-row'), 'artwork')).click();
+    await pause();
     (await until(() => find('Edit design'), 'edit design')).click();
     await until(() => document.querySelector('.designer-layer-row button'), 'layers');
     [...document.querySelectorAll('.designer-layer-row > button:first-child')].find(b => !b.textContent.includes('Cut ·')).click();
