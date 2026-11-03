@@ -18,6 +18,17 @@ app.on('window-all-closed', () => {});
     show: true,
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
+  // CI Windows desktops can be smaller than the documentation viewport.
+  // Chromium renders the real app at a fixed size independent of monitor bounds.
+  win.webContents.debugger.attach('1.3');
+  await win.webContents.debugger.sendCommand('Emulation.setDeviceMetricsOverride', {
+    width: 1600,
+    height: 1100,
+    deviceScaleFactor: 1,
+    mobile: false,
+    screenWidth: 1600,
+    screenHeight: 1100,
+  });
   await win.loadFile(path.resolve('dist/index.html'));
   const result = await win.webContents.executeJavaScript(`(async () => {
     const pause = () => new Promise(r => setTimeout(r, 100));
@@ -45,7 +56,11 @@ app.on('window-all-closed', () => {});
     throw Error('Editor capture did not reach expected interface: ' + JSON.stringify(result));
   const output = path.resolve(process.argv[2] || 'docs/assets/skarix-editor.png');
   await fs.mkdir(path.dirname(output), { recursive: true });
-  await fs.writeFile(output, (await win.webContents.capturePage()).toPNG());
+  const screenshot = await win.webContents.debugger.sendCommand('Page.captureScreenshot', {
+    format: 'png',
+    captureBeyondViewport: true,
+  });
+  await fs.writeFile(output, Buffer.from(screenshot.data, 'base64'));
   console.log('Captured production Skarix editor:', output, result);
 })()
   .catch((error) => {
