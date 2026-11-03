@@ -11,7 +11,7 @@ Skarix takes its name from *skära*—the Swedish word for cutting with a blade�
 | Feature | What you can do |
 | --- | --- |
 | **Your own studio** | Start blank, continue your draft, or explore the editable Skarix starter sticker. |
-| **Editable artwork** | Combine shapes, Bézier paths and text on a path with gradients, textures, shadows and photo adjustments. Group, align, lock and hide layers. |
+| **Editable artwork** | Combine shapes, Bézier paths and text on a path with gradients, textures, shadows and photo adjustments. Name and organize layer groups, reuse materials and repeated details, and draw against a non-printing reference overlay. |
 | **Precise layouts** | Work in physical dimensions, snap to a grid, align artwork, nest copies and inspect cut boundaries. |
 | **Print and cut** | Generate marked sheets and matching contours, choose materials and inspect output. |
 | **Local projects** | Save portable files and keep a local draft. Existing sticker projects remain compatible. |

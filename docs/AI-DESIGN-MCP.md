@@ -9,7 +9,7 @@ Skarix includes an optional local MCP server for editable artwork and sheet layo
 
 The configuration contains a local token. Keep it private and use trusted clients. The server is bound to loopback.
 
-The fifteen tools cover capabilities, workspace inspection, project creation/loading/export, design creation/editing/duplication/deletion, SVG import, cut paths, fitting cuts, layout, sheet settings, previews and undo/redo. Use `workspace: "stickers"`; this identifier is retained for compatibility.
+The design tools cover capabilities, workspace inspection, project creation/loading/export, design creation/editing/duplication/deletion, SVG import, cut paths, fitting cuts, layout, sheet settings, previews and undo/redo. Use `workspace: "stickers"`; this identifier is retained for compatibility.
 
 Designs support up to 500 layers, 2,000 normalized points per path and 100,000 total points. Coordinates and sizes are millimeters. Use text, shapes, filled paths or embedded images. The server does not invoke an image-generation model.
 
@@ -52,3 +52,50 @@ Pass `canvas.grid: {"visible": true, "snap": true, "spacing": 2}` through create
 Preview after changes. The same SVG rendering powers the interactive editor and saved/printed artwork. Assets must be embedded; effects cannot load external URLs or run scripts. Total limits remain 500 layers and 40 MB of embedded images, including texture images. Curves count toward the 100,000-point budget.
 
 An editable example created through the MCP server is available in [`examples/skarix-aurora.skarix.json`](../examples/skarix-aurora.skarix.json). Open it from Home to inspect the rounded badge, layered gradients, lighting and textured lettering.
+
+## Detailed illustration workflow
+
+Use `preflight_design` before submitting a large design. It accepts proposed `canvas` and
+`elements`, or an existing `designId`, and reports each numeric budget, current value and
+recovery suggestion. Rendering uses a 600 dpi target with an approximately 24-megapixel cap;
+compressed PNG size is only known after rendering. Oversized output errors include the actual
+PNG data-URL character count and a suggested scale reduction. Image limits measure data-URL
+characters, not decoded bytes.
+
+`get_editor_state` describes the current human operation. Read-only workspace, preview and
+export tools remain available during editing, but describe the **last saved** project, not the
+unsaved draft. Do not discard human work silently. After the user chooses Save or Cancel,
+call `resolve_editor_operation` with `action`, the returned `operationId`, and `confirm: true`.
+An operation that has changed, or is still rendering/fitting, cannot be resolved by an old request.
+
+Layers have optional `name` labels. Groups are the existing nested artwork groups, now with
+names, hierarchy breadcrumbs and selected-part close-ups. `preview_design` accepts a `layerId`
+with `designId` for a cropped view of the part in context (including ancestor effects).
+
+`canvas.reference` stores an embedded image, `visible`, `opacity`, `x`, `y`, `width` and `height`
+for an editor-only reference overlay. Set it to `null` through MCP to remove it. It never enters
+printed artwork, previews or blade geometry; it remains embedded in the saved native project.
+
+For repeated details, add a `repeat` object to a source print layer:
+
+```json
+{"mode":"scatter","count":80,"columns":10,"spacingX":60,"spacingY":10,
+ "angle":30,"seed":7,"rotationJitter":15,"opacityJitter":0.3}
+```
+
+Modes are `grid`, `radial` and `scatter`. Grid uses columns and horizontal/vertical spacing.
+Radial uses the spacing values as ellipse radii and angle as the step between copies.
+Scatter distributes copies within the spacing rectangle. Offsets use source-local coordinates.
+The seed deterministically controls scatter and rotation/opacity variation. These are linked
+render-only instances of one editable layer, not 80 additional saved layers. Changing the source
+updates every copy. Maximums are 200 copies per source and 2,000 rendered layers per design.
+Groups, cut layers and text following another path cannot be repeated. Keep repeated artwork
+inside the canvas/cut contour; repetition does not create additional blade paths.
+
+`list_material_presets` returns built-in Painted metal, Rubber and Soft grass appearances and,
+with a `designId`, saved project-local materials. `edit_design.operations` accepts
+`{"action":"apply_material","ids":["frame"],"presetId":"painted-metal","includeDescendants":true}`
+and `{"action":"save_material","id":"frame","name":"Turquoise metal"}`. Applying a material
+preserves geometry and skips locked, cut and non-fillable layers. Saved materials use procedural
+textures, not embedded photo textures; up to 32 named styles travel with each design. These are
+illustration appearances, unrelated to cutter pressure/material settings.

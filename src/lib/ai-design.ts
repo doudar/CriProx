@@ -1,3 +1,6 @@
+import { MATERIAL_PRESETS, applyMaterialPreset, saveMaterialPreset } from './design-materials';
+import { layerBounds } from './design-layer-tools';
+import { preflightDesign } from './design-preflight';
 import { alignLayers, layerLocked } from './design-layer-tools';
 import { groupLayers, ungroupLayer, removeLayer, duplicateLayer } from './design-groups';
 import { designTool, DESIGN_TOOLS } from '../../electron/ai-tools.cjs';
@@ -40,6 +43,13 @@ export type AiWorkspace = {
   open: (fresh?: boolean) => void;
   beforeReplace?: () => Promise<void>;
   busy: () => boolean;
+  resolveEditor?: (action: 'save' | 'cancel', operationId: string) => Promise<void>;
+  editorState?: () => {
+    operation: string | null;
+    operationId?: string;
+    guidance?: string;
+    actions?: string[];
+  };
 };
 const workspaces = new Map<AiMode, AiWorkspace>();
 let requestEpoch = 0,
@@ -70,7 +80,11 @@ export const AI_DESIGN_GUIDE = {
     totalPoints: 100000,
     canvasMm: [10, 250],
     copies: 500,
-    embeddedImageBytes: 14000000,
+    embeddedImageDataUrlCharacters: 14000000,
+    totalEmbeddedDataUrlCharacters: 40000000,
+    renderedPngDataUrlCharacters: 14000000,
+    renderTargetDpi: 600,
+    renderTargetPixels: 24000000,
   },
   shapes: SHAPES,
   fonts: FONTS,
@@ -90,6 +104,12 @@ export const AI_DESIGN_GUIDE = {
       'texture supports embedded image, grain, paper, stone or metal with seed, scale and opacity on shapes, text and filled paths. adjustments applies exposure, contrast, saturation, temperature and sharpen to image layers.',
     paths:
       'draw.curves contains normalized cubic c1/c2/end segments, starting at points[0]. textPath references a shape or closed draw by pathId, with inner/middle/outer side and offset percent.',
+    repetition:
+      'repeat on a print source creates linked render-only grid/radial/seeded scatter copies. Edit source once; count max 200, total rendered copies max 2000. Cuts, groups and text paths are excluded; keep copies within canvas/cut bounds.',
+    materials:
+      'list_material_presets and apply_material/save_material operations reuse artwork appearances. Saved materials are project-local procedural styles, not cutter settings.',
+    reference:
+      'canvas.reference is an embedded, non-printing editor overlay. It is never included in previews, print artwork or cuts. Set null to remove it. preview_design.layerId crops a detail view.',
     layers:
       'group/ungroup manage nested print layers. Group children use local coordinates; groupWidth/groupHeight are the original frame. Ungroup requires resetting group effects, mask, blend and opacity. hidden omits output; locked protects direct edits. Unlock explicitly before edits. align supports edges, centers and distribution.',
     grid: 'canvas.grid {visible,snap,spacing} saves non-printing editor guides. Snap affects interactive drawing and dragging; MCP coordinates stay exact.',
@@ -102,10 +122,13 @@ const clone = <T>(v: T): T => structuredClone(v);
 function validate(_mode: AiMode, p: AiProject) {
   return validateStickerProject(clone(p));
 }
-function ws(mode: AiMode) {
+function ws(mode: AiMode, readOnly = false) {
   const c = workspaces.get(mode);
   if (!c) throw Error('The workspace is still loading. Open Skarix and try again.');
-  if (c.busy()) throw Error('Finish the current editor operation before AI edits.');
+  if (!readOnly && c.busy())
+    throw Error(
+      'Finish the current editor operation before AI edits. Use get_editor_state for safe recovery guidance.',
+    );
   return c;
 }
 function findDesign(_mode: AiMode, p: AiProject, id: string) {
@@ -120,6 +143,7 @@ export function applyDesignOperations(
 ): StickerDesign {
   const d = clone(design);
   Object.assign(d, canvas || {});
+  if (canvas?.reference === null) delete d.reference;
   for (const op of operations) {
     const i = d.elements.findIndex((e) => e.id === op.id);
     const target = d.elements[i];
@@ -133,7 +157,18 @@ export function applyDesignOperations(
       )
     )
       throw Error('Unlock the layer before editing it.');
-    if (op.action === 'align') {
+    if (op.action === 'apply_material') {
+      const preset = [...MATERIAL_PRESETS, ...(d.materialPresets ?? [])].find(
+        (p) => p.id === op.presetId,
+      );
+      if (!preset) throw Error('Material preset not found.');
+      Object.assign(
+        d,
+        applyMaterialPreset(d, op.ids, preset, { includeDescendants: op.includeDescendants }),
+      );
+    } else if (op.action === 'save_material') {
+      Object.assign(d, saveMaterialPreset(d, op.id, op.name));
+    } else if (op.action === 'align') {
       Object.assign(d, alignLayers(d, op.ids, op.alignment));
     } else if (op.action === 'group') {
       Object.assign(d, groupLayers(d, op.ids, op.id));
@@ -165,7 +200,21 @@ export function applyDesignOperations(
       }
     }
   }
+  assertDesignPreflight(d);
   return validateStickerDesign(d);
+}
+function assertDesignPreflight(d: StickerDesign) {
+  const report = preflightDesign({ design: d });
+  const exceeded = report.checks.filter((check) => !check.ok);
+  if (exceeded.length)
+    throw Error(
+      exceeded
+        .map(
+          (check) =>
+            `${check.metric}: current ${check.current}, allowed ${check.min}–${check.max}. ${check.suggestion}`,
+        )
+        .join(' '),
+    );
 }
 async function storeDesign(
   mode: AiMode,
@@ -175,6 +224,7 @@ async function storeDesign(
   d: StickerDesign,
   copies = 0,
 ): Promise<AiProject> {
+  assertDesignPreflight(d);
   d = validateStickerDesign(d);
   d = { ...d, cropToCuts: mode === 'stickers' };
   const image = await renderStickerDesign(d);
@@ -248,6 +298,18 @@ export async function previewAiProject(mode: AiMode, p: AiProject, args: any): P
     const a = findDesign(mode, p, args.designId);
     if (a.design) {
       let svg = designSvg(a.design);
+      if (args.layerId) {
+        const layer = a.design.elements.find((e) => e.id === args.layerId);
+        if (!layer) throw Error('Preview layer not found.');
+        const b = layerBounds(a.design, layer),
+          pad = 2;
+        const width = Math.max(1, b.right - b.left + pad * 2),
+          height = Math.max(1, b.bottom - b.top + pad * 2);
+        svg = svg
+          .replace(/viewBox="[^"]*"/, `viewBox="${b.left - pad} ${b.top - pad} ${width} ${height}"`)
+          .replace(/width="[^"]*"/, `width="${width}mm"`)
+          .replace(/height="[^"]*"/, `height="${height}mm"`);
+      }
       if (args.showCuts) {
         const paths = designCutPaths(a.design)
           .map(
@@ -302,7 +364,7 @@ export async function invokeAiDesign(name: string, input: unknown): Promise<any>
   const args = designTool(name).schema.parse(input);
   if (name === 'get_design_capabilities') return AI_DESIGN_GUIDE;
   const mode: AiMode = 'stickers';
-  const c = ws(mode),
+  const c = ws(mode, designTool(name).readOnly || name === 'resolve_editor_operation'),
     before = c.read();
   let next = clone(before),
     result: any = {};
@@ -324,6 +386,39 @@ export async function invokeAiDesign(name: string, input: unknown): Promise<any>
     c.open(fresh);
     return result;
   };
+  if (name === 'resolve_editor_operation') {
+    if (!c.resolveEditor)
+      throw Error('This editor does not support remote resolution. Use Save or Cancel in the app.');
+    const state = c.editorState?.();
+    if (state?.operationId !== args.operationId || !state?.actions?.includes(args.action))
+      throw Error(
+        'The editor operation changed or is not ready. Read get_editor_state and confirm the intended action again.',
+      );
+    await c.resolveEditor(args.action, args.operationId);
+    return { ok: true, action: args.action };
+  }
+  if (name === 'get_editor_state')
+    return {
+      busy: c.busy(),
+      ...(c.editorState?.() ?? {
+        operation: c.busy() ? 'Editor operation in progress' : null,
+        guidance: c.busy()
+          ? 'Finish or cancel the operation in the app before requesting edits.'
+          : undefined,
+      }),
+      readOnlyInspectionAvailable: true,
+    };
+  if (name === 'preflight_design') {
+    if (args.designId && !findDesign(mode, before, args.designId).design)
+      throw Error(
+        'This artwork has no editable design. Preflight proposed canvas/elements instead.',
+      );
+    return preflightDesign({
+      design: args.designId ? findDesign(mode, before, args.designId).design : undefined,
+      canvas: args.canvas,
+      elements: args.elements,
+    });
+  }
   if (name === 'manage_design') {
     const id = crypto.randomUUID();
     {
@@ -345,6 +440,13 @@ export async function invokeAiDesign(name: string, input: unknown): Promise<any>
     result = args.action === 'duplicate' ? { designId: id } : {};
     return save();
   }
+  if (name === 'list_material_presets')
+    return {
+      builtIn: MATERIAL_PRESETS,
+      saved: args.designId
+        ? (findDesign(mode, before, args.designId).design?.materialPresets ?? [])
+        : [],
+    };
   if (name === 'get_workspace')
     return JSON.parse(
       JSON.stringify(before, (key, v) =>

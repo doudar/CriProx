@@ -38,7 +38,7 @@ test('existing data directory takes precedence and no user files are moved', () 
   );
 });
 test('catalogs and gaming-card workspace are absent from the AI boundary', () => {
-  assert.equal(DESIGN_TOOLS.length, 15);
+  assert.equal(DESIGN_TOOLS.length, 19);
   for (const name of ['search_cards', 'add_catalog_cards', 'edit_card_entries'])
     assert.throws(() => designTool(name));
   assert.throws(() =>

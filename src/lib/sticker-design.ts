@@ -1,3 +1,4 @@
+import { parseMaterialPresets, type MaterialPreset } from './design-materials';
 import { parseAppearance } from '../../electron/design-appearance.cjs';
 import { type Appearance, type Matrix, multiply, identity } from './design-appearance';
 import { renderDesignContent } from './design-render';
@@ -53,7 +54,18 @@ export type DesignElement = Appearance & {
   image?: string;
   points?: { x: number; y: number }[];
 };
+export type DesignReference = {
+  image: string;
+  opacity: number;
+  visible: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 export type StickerDesign = {
+  reference?: DesignReference;
+  materialPresets?: MaterialPreset[];
   cropToCuts?: boolean;
   grid?: { visible: boolean; snap: boolean; spacing: number };
   fitCut?: {
@@ -93,8 +105,30 @@ export function validateStickerDesign(value: unknown): StickerDesign {
       d.grid.spacing > 50)
   )
     throw Error('Grid spacing must be from 0.5 to 50 mm.');
+  if (
+    d.reference &&
+    (typeof d.reference.image !== 'string' ||
+      d.reference.image.length > 14_000_000 ||
+      !raster.test(d.reference.image) ||
+      typeof d.reference.visible !== 'boolean' ||
+      !Number.isFinite(d.reference.opacity) ||
+      d.reference.opacity < 0 ||
+      d.reference.opacity > 1 ||
+      ![d.reference.x, d.reference.y, d.reference.width, d.reference.height].every(
+        Number.isFinite,
+      ) ||
+      Math.abs(d.reference.x) > 500 ||
+      Math.abs(d.reference.y) > 500 ||
+      d.reference.width < 0.1 ||
+      d.reference.height < 0.1 ||
+      d.reference.width > 500 ||
+      d.reference.height > 500)
+  )
+    throw Error(
+      'Reference overlay must be an embedded image with valid position, size and opacity.',
+    );
   const ids = new Set<string>();
-  let bytes = 0,
+  let bytes = d.reference?.image.length ?? 0,
     points = 0;
   const elements = d.elements.map((e) => {
     if (
@@ -122,6 +156,8 @@ export function validateStickerDesign(value: unknown): StickerDesign {
     )
       throw Error('Invalid design element.');
     const appearance = parseAppearance(e);
+    if (e.repeat && (e.kind === 'group' || e.operation === 'cut' || e.textPath))
+      throw Error('Repeat a print layer without a text path. Groups and cuts cannot be repeated.');
     if (e.gradient && !['shape', 'draw', 'text'].includes(e.kind))
       throw Error('Use gradients on shapes, text or filled paths.');
     if (e.texture && !['shape', 'draw', 'text'].includes(e.kind))
@@ -228,6 +264,11 @@ export function validateStickerDesign(value: unknown): StickerDesign {
       parentId = parent.parentId;
     }
   }
+  const renderedCopies = elements.reduce((total, e) => total + (e.repeat?.count ?? 1), 0);
+  if (renderedCopies > 2000)
+    throw Error(
+      `Design has ${renderedCopies} rendered copies; use at most 2000. Reduce repeat counts.`,
+    );
   if (bytes > 40_000_000) throw Error('Use less than 40 MB of embedded design images.');
   if (points > 100_000) throw Error('Use at most 100,000 points in one design.');
   if (
@@ -249,6 +290,10 @@ export function validateStickerDesign(value: unknown): StickerDesign {
     width: d.width,
     height: d.height,
     background: d.background,
+    ...(d.reference ? { reference: { ...d.reference } } : {}),
+    ...(d.materialPresets !== undefined
+      ? { materialPresets: parseMaterialPresets(d.materialPresets) }
+      : {}),
     ...(d.grid
       ? { grid: { visible: d.grid.visible, snap: d.grid.snap, spacing: d.grid.spacing } }
       : {}),
@@ -399,7 +444,9 @@ export async function renderStickerDesign(value: StickerDesign): Promise<string>
     canvas.getContext('2d')!.drawImage(image, 0, 0, canvas.width, canvas.height);
     const png = canvas.toDataURL('image/png');
     if (png.length > 14_000_000)
-      throw Error('This design is too large. Use smaller images or fewer elements.');
+      throw Error(
+        `Rendered PNG uses ${png.length.toLocaleString('en-US')} data URL characters; maximum 14,000,000. Current render: ${canvas.width} × ${canvas.height} pixels. Reduce canvas and artwork dimensions to roughly ${(Math.sqrt(14_000_000 / png.length) * (scale / (600 / 25.4)) * 90).toFixed(0)}% or simplify image detail, then retry; PNG compression varies.`,
+      );
     return png;
   } finally {
     URL.revokeObjectURL(url);

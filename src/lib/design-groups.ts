@@ -1,3 +1,4 @@
+import { repeatTransforms } from './design-repeat';
 import { layerLocked } from './design-layer-tools';
 import {
   type StickerDesign,
@@ -72,12 +73,24 @@ export function groupLayers(
     throw Error('Select at least two artwork layers in the same group.');
   if (design.elements.some((e) => e.id === id)) throw Error('Group ID already exists.');
   const points = layers.flatMap((e) =>
-    [
-      { x: 0, y: 0 },
-      { x: e.width, y: 0 },
-      { x: 0, y: e.height },
-      { x: e.width, y: e.height },
-    ].map((p) => transformPoint(elementMatrix(e), p)),
+    repeatTransforms(e.repeat).flatMap((copy) => {
+      const a = (copy.rotation * Math.PI) / 180,
+        cos = Math.cos(a),
+        sin = Math.sin(a);
+      return [
+        { x: 0, y: 0 },
+        { x: e.width, y: 0 },
+        { x: 0, y: e.height },
+        { x: e.width, y: e.height },
+      ].map((p) => {
+        const x = p.x - e.width / 2,
+          y = p.y - e.height / 2;
+        return transformPoint(elementMatrix(e), {
+          x: copy.x + e.width / 2 + x * cos - y * sin,
+          y: copy.y + e.height / 2 + x * sin + y * cos,
+        });
+      });
+    }),
   );
   const x = Math.min(...points.map((p) => p.x)),
     y = Math.min(...points.map((p) => p.y));
@@ -86,6 +99,7 @@ export function groupLayers(
   const group: DesignElement = {
     ...newElement('group', design),
     id,
+    name: 'Group',
     x,
     y,
     width,
@@ -106,6 +120,7 @@ export function groupLayers(
 export function ungroupLayer(design: StickerDesign, id: string): StickerDesign {
   const group = design.elements.find((e) => e.id === id);
   if (!group || group.kind !== 'group') throw Error('Select a group.');
+  if (layerLocked(design, group)) throw Error('Unlock the group before ungrouping.');
   const m = multiply(elementMatrix(group), [
     group.width / group.groupWidth!,
     0,
@@ -126,7 +141,12 @@ export function ungroupLayer(design: StickerDesign, id: string): StickerDesign {
     );
   const children = design.elements
     .filter((e) => e.parentId === id)
-    .map((e) => ({ ...e, parentId: group.parentId, matrix: multiply(m, e.matrix ?? identity) }));
+    .map((e) => ({
+      ...e,
+      hidden: !!group.hidden || !!e.hidden,
+      parentId: group.parentId,
+      matrix: multiply(m, e.matrix ?? identity),
+    }));
   const elements = design.elements
     .filter((e) => e.parentId !== id)
     .flatMap((e) => (e.id === id ? children : [e]));

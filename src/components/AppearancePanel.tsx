@@ -1,17 +1,34 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DesignElement, StickerDesign } from '../lib/sticker-design';
 import { SHAPES } from '../lib/sticker-design';
 import { gradientStops, type Shadow } from '../lib/design-appearance';
 import { ScrubbableNumberInput } from './ScrubbableNumberInput';
 import { readStickerArtwork } from '../lib/sticker-output';
+import { MATERIAL_PRESETS, type MaterialPreset } from '../lib/design-materials';
+import { layerLocked } from '../lib/design-layer-tools';
+import { RepeatPanel } from './RepeatPanel';
 
 type Props = {
   element: DesignElement;
   design: StickerDesign;
   patch: (change: Partial<DesignElement>) => void;
   onError: (message: string) => void;
+  onApplyMaterial?: (preset: MaterialPreset, includeDescendants: boolean) => void;
+  onSaveMaterial?: (name: string) => void;
 };
-export function AppearancePanel({ element: e, design, patch, onError }: Props) {
+export function AppearancePanel({
+  element: e,
+  design,
+  patch,
+  onError,
+  onApplyMaterial,
+  onSaveMaterial,
+}: Props) {
+  const [materialId, setMaterialId] = useState(MATERIAL_PRESETS[0].id);
+  const [materialName, setMaterialName] = useState('');
+  const [includeDescendants, setIncludeDescendants] = useState(true);
+  const materials = [...MATERIAL_PRESETS, ...(design.materialPresets ?? [])];
+  const selectedMaterial = materials.find((material) => material.id === materialId) ?? materials[0];
   const alive = useRef(true);
   const uploadVersion = useRef(0);
   useEffect(() => {
@@ -53,6 +70,85 @@ export function AppearancePanel({ element: e, design, patch, onError }: Props) {
     });
   return (
     <div className="appearance-panel">
+      <RepeatPanel element={e} patch={patch} />
+      {e.operation !== 'cut' && (fillable || e.kind === 'group') && onApplyMaterial && (
+        <details className="appearance-section">
+          <summary>Materials</summary>
+          <p className="muted">
+            Reusable print appearances. These do not change cutter settings or layer geometry.
+          </p>
+          <label>
+            Material preset
+            <select
+              value={selectedMaterial.id}
+              onChange={(event) => setMaterialId(event.target.value)}
+            >
+              <optgroup label="Built-in materials">
+                {MATERIAL_PRESETS.map((material) => (
+                  <option key={material.id} value={material.id}>
+                    {material.name}
+                  </option>
+                ))}
+              </optgroup>
+              {!!design.materialPresets?.length && (
+                <optgroup label="Saved in this design">
+                  {design.materialPresets.map((material) => (
+                    <option key={material.id} value={material.id}>
+                      {material.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </label>
+          {e.kind === 'group' && (
+            <label className="appearance-check">
+              <input
+                type="checkbox"
+                checked={includeDescendants}
+                onChange={(event) => setIncludeDescendants(event.target.checked)}
+              />
+              Apply to group contents
+            </label>
+          )}
+          <button
+            className="secondary compact"
+            disabled={layerLocked(design, e) || (e.kind === 'group' && !includeDescendants)}
+            onClick={() => onApplyMaterial(selectedMaterial, includeDescendants)}
+          >
+            Apply material
+          </button>
+          <p className="muted">
+            Replaces fill, gradient, texture, effects, blend mode and opacity. Locked layers, images
+            and cuts are skipped.
+          </p>
+          {fillable && onSaveMaterial && (
+            <>
+              <label>
+                Material name
+                <input
+                  type="text"
+                  maxLength={100}
+                  value={materialName}
+                  placeholder="My material"
+                  onChange={(event) => setMaterialName(event.target.value)}
+                />
+              </label>
+              <button
+                className="secondary compact"
+                disabled={!materialName.trim() || e.texture?.type === 'image'}
+                onClick={() => onSaveMaterial(materialName.trim())}
+              >
+                Save current material
+              </button>
+              <p className="muted">
+                Saving an existing name replaces that preset in this design. Photo textures cannot
+                be saved as materials.
+              </p>
+            </>
+          )}
+        </details>
+      )}
       {e.kind === 'text' && (
         <details className="appearance-section">
           <summary>Text on a path {e.textPath ? '· On' : ''}</summary>

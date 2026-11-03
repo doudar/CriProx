@@ -1,3 +1,4 @@
+import { repeatTransforms } from './design-repeat';
 import {
   elementPath,
   elementTransform,
@@ -170,6 +171,15 @@ export function renderDesignContent(design: StickerDesign, prefix = 'art'): stri
           defs += `<filter id="${id}-feather"><feGaussianBlur stdDeviation="${m.feather}"/></filter>`;
         defs += `<mask id="${id}-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="${w}" height="${h}" style="mask-type:luminance"><path d="${shapePath(m.shape, w, h)}" fill="${paint}"${m.feather ? ` filter="url(#${id}-feather)"` : ''}/></mask>`;
         body = `<g mask="url(#${id}-mask)">${body}</g>`;
+      }
+      if (e.repeat) {
+        defs += `<g id="${id}-repeat-source">${body}</g>`;
+        body = repeatTransforms(e.repeat)
+          .map(
+            (copy) =>
+              `<use href="#${id}-repeat-source" xlink:href="#${id}-repeat-source" transform="translate(${copy.x} ${copy.y}) rotate(${copy.rotation} ${w / 2} ${h / 2})" opacity="${copy.opacity}"/>`,
+          )
+          .join('');
       }
       content += `<g id="${id}-layer" transform="${elementTransform(e)}" opacity="${e.opacity}" style="mix-blend-mode:${e.blendMode ?? 'normal'}${e.kind === 'group' ? ';isolation:isolate' : ''}"><defs>${defs}</defs>${body}</g>`;
       painted.push(`${id}-layer`);

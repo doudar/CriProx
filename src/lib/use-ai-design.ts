@@ -20,6 +20,14 @@ export function useAiWorkspace(mode: AiMode, workspace: AiWorkspace) {
           latest.current.write(next, fresh);
         },
         busy: () => latest.current.busy(),
+        resolveEditor: async (action, operationId) => {
+          if (!latest.current.resolveEditor) throw Error('Resolve this operation in the app.');
+          await latest.current.resolveEditor(action, operationId);
+        },
+        editorState: () =>
+          latest.current.editorState?.() ?? {
+            operation: latest.current.busy() ? 'Editor operation in progress' : null,
+          },
         open: (fresh) => latest.current.open(fresh),
         beforeReplace: () => latest.current.beforeReplace?.() ?? Promise.resolve(),
         undo: () => latest.current.undo(),

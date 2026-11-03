@@ -16,7 +16,20 @@ export type Shadow = {
   x: number;
   y: number;
 };
+export type RepeatPattern = {
+  mode: 'grid' | 'radial' | 'scatter';
+  count: number;
+  columns: number;
+  spacingX: number;
+  spacingY: number;
+  angle: number;
+  seed: number;
+  rotationJitter: number;
+  opacityJitter: number;
+};
 export type Appearance = {
+  name?: string;
+  repeat?: RepeatPattern | null;
   hidden?: boolean;
   locked?: boolean;
   textPath?: { pathId: string; side: 'inner' | 'middle' | 'outer'; offset: number } | null;

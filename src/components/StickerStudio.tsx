@@ -49,7 +49,7 @@ import {
 } from '../lib/sticker-output';
 import { importStickerSvg } from '../lib/sticker-svg';
 import StickerCanvas from './StickerCanvas';
-import StickerDesigner from './StickerDesigner';
+import StickerDesigner, { type StickerDesignerController } from './StickerDesigner';
 import { hasCustomCuts } from '../lib/sticker-cuts';
 import { newDesign, newElement, type StickerDesign } from '../lib/sticker-design';
 import { workspaceShortcut, isTextEditing } from '../lib/workspace-history';
@@ -139,6 +139,18 @@ export default function StickerStudio({
     }
   }, [open]);
   const [designer, setDesigner] = useState<{ id?: string; name: string; design: StickerDesign }>();
+  const editorController = useRef<StickerDesignerController | undefined>(undefined);
+  const editorOperationId = useMemo(() => (designer ? crypto.randomUUID() : undefined), [designer]);
+  const currentEditorOperationId = () =>
+    editorOperationId && editorController.current
+      ? `${editorOperationId}-${editorController.current.revision()}`
+      : undefined;
+  const connectEditorController = useCallback(
+    (controller: StickerDesignerController | undefined) => {
+      editorController.current = controller;
+    },
+    [],
+  );
   const [showCuts, setShowCuts] = useState(false);
   const artworkInput = useRef<HTMLInputElement>(null),
     projectInput = useRef<HTMLInputElement>(null),
@@ -184,6 +196,28 @@ export default function StickerStudio({
     undo: history.undo,
     redo: history.redo,
     busy: () => !loaded || !!busy || !!designer,
+    resolveEditor: async (action, operationId) => {
+      if (!designer || !editorController.current || operationId !== currentEditorOperationId())
+        throw Error(
+          'The active editor changed. Read get_editor_state and confirm the intended operation again.',
+        );
+      if (!loaded || busy || editorController.current.busy())
+        throw Error('Wait for the active editor operation to finish before saving or canceling.');
+      if (action === 'save') await editorController.current.save();
+      else editorController.current.cancel();
+    },
+    editorState: () => ({
+      operationId: currentEditorOperationId(),
+      operation: !loaded
+        ? 'Opening local draft'
+        : busy || (designer ? `Editing ${designer.name}` : null),
+      guidance: designer
+        ? 'The human editor has an unsaved draft. Use Save or Cancel in the designer before AI edits; inspecting the workspace returns the last saved project, not this draft.'
+        : busy
+          ? 'Wait for the current operation to finish.'
+          : undefined,
+      actions: designer && !busy && !editorController.current?.busy() ? ['save', 'cancel'] : [],
+    }),
   });
   useEffect(() => () => layoutTask.current?.abort(), []);
   useEffect(() => {
@@ -668,6 +702,7 @@ export default function StickerStudio({
       {designer && (
         <StickerDesigner
           key={designer.id || 'new'}
+          onEditorController={connectEditorController}
           initial={designer.design}
           name={designer.name}
           active={open}

@@ -5,6 +5,13 @@ import {
   snapCoordinate,
   type Alignment,
 } from '../lib/design-layer-tools';
+import { applyMaterialPreset, saveMaterialPreset } from '../lib/design-materials';
+import {
+  layerLabel,
+  layerAncestors,
+  selectionViewBox,
+  layerHitRegions,
+} from '../lib/design-workflow';
 import { AppearancePanel } from './AppearancePanel';
 import { renderDesignContent } from '../lib/design-render';
 import {
@@ -44,6 +51,13 @@ import { fitDesignCut, reorderDesignLayer, type FitCutOptions } from '../lib/sti
 import { ScrubbableNumberInput } from './ScrubbableNumberInput';
 import { GripVertical, Eye, EyeOff, Lock, Unlock, ChevronRight, ChevronDown } from 'lucide-react';
 
+export type StickerDesignerController = {
+  save: () => Promise<void>;
+  cancel: () => void;
+  busy: () => boolean;
+  revision: () => string;
+};
+
 export default function StickerDesigner({
   initial,
   name: initialName,
@@ -54,6 +68,7 @@ export default function StickerDesigner({
   onClose,
   saveLabel = 'Save design to sheet',
   fixedCanvas = false,
+  onEditorController,
 }: {
   initial: StickerDesign;
   name: string;
@@ -64,6 +79,7 @@ export default function StickerDesigner({
   onClose: () => void;
   saveLabel?: string;
   fixedCanvas?: boolean;
+  onEditorController?: (controller: StickerDesignerController | undefined) => void;
 }) {
   const history = useWorkspaceHistory(() => initial),
     design = history.value;
@@ -78,6 +94,7 @@ export default function StickerDesigner({
     [ink, setInk] = useState('#7560cf'),
     [showCuts, setShowCuts] = useState(false),
     [zoom, setZoom] = useState(100),
+    [detailZoom, setDetailZoom] = useState(100),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
     [space, setSpace] = useState({ width: 500, height: 500 });
@@ -463,6 +480,35 @@ export default function StickerDesigner({
       setTool('select');
     }
   }
+  async function referenceImage(file?: File) {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const image = await readStickerArtwork(file);
+      const bitmap = await createImageBitmap(file);
+      const current = latestDesign.current;
+      const scale = Math.min(current.width / bitmap.width, current.height / bitmap.height);
+      const width = bitmap.width * scale,
+        height = bitmap.height * scale;
+      bitmap.close();
+      update({
+        ...current,
+        reference: {
+          image,
+          opacity: 0.35,
+          visible: true,
+          x: (current.width - width) / 2,
+          y: (current.height - height) / 2,
+          width,
+          height,
+        },
+      });
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
   async function image(file?: File) {
     if (!file) return;
     setBusy(true);
@@ -486,7 +532,28 @@ export default function StickerDesigner({
       setBusy(false);
     }
   }
+  const draftRevision = useMemo(() => crypto.randomUUID(), [design, name]);
+  const saveInFlight = useRef(false);
+  const editorController = useRef<StickerDesignerController>(null!);
+  editorController.current = {
+    save,
+    cancel: onClose,
+    busy: () => busy || fitting || saveInFlight.current,
+    revision: () => draftRevision,
+  };
+  useEffect(() => {
+    onEditorController?.({
+      save: () => editorController.current.save(),
+      cancel: () => editorController.current.cancel(),
+      busy: () => editorController.current.busy(),
+      revision: () => editorController.current.revision(),
+    });
+    return () => onEditorController?.(undefined);
+  }, [onEditorController]);
   async function save() {
+    if (busy || fitting || saveInFlight.current)
+      throw Error('Wait for the current editor operation to finish.');
+    saveInFlight.current = true;
     setBusy(true);
     setError('');
     try {
@@ -497,6 +564,9 @@ export default function StickerDesigner({
     } catch (e) {
       setError(String(e));
       setBusy(false);
+      throw e;
+    } finally {
+      saveInFlight.current = false;
     }
   }
   async function fitCut() {
@@ -812,6 +882,20 @@ export default function StickerDesigner({
                     disabled={layerLocked(design, element)}
                   >
                     <h3>Selected {element.operation === 'cut' ? 'cut path' : element.kind}</h3>
+                    <label>
+                      Layer name
+                      <input
+                        value={element.name ?? ''}
+                        maxLength={100}
+                        placeholder={layerLabel(element)}
+                        onChange={(event) => patch({ name: event.target.value })}
+                      />
+                    </label>
+                    {element.kind === 'group' && (
+                      <p className="muted">
+                        Edit this logical part as a whole, or select a child in Layers to refine it.
+                      </p>
+                    )}
                     {['shape', 'draw', 'line'].includes(element.kind) && !element.parentId && (
                       <label>
                         Element use
@@ -995,6 +1079,27 @@ export default function StickerDesigner({
                       element={element}
                       patch={patch}
                       onError={setError}
+                      onApplyMaterial={(preset, includeDescendants) => {
+                        try {
+                          update(
+                            applyMaterialPreset(
+                              design,
+                              groupSelection.length ? groupSelection : [selected],
+                              preset,
+                              { includeDescendants },
+                            ),
+                          );
+                        } catch (error) {
+                          setError(String(error));
+                        }
+                      }}
+                      onSaveMaterial={(materialName) => {
+                        try {
+                          update(saveMaterialPreset(design, selected, materialName));
+                        } catch (error) {
+                          setError(String(error));
+                        }
+                      }}
                     />
                     <label hidden={element.operation === 'cut'}>
                       Opacity
@@ -1123,6 +1228,18 @@ export default function StickerDesigner({
               >
                 <rect width={design.width} height={design.height} fill={design.background} />
                 <g pointerEvents="none" dangerouslySetInnerHTML={{ __html: artworkMarkup }} />
+                {design.reference?.visible && (
+                  <image
+                    href={design.reference.image}
+                    x={design.reference.x}
+                    y={design.reference.y}
+                    width={design.reference.width}
+                    height={design.reference.height}
+                    opacity={design.reference.opacity}
+                    preserveAspectRatio="xMidYMid meet"
+                    pointerEvents="none"
+                  />
+                )}
                 {grid.visible && (
                   <g pointerEvents="none">
                     <defs>
@@ -1191,20 +1308,42 @@ export default function StickerDesigner({
                             strokeDasharray="4 3"
                           />
                         )}
-                        <rect
-                          width={frame.width}
-                          height={frame.height}
-                          fill="transparent"
-                          stroke={
-                            selected === e.id || groupSelection.includes(e.id) ? '#7560cf' : 'none'
-                          }
-                          strokeWidth={1}
-                          strokeDasharray="4 3"
-                          vectorEffect="non-scaling-stroke"
-                          pointerEvents={
-                            tool === 'select' && (!e.parentId || e.id === selected) ? 'all' : 'none'
-                          }
-                        />
+                        {layerHitRegions(e, frame).map((region, index) => (
+                          <rect
+                            key={index}
+                            data-layer-hit={e.id}
+                            data-copy-index={index}
+                            transform={region.transform}
+                            width={region.width}
+                            height={region.height}
+                            fill="transparent"
+                            stroke={
+                              selected === e.id || groupSelection.includes(e.id)
+                                ? '#7560cf'
+                                : 'none'
+                            }
+                            strokeWidth={1}
+                            strokeDasharray="4 3"
+                            vectorEffect="non-scaling-stroke"
+                            pointerEvents={
+                              tool === 'select' && (!e.parentId || e.id === selected)
+                                ? 'all'
+                                : 'none'
+                            }
+                          />
+                        ))}
+                        {e.repeat && selected === e.id && (
+                          <rect
+                            width={frame.width}
+                            height={frame.height}
+                            fill="none"
+                            stroke="#86868b"
+                            strokeWidth={1}
+                            strokeDasharray="2 3"
+                            vectorEffect="non-scaling-stroke"
+                            pointerEvents="none"
+                          />
+                        )}
                         {selected === e.id && !e.textPath && !layerLocked(design, e) && (
                           <rect
                             x={e.width - handleSize / 2}
@@ -1441,7 +1580,11 @@ export default function StickerDesigner({
                   </p>
                 </fieldset>
               </details>
-              <button className="primary" disabled={busy || fitting} onClick={() => void save()}>
+              <button
+                className="primary"
+                disabled={busy || fitting}
+                onClick={() => void save().catch(() => {})}
+              >
                 {busy ? 'Saving artwork…' : saveLabel}
               </button>
               <p className="muted">
@@ -1449,8 +1592,131 @@ export default function StickerDesigner({
                   ? 'Card artwork keeps the project’s full card dimensions. Its editable layers are saved with the card.'
                   : 'Saves editable layers and updates every copy on the sheet.'}
               </p>
+              <details className="appearance-section">
+                <summary>Reference overlay · never prints or cuts</summary>
+                <label className="appearance-upload">
+                  Load reference image
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    disabled={busy}
+                    onChange={(event) => {
+                      void referenceImage(event.target.files?.[0]);
+                      event.target.value = '';
+                    }}
+                  />
+                </label>
+                <p className="muted">
+                  A tracing guide only. Saved with editable artwork, excluded from output and cut
+                  generation.
+                </p>
+                {design.reference && (
+                  <>
+                    <label className="appearance-check">
+                      <input
+                        type="checkbox"
+                        checked={design.reference.visible}
+                        onChange={(event) =>
+                          update({
+                            ...design,
+                            reference: { ...design.reference!, visible: event.target.checked },
+                          })
+                        }
+                      />
+                      Show reference
+                    </label>
+                    <label>
+                      Reference opacity · {Math.round(design.reference.opacity * 100)}%
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={design.reference.opacity * 100}
+                        onChange={(event) =>
+                          update({
+                            ...design,
+                            reference: {
+                              ...design.reference!,
+                              opacity: Number(event.target.value) / 100,
+                            },
+                          })
+                        }
+                      />
+                    </label>
+                    <div className="appearance-grid">
+                      {(['x', 'y', 'width', 'height'] as const).map((key) => (
+                        <label key={key}>
+                          Reference {key} (mm)
+                          <ScrubbableNumberInput
+                            type="number"
+                            step="0.5"
+                            min={key === 'x' || key === 'y' ? -500 : 0.1}
+                            max="500"
+                            value={design.reference![key]}
+                            onValueChange={(value) => {
+                              if (Number.isFinite(value))
+                                update({
+                                  ...design,
+                                  reference: { ...design.reference!, [key]: value },
+                                });
+                            }}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                    <button
+                      className="secondary compact"
+                      onClick={() => update({ ...design, reference: undefined })}
+                    >
+                      Remove reference
+                    </button>
+                  </>
+                )}
+              </details>
+              {element && (
+                <details className="appearance-section">
+                  <summary>Selection detail · {layerLabel(element)}</summary>
+                  <p className="muted">
+                    Close-up in artwork context. Reference and cut guides are excluded.
+                  </p>
+                  <ZoomControl value={detailZoom} onChange={setDetailZoom} />
+                  <svg
+                    className="selection-detail"
+                    role="img"
+                    aria-label={`Detail of ${layerLabel(element)}`}
+                    viewBox={selectionViewBox(design, element, detailZoom)}
+                  >
+                    <rect width={design.width} height={design.height} fill={design.background} />
+                    <g
+                      dangerouslySetInnerHTML={{
+                        __html: renderDesignContent(design, 'selection-detail'),
+                      }}
+                    />
+                  </svg>
+                </details>
+              )}
               <h3>Layers</h3>
-              <p className="muted">Drag to reorder. Shift-click layers to select a group.</p>
+              {element && (
+                <nav className="layer-breadcrumbs" aria-label="Selected layer hierarchy">
+                  {layerAncestors(design, element).map((group) => (
+                    <button
+                      key={group.id}
+                      className="secondary compact"
+                      onClick={() => {
+                        setSelected(group.id);
+                        setGroupSelection([]);
+                      }}
+                    >
+                      {layerLabel(group)}
+                    </button>
+                  ))}
+                  <span>{layerLabel(element)}</span>
+                </nav>
+              )}
+              <p className="muted">
+                Drag to reorder within a group. Shift-click sibling layers, then Group selected.
+                Name groups to organize logical parts.
+              </p>
               <div className="sticker-actions">
                 <button
                   className="secondary compact"
@@ -1470,7 +1736,7 @@ export default function StickerDesigner({
                 </button>
                 <button
                   className="secondary compact"
-                  disabled={element?.kind !== 'group'}
+                  disabled={element?.kind !== 'group' || layerLocked(design, element)}
                   onClick={() => {
                     try {
                       update(ungroupLayer(design, selected));
@@ -1526,7 +1792,11 @@ export default function StickerDesigner({
               </details>
               <div className="designer-layers" aria-label="Design layers">
                 {visibleLayers.map((e, i) => (
-                  <div className="designer-layer-row" key={e.id}>
+                  <div
+                    className="designer-layer-row"
+                    key={e.id}
+                    style={{ marginLeft: `${layerAncestors(design, e).length * 12}px` }}
+                  >
                     <button
                       key={e.id}
                       className={'secondary' + (dropLayer === e.id ? ' layer-drop-target' : '')}
@@ -1578,13 +1848,16 @@ export default function StickerDesigner({
                     >
                       <GripVertical size={12} aria-hidden="true" />
                       {design.elements.indexOf(e) + 1}. {e.operation === 'cut' ? 'Cut · ' : ''}
-                      {e.parentId ? '↳ ' : ''}
-                      {e.kind === 'text' ? e.text?.slice(0, 24) : e.shape || e.kind}
+                      {layerLabel(e)}
+                      {e.kind === 'group'
+                        ? ` · ${design.elements.filter((child) => child.parentId === e.id).length}`
+                        : ''}
                     </button>
                     {e.kind === 'group' && (
                       <button
                         className="secondary compact layer-icon"
-                        aria-label={`${collapsedGroups.includes(e.id) ? 'Expand' : 'Collapse'} group ${i + 1}`}
+                        aria-label={`${collapsedGroups.includes(e.id) ? 'Expand' : 'Collapse'} group ${layerLabel(e)}`}
+                        aria-expanded={!collapsedGroups.includes(e.id)}
                         onClick={() =>
                           setCollapsedGroups((ids) =>
                             ids.includes(e.id) ? ids.filter((id) => id !== e.id) : [...ids, e.id],
@@ -1601,7 +1874,14 @@ export default function StickerDesigner({
                     <button
                       className="secondary compact layer-icon"
                       aria-label={`${e.hidden ? 'Show' : 'Hide'} layer ${i + 1}`}
-                      title={e.hidden ? 'Show layer' : 'Hide layer'}
+                      title={
+                        !e.hidden && layerHidden(design, e)
+                          ? 'Hidden by group'
+                          : e.hidden
+                            ? 'Show layer'
+                            : 'Hide layer'
+                      }
+                      disabled={!e.hidden && layerHidden(design, e)}
                       onClick={() =>
                         update({
                           ...design,
@@ -1611,7 +1891,7 @@ export default function StickerDesigner({
                         })
                       }
                     >
-                      {e.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
+                      {layerHidden(design, e) ? <EyeOff size={13} /> : <Eye size={13} />}
                     </button>
                     <button
                       className="secondary compact layer-icon"
