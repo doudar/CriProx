@@ -20,9 +20,9 @@ export function useAiWorkspace(mode: AiMode, workspace: AiWorkspace) {
           latest.current.write(next, fresh);
         },
         busy: () => latest.current.busy(),
-        resolveEditor: async (action, operationId) => {
+        resolveEditor: async (action, operationId, request) => {
           if (!latest.current.resolveEditor) throw Error('Resolve this operation in the app.');
-          await latest.current.resolveEditor(action, operationId);
+          await latest.current.resolveEditor(action, operationId, request);
         },
         editorState: () =>
           latest.current.editorState?.() ?? {

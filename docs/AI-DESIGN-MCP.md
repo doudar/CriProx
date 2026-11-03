@@ -66,6 +66,9 @@ characters, not decoded bytes.
 export tools remain available during editing, but describe the **last saved** project, not the
 unsaved draft. Do not discard human work silently. After the user chooses Save or Cancel,
 call `resolve_editor_operation` with `action`, the returned `operationId`, and `confirm: true`.
+Stopping AI access or a request timeout during rendering prevents the pending save from committing;
+the human draft stays open and can still be saved manually. Changes to the project or draft while
+rendering also invalidate the confirmation before any save is committed.
 An operation that has changed, or is still rendering/fitting, cannot be resolved by an old request.
 
 Layers have optional `name` labels. Groups are the existing nested artwork groups, now with

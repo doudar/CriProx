@@ -51,8 +51,10 @@ import { fitDesignCut, reorderDesignLayer, type FitCutOptions } from '../lib/sti
 import { ScrubbableNumberInput } from './ScrubbableNumberInput';
 import { GripVertical, Eye, EyeOff, Lock, Unlock, ChevronRight, ChevronDown } from 'lucide-react';
 
+import type { AiEditorResolution } from '../lib/ai-design';
+
 export type StickerDesignerController = {
-  save: () => Promise<void>;
+  save: (request?: AiEditorResolution) => Promise<void>;
   cancel: () => void;
   busy: () => boolean;
   revision: () => string;
@@ -532,8 +534,9 @@ export default function StickerDesigner({
       setBusy(false);
     }
   }
-  const draftRevision = useMemo(() => crypto.randomUUID(), [design, name]);
+  const draftRevision = useMemo(() => crypto.randomUUID(), [design, name, fixedCanvas]);
   const saveInFlight = useRef(false);
+  const mounted = useRef(false);
   const editorController = useRef<StickerDesignerController>(null!);
   editorController.current = {
     save,
@@ -542,15 +545,21 @@ export default function StickerDesigner({
     revision: () => draftRevision,
   };
   useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
     onEditorController?.({
-      save: () => editorController.current.save(),
+      save: (request) => editorController.current.save(request),
       cancel: () => editorController.current.cancel(),
       busy: () => editorController.current.busy(),
       revision: () => editorController.current.revision(),
     });
     return () => onEditorController?.(undefined);
   }, [onEditorController]);
-  async function save() {
+  async function save(request?: AiEditorResolution) {
     if (busy || fitting || saveInFlight.current)
       throw Error('Wait for the current editor operation to finish.');
     saveInFlight.current = true;
@@ -560,7 +569,14 @@ export default function StickerDesigner({
       if (!name.trim()) throw Error('Name the design first.');
       const clean = validateStickerDesign({ ...design, cropToCuts: !fixedCanvas });
       designCutPaths(clean);
-      onSave(name.trim(), clean, await renderStickerDesign(clean));
+      const image = await renderStickerDesign(clean);
+      // Rendering yields to Stop/timeouts and human edits. Validate at the commit boundary,
+      // not after onSave has already persisted the draft and closed the editor.
+      if (!mounted.current || editorController.current.revision() !== draftRevision)
+        throw Error('The editor draft changed while saving. Review it and save again.');
+      if (request?.signal.aborted) throw Error('AI design access has stopped.');
+      request?.assertCurrent();
+      onSave(name.trim(), clean, image);
     } catch (e) {
       setError(String(e));
       setBusy(false);

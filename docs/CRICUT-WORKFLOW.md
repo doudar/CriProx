@@ -33,7 +33,7 @@ Expand **Canvas & cut settings** when you need dimensions, background or border 
 
 ## Adjust the cut border
 
-In the designer, change **Cut border** to automatically fit the cut around visible artwork. Set the gap with **Border width** and the printed line thickness with **Border stroke**; a stroke of 0 hides the printed line. Choose **Inside** (default), **Centered** or **Outside** to place the printed stroke relative to the cut line. Border changes replace the previous fitted outline and printed border. You can also use **Fit Cut** after editing artwork to refit its outline.
+In the designer, change **Cut border** to automatically fit the cut around visible artwork. Set the gap with **Border width** and the printed line thickness with **Border stroke**; a stroke of 0 hides the printed line. Choose **Inside** (default), **Centered** or **Outside** to place the printed stroke relative to the cut line. Border changes replace the previous fitted outline and printed border. You can also use **Fit Cut** after editing artwork to refit its outline. Grid, radial and scatter repeats are included in full, including copies inside transformed groups.
 
 Drag numeric fields left or right to decrease or increase values, or click and type an exact value. Review the pink cut preview before saving to the sheet.
 

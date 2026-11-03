@@ -35,6 +35,10 @@ import { renderStickerSheet, bytesToBase64 } from './sticker-output';
 import { stickerLocalCuts } from './sticker-cuts';
 export type AiMode = 'stickers';
 export type AiProject = StickerProject;
+export type AiEditorResolution = {
+  signal: AbortSignal;
+  assertCurrent: () => void;
+};
 export type AiWorkspace = {
   read: () => AiProject;
   write: (value: AiProject, fresh?: boolean) => void;
@@ -43,7 +47,11 @@ export type AiWorkspace = {
   open: (fresh?: boolean) => void;
   beforeReplace?: () => Promise<void>;
   busy: () => boolean;
-  resolveEditor?: (action: 'save' | 'cancel', operationId: string) => Promise<void>;
+  resolveEditor?: (
+    action: 'save' | 'cancel',
+    operationId: string,
+    request: AiEditorResolution,
+  ) => Promise<void>;
   editorState?: () => {
     operation: string | null;
     operationId?: string;
@@ -394,7 +402,20 @@ export async function invokeAiDesign(name: string, input: unknown): Promise<any>
       throw Error(
         'The editor operation changed or is not ready. Read get_editor_state and confirm the intended action again.',
       );
-    await c.resolveEditor(args.action, args.operationId);
+    const assertResolutionCurrent = () => {
+      if (signal.aborted || epoch !== requestEpoch) throw Error('AI design access has stopped.');
+      if (workspaces.get(mode) !== c || c.read() !== before)
+        throw Error('The project changed while AI was working. Read the workspace and retry.');
+      if (c.editorState?.().operationId !== args.operationId)
+        throw Error(
+          'The editor draft changed. Read get_editor_state and confirm the intended action again.',
+        );
+    };
+    assertResolutionCurrent();
+    await c.resolveEditor(args.action, args.operationId, {
+      signal,
+      assertCurrent: assertResolutionCurrent,
+    });
     return { ok: true, action: args.action };
   }
   if (name === 'get_editor_state')

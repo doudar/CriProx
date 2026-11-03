@@ -196,14 +196,15 @@ export default function StickerStudio({
     undo: history.undo,
     redo: history.redo,
     busy: () => !loaded || !!busy || !!designer,
-    resolveEditor: async (action, operationId) => {
+    resolveEditor: async (action, operationId, request) => {
       if (!designer || !editorController.current || operationId !== currentEditorOperationId())
         throw Error(
           'The active editor changed. Read get_editor_state and confirm the intended operation again.',
         );
       if (!loaded || busy || editorController.current.busy())
         throw Error('Wait for the active editor operation to finish before saving or canceling.');
-      if (action === 'save') await editorController.current.save();
+      request.assertCurrent();
+      if (action === 'save') await editorController.current.save(request);
       else editorController.current.cancel();
     },
     editorState: () => ({
