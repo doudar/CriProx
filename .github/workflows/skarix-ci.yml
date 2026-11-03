@@ -42,10 +42,10 @@ jobs:
         if: runner.os != 'Linux'
         run: npx --no-install electron tests/design-workflow.electron.cjs
       - name: Capture current editor documentation
-        if: runner.os == 'Windows'
+        if: runner.os == 'macOS'
         run: npx --no-install electron scripts/capture-editor.cjs artifacts/skarix-editor.png
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: runner.os == 'Windows'
+        if: runner.os == 'macOS'
         with:
           name: editor-documentation-preview
           path: artifacts/skarix-editor.png
