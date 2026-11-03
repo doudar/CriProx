@@ -15,7 +15,7 @@ app.on('window-all-closed', () => {});
     width: 1600,
     height: 1100,
     useContentSize: true,
-    show: false,
+    show: true,
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
   await win.loadFile(path.resolve('dist/index.html'));
@@ -24,6 +24,7 @@ app.on('window-all-closed', () => {});
     const find = label => [...document.querySelectorAll('button')].find(b => b.textContent.trim() === label && !b.disabled && b.getClientRects().length);
     const until = async (fn, label) => { for (let i=0;i<200;i++) { const value=fn(); if(value) return value; await pause(); } throw Error('Timed out: '+label); };
     (await until(() => [...document.querySelectorAll('button')].find(b => b.querySelector('strong')?.textContent === 'Meet Skarix' && !b.disabled), 'starter')).click();
+    await until(() => [...document.querySelectorAll('nav button')].some(b => b.textContent.trim() === 'Design studio' && b.getAttribute('aria-current') === 'page'), 'visible design studio');
     (await until(() => document.querySelector('.sticker-artwork-row'), 'artwork')).click();
     (await until(() => find('Edit design'), 'edit design')).click();
     await until(() => document.querySelector('.designer-layer-row button'), 'layers');
@@ -32,6 +33,7 @@ app.on('window-all-closed', () => {});
     for (const summary of document.querySelectorAll('summary')) {
       if (summary.textContent.trim() === 'Materials' || summary.textContent.includes('Reference overlay')) summary.parentElement.open = true;
     }
+    await until(() => document.querySelector('.sticker-designer')?.getBoundingClientRect().width > 0 && !document.querySelector('.skarix-home'), 'visible editor');
     await document.fonts.ready;
     await new Promise(r => setTimeout(r, 600));
     return { editor: !!document.querySelector('.sticker-designer'), materials: !!find('Apply material'), layers: document.querySelectorAll('.designer-layer-row').length };
