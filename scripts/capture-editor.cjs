@@ -22,10 +22,10 @@ app.on('window-all-closed', () => {});
   // Keep all three editor columns visible on smaller CI desktop displays.
   const [width] = win.getContentSize();
   win.webContents.setZoomFactor(Math.min(1, width / 1600));
-  const result = await win.webContents.executeJavaScript(`(async () => {
+  const captureFlow = `(async () => {
     const pause = () => new Promise(r => setTimeout(r, 100));
     const find = label => [...document.querySelectorAll('button')].find(b => b.textContent.trim() === label && !b.disabled && b.getClientRects().length);
-    const until = async (fn, label) => { for (let i=0;i<200;i++) { const value=fn(); if(value) return value; await pause(); } throw Error('Timed out: '+label+'; '+document.body.innerText.slice(-6000)); };
+    const until = async (fn, label) => { for (let i=0;i<400;i++) { const value=fn(); if(value) return value; await pause(); } throw Error('Timed out: '+label+'; '+document.body.innerText.slice(-6000)); };
     (await until(() => [...document.querySelectorAll('button')].find(b => b.querySelector('strong')?.textContent === 'Meet Skarix' && !b.disabled), 'starter')).click();
     await until(() => [...document.querySelectorAll('nav button')].some(b => b.textContent.trim() === 'Design studio' && b.getAttribute('aria-current') === 'page'), 'visible design studio');
     // Let the new-project request finish before selecting its artwork.
@@ -43,7 +43,18 @@ app.on('window-all-closed', () => {});
     await document.fonts.ready;
     await new Promise(r => setTimeout(r, 600));
     return { editor: !!document.querySelector('.sticker-designer'), materials: !!find('Apply material'), layers: document.querySelectorAll('.designer-layer-row').length };
-  })()`);
+  })()`;
+  let result;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      result = await win.webContents.executeJavaScript(captureFlow);
+      break;
+    } catch (error) {
+      if (attempt === 2) throw error;
+      console.warn('Editor capture initialization failed; retrying after reload:', error.message);
+      await win.loadFile(path.resolve('dist/index.html'));
+    }
+  }
   if (!result.editor || !result.materials || !result.layers)
     throw Error('Editor capture did not reach expected interface: ' + JSON.stringify(result));
   const output = path.resolve(process.argv[2] || 'docs/assets/skarix-editor.png');
