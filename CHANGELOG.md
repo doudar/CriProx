@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/doudar/Skarix/compare/v0.20.0...v0.21.0) (2026-11-03)
+
+
+### Features
+
+* organize detailed artwork with groups and reusable styles ([#14](https://github.com/doudar/Skarix/issues/14)) ([b06c2f5](https://github.com/doudar/Skarix/commit/b06c2f5c40f676030b8704453c8361a632d7ce97))
+
 ## [0.20.0](https://github.com/doudar/Skarix/compare/v0.19.0...v0.20.0) (2026-11-02)
 
 
