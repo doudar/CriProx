@@ -112,6 +112,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - uses: ./.github/actions/artwork-test-fonts
       - run: npm test
       - name: Build unsigned installer
         if: matrix.platform != 'macos'
