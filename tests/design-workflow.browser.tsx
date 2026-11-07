@@ -1,4 +1,5 @@
 import { run as runSaveCancellationTests } from './editor-save-cancellation.browser';
+import { run as runAiSettingsTests } from './ai-settings.browser';
 import { createRoot } from 'react-dom/client';
 import StickerDesigner, { type StickerDesignerController } from '../src/components/StickerDesigner';
 import { newDesign, newElement, type StickerDesign } from '../src/lib/sticker-design';
@@ -191,6 +192,7 @@ export async function run() {
   );
   repeatedRoot.unmount();
   return [
+    ...(await runAiSettingsTests()),
     ...(await runSaveCancellationTests()),
     'PASS repeated copy hit testing selects editable source',
     'PASS group collapse/expand and child selection',

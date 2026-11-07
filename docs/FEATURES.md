@@ -50,7 +50,7 @@ Use **Manage materials** to inspect cached Design Space materials or create loca
 
 ## AI design and settings
 
-Optional MCP access defaults off, remembers Start/Stop across sessions, and automatically resumes when the editor opens if left on. Copied client configuration remains reusable across app restarts. AI can edit artwork, SVG, contours, layouts and previews; it cannot print, control cutters, run shell commands or use the removed catalogs. See [AI setup](AI-DESIGN-MCP.md).
+Optional MCP access defaults off, remembers Start/Stop across sessions, and automatically resumes when the editor opens if left on. If restoration fails, Settings shows that automatic starts are still enabled and offers both Start to retry and Stop to disable them, even while the server is not running. Copied client configuration remains reusable across app restarts. AI can edit artwork, SVG, contours, layouts and previews; it cannot print, control cutters, run shell commands or use the removed catalogs. See [AI setup](AI-DESIGN-MCP.md).
 
 Closing the design window stops AI access and removes its local connection record without clearing the saved enabled preference. Window-close and application-quit requests wait for cleanup before exit. Windows and Linux exit after the last window closes; macOS retains its normal application lifecycle until Quit. Application quit also waits for the cutter helper to exit, with a three-second fallback termination after disconnect. A separately launched MCP client owns its own relay process.
 

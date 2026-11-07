@@ -66,18 +66,21 @@ declare global {
       ai?: {
         status: () => Promise<{
           error?: string;
+          enabled: boolean;
           running: boolean;
           url: string;
           connectionFile: string;
           scope: string;
         }>;
         start: () => Promise<{
+          enabled: boolean;
           running: boolean;
           url: string;
           connectionFile: string;
           scope: string;
         }>;
         stop: () => Promise<{
+          enabled: boolean;
           running: boolean;
           url: string;
           connectionFile: string;

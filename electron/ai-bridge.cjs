@@ -7,7 +7,8 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
   const pending = new Map();
   let queue = Promise.resolve();
   let lifecycle = Promise.resolve(),
-    startupError = '';
+    startupError = '',
+    accessEnabled = false;
   const readyWindows = new Set();
   const settingsFile = path.join(app.getPath('userData'), 'ai-design-settings.json');
   function schedule(action) {
@@ -21,6 +22,7 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
     try {
       await fs.writeFile(temporary, JSON.stringify({ enabled }), { mode: 0o600 });
       await fs.rename(temporary, settingsFile);
+      accessEnabled = enabled;
     } finally {
       await fs.rm(temporary, { force: true });
     }
@@ -55,6 +57,7 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
       return task;
     },
   });
+  const status = () => ({ ...service.status(), enabled: accessEnabled, error: startupError });
   async function stop() {
     for (const p of pending.values()) {
       clearTimeout(p.timer);
@@ -79,6 +82,7 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
       if (readyWindows.has(id)) return;
       readyWindows.add(id);
       try {
+        accessEnabled = false;
         let settings;
         try {
           settings = JSON.parse(await fs.readFile(settingsFile, 'utf8'));
@@ -86,7 +90,8 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
           if (error.code === 'ENOENT' || error instanceof SyntaxError) return;
           throw error;
         }
-        if (settings?.enabled === true) await service.start(id);
+        accessEnabled = settings?.enabled === true;
+        if (accessEnabled) await service.start(id);
       } catch (error) {
         startupError = `Could not restore AI design access: ${error.message}`;
       }
@@ -94,13 +99,13 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
   });
   ipcMain.handle('ai-design-status', (event) => {
     windowId(event);
-    return lifecycle.then(() => ({ ...service.status(), error: startupError }));
+    return lifecycle.then(status);
   });
   ipcMain.handle('ai-design-start', (event) => {
     const id = windowId(event);
     return schedule(async () => {
       const wasRunning = service.status().running;
-      const state = await service.start(id);
+      await service.start(id);
       try {
         await remember(true);
       } catch (error) {
@@ -108,7 +113,7 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
         throw error;
       }
       startupError = '';
-      return state;
+      return status();
     });
   });
   ipcMain.handle('ai-design-stop', (event) => {
@@ -125,7 +130,7 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
       } finally {
         await stop();
       }
-      return service.status();
+      return status();
     });
   });
   ipcMain.handle('ai-design-copy-config', (event) => {

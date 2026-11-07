@@ -9,7 +9,7 @@ Skarix includes an optional local MCP server for editable artwork and sheet layo
 
 Copy the configuration once: it uses a stable local connection-file path and remains reusable across sessions. The private token and loopback port rotate whenever the server starts; the relay reads the current connection for each request, including after an app restart. Keep the connection file private and use trusted clients. The server is bound to loopback.
 
-Closing Skarix stops the server and removes its temporary connection file without clearing your saved preference. Startup failures appear in **Settings → AI design**, where you can retry Start or choose Stop to disable future automatic starts. If another Skarix instance already owns the connection, it keeps control.
+Closing Skarix stops the server and removes its temporary connection file without clearing your saved preference. Startup failures appear in **Settings → AI design**, which distinguishes the saved automatic-start preference from whether access is currently running. You can retry **Start AI design access** or choose **Stop AI design access** to disable future automatic starts, even when access could not start. If another Skarix instance already owns the connection, stopping the saved preference leaves that instance's live connection untouched.
 
 The design tools cover capabilities, workspace inspection, project creation/loading/export, design creation/editing/duplication/deletion, SVG import, cut paths, fitting cuts, layout, sheet settings, previews and undo/redo. Use `workspace: "stickers"`; this identifier is retained for compatibility.
 
