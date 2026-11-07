@@ -1,12 +1,33 @@
 const crypto = require('node:crypto');
+const fs = require('node:fs/promises');
+const path = require('node:path');
 const { createAiServer } = require('./ai-server.cjs');
 const { designTool } = require('./ai-tools.cjs');
 function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }) {
   const pending = new Map();
   let queue = Promise.resolve();
+  let lifecycle = Promise.resolve(),
+    startupError = '';
+  const readyWindows = new Set();
+  const settingsFile = path.join(app.getPath('userData'), 'ai-design-settings.json');
+  function schedule(action) {
+    const result = lifecycle.then(action);
+    lifecycle = result.catch(() => {});
+    return result;
+  }
+  async function remember(enabled) {
+    await fs.mkdir(path.dirname(settingsFile), { recursive: true });
+    const temporary = `${settingsFile}.${crypto.randomUUID()}.tmp`;
+    try {
+      await fs.writeFile(temporary, JSON.stringify({ enabled }), { mode: 0o600 });
+      await fs.rename(temporary, settingsFile);
+    } finally {
+      await fs.rm(temporary, { force: true });
+    }
+  }
   const service = createAiServer({
     version: app.getVersion(),
-    connectionFile: require('node:path').join(app.getPath('userData'), 'ai-design-connection.json'),
+    connectionFile: path.join(app.getPath('userData'), 'ai-design-connection.json'),
     invoke: (owner, name, args) => {
       designTool(name).schema.parse(args);
       const task = queue
@@ -51,16 +72,61 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
     if (!w) throw Error('Design window unavailable.');
     return w.id;
   }
+  // The renderer registers its request listener before announcing readiness.
+  ipcMain.handle('ai-design-ready', (event) => {
+    const id = windowId(event);
+    return schedule(async () => {
+      if (readyWindows.has(id)) return;
+      readyWindows.add(id);
+      try {
+        let settings;
+        try {
+          settings = JSON.parse(await fs.readFile(settingsFile, 'utf8'));
+        } catch (error) {
+          if (error.code === 'ENOENT' || error instanceof SyntaxError) return;
+          throw error;
+        }
+        if (settings?.enabled === true) await service.start(id);
+      } catch (error) {
+        startupError = `Could not restore AI design access: ${error.message}`;
+      }
+    });
+  });
   ipcMain.handle('ai-design-status', (event) => {
     windowId(event);
-    return service.status();
+    return lifecycle.then(() => ({ ...service.status(), error: startupError }));
   });
-  ipcMain.handle('ai-design-start', (event) => service.start(windowId(event)));
+  ipcMain.handle('ai-design-start', (event) => {
+    const id = windowId(event);
+    return schedule(async () => {
+      const wasRunning = service.status().running;
+      const state = await service.start(id);
+      try {
+        await remember(true);
+      } catch (error) {
+        if (!wasRunning) await stop();
+        throw error;
+      }
+      startupError = '';
+      return state;
+    });
+  });
   ipcMain.handle('ai-design-stop', (event) => {
     const id = windowId(event);
     if (service.status().running && !service.owns(id))
       throw Error('AI server belongs to another window.');
-    return stop();
+    return schedule(async () => {
+      if (service.status().running && !service.owns(id))
+        throw Error('AI server belongs to another window.');
+      // Closing the window/quit uses stop() without changing this preference.
+      try {
+        await remember(false);
+        startupError = '';
+      } finally {
+        await stop();
+      }
+      return service.status();
+    });
   });
   ipcMain.handle('ai-design-copy-config', (event) => {
     const id = windowId(event);
@@ -84,9 +150,12 @@ function installAiBridge({ ipcMain, BrowserWindow, clipboard, app, checkSender }
     else p.resolve(response.value);
   });
   return {
-    stop,
+    stop: () => schedule(stop),
     windowClosed: (id) => {
-      if (service.owns(id)) void stop();
+      return schedule(async () => {
+        readyWindows.delete(id);
+        if (service.owns(id)) await stop();
+      });
     },
   };
 }

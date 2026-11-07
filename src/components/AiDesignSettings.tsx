@@ -11,7 +11,10 @@ export default function AiDesignSettings() {
     if (api)
       void api
         .status()
-        .then(setState)
+        .then((status) => {
+          setState(status);
+          if (status.error) setMessage(status.error);
+        })
         .catch(() => setMessage('Could not read AI design status.'));
   }, [api]);
   async function action(fn: () => Promise<unknown>) {
@@ -66,8 +69,10 @@ export default function AiDesignSettings() {
           </div>
           <p className="hint">
             Start access, copy the configuration into your MCP client, and leave Skarix open. Access
-            uses a private local token, starts off each time you launch the app, and stops when this
-            window closes. Stopping access cancels pending edits.
+            uses a private local token. Skarix remembers your choice and restores access next time
+            if you leave it on. The copied configuration works across sessions. Closing this window
+            stops the server; Stop AI design access also disables it for future launches and cancels
+            pending edits.
           </p>
         </>
       ) : (

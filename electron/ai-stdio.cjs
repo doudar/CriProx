@@ -1,4 +1,4 @@
-// A design-only stdio relay. The GUI must explicitly enable its local server.
+// A design-only stdio relay. The GUI manages the local server's saved enabled state.
 // Never loads the desktop main process, printer service or cutter controller.
 const fs = require('node:fs/promises');
 function validateConnection(value) {
@@ -24,7 +24,6 @@ async function relay({
   fetchImpl = fetch,
 }) {
   if (!connectionFile) throw Error('Provide --connection-file from Skarix Settings → AI design.');
-  const connection = validateConnection(JSON.parse(await fs.readFile(connectionFile, 'utf8')));
   input.setEncoding('utf8');
   let buffer = '',
     version = '2025-11-25';
@@ -40,6 +39,10 @@ async function relay({
       let message;
       try {
         message = JSON.parse(line);
+        // A client may outlive Skarix. Re-read the rotated port/token after a restart.
+        const connection = validateConnection(
+          JSON.parse(await fs.readFile(connectionFile, 'utf8')),
+        );
         if (message.method === 'initialize' && typeof message.params?.protocolVersion === 'string')
           version = message.params.protocolVersion;
         const response = await fetchImpl(connection.url, {

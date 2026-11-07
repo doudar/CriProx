@@ -65,6 +65,7 @@ declare global {
     skarix?: {
       ai?: {
         status: () => Promise<{
+          error?: string;
           running: boolean;
           url: string;
           connectionFile: string;
