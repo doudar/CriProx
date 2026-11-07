@@ -163,18 +163,16 @@ test('Stop disables future MCP restoration after an occupied-connection failure 
     assert.equal(stopped.error, '');
     assert.equal(await readFile(connection, 'utf8'), original);
     assert.equal((await owner.call('status')).running, true);
-    const { url, token } = JSON.parse(original);
-    const ping = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json, text/event-stream',
-      },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }),
-    });
-    assert.equal(ping.status, 200, 'the owner still serves MCP requests');
-    assert.deepEqual((await ping.json()).result, {});
+    // Exercise the same local-only, redirect-blocking relay used by MCP clients.
+    const input = new PassThrough(),
+      output = new PassThrough();
+    input.end(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) + '\n');
+    await relay({ connectionFile: connection, input, output });
+    assert.deepEqual(
+      JSON.parse(output.read().toString()),
+      { jsonrpc: '2.0', id: 1, result: {} },
+      'the owner still serves authenticated MCP requests through the validated relay',
+    );
     assert.deepEqual(
       JSON.parse(await readFile(join(directory, 'ai-design-settings.json'), 'utf8')),
       { enabled: false },
