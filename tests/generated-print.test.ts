@@ -1,4 +1,5 @@
 import { TAPERED_SETTINGS } from './fixtures/tapered-settings';
+import './fixtures/test-font';
 import { test } from 'node:test';
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';

@@ -12,7 +12,7 @@ No workflow creates releases or tags, changes permissions, or deploys Pages. No 
 
 Windows CI also launches the actual application with disposable storage and closes it with AI access off and on (including an open local connection). The process must exit within 15 seconds and remove its AI connection file. The probe never opens a user's profile or sends printer/cutter operations.
 
-Linux CI explicitly installs DejaVu and Liberation fonts and refreshes the font cache before artwork tests, so visible-text assertions do not depend on the hosted runner's preinstalled fonts.
+Linux CI explicitly installs DejaVu and Liberation fonts and refreshes the font cache before artwork tests. `SKARIX_TEST_FONT` selects DejaVu Sans for the native canvas tests' Arial alias, so visible-text assertions do not depend on the hosted runner's fallback font matching. Other platforms retain their normal fonts.
 
 Actions are pinned to full commit hashes. actionlint 1.7.12 is downloaded from its official release and verified against its published SHA-256 before execution. Jobs have bounded timeouts and CI cancels superseded runs.
 

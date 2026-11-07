@@ -37,6 +37,8 @@ jobs:
           sudo apt-get install --yes fontconfig fonts-dejavu-core fonts-liberation
           fc-cache -f
       - run: npm test
+        env:
+          SKARIX_TEST_FONT: ${{ runner.os == 'Linux' && '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf' || '' }}
       - run: npm run build
       - name: Verify renderer and existing project preservation
         if: runner.os == 'Windows'
