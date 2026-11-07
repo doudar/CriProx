@@ -70,7 +70,16 @@ export async function run() {
     check(host.textContent?.includes('Could not restore'), 'Restoration failure is not displayed');
 
     start()!.click();
-    await until(() => starts === 1 && !stop()?.disabled);
+    // Wait for the rejected request's React render, not the still-enabled button
+    // from before the click. Otherwise Stop can run while Start is becoming busy.
+    await until(
+      () =>
+        starts === 1 &&
+        !stop()?.disabled &&
+        [...host.querySelectorAll('[role="status"]')].some(
+          (item) => item.textContent === 'Another Skarix window has AI design access on.',
+        ),
+    );
     check(stop(), 'A failed Start retry must keep Stop available');
     stop()!.click();
     await until(() => releaseStop && stop()?.disabled);
