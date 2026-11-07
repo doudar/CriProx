@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.2](https://github.com/doudar/Skarix/compare/v0.21.1...v0.21.2) (2026-11-07)
+
+
+### Bug Fixes
+
+* allow stopping AI access after startup fails ([#17](https://github.com/doudar/Skarix/issues/17)) ([f227c28](https://github.com/doudar/Skarix/commit/f227c28943f9bb3f6e4289243ad317c51f4623e3))
+
 ## [0.21.1](https://github.com/doudar/Skarix/compare/v0.21.0...v0.21.1) (2026-11-07)
 
 
