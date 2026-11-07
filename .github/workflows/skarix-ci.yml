@@ -30,6 +30,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Install fonts for artwork rendering tests
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes fontconfig fonts-dejavu-core fonts-liberation
+          fc-cache -f
       - run: npm test
       - run: npm run build
       - name: Verify renderer and existing project preservation
