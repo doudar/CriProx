@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.21.1](https://github.com/doudar/Skarix/compare/v0.21.0...v0.21.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* build Linux releases with the required test fonts ([#16](https://github.com/doudar/Skarix/issues/16)) ([e641a8c](https://github.com/doudar/Skarix/commit/e641a8c0a0773f1c6c06e0f4eb36cc4d3cfe1061))
+* remember MCP access across sessions ([#15](https://github.com/doudar/Skarix/issues/15)) ([47754a9](https://github.com/doudar/Skarix/commit/47754a93a65f69d810906e8f51eea94de22f152a))
+
 ## [0.21.0](https://github.com/doudar/Skarix/compare/v0.20.0...v0.21.0) (2026-11-03)
 
 
