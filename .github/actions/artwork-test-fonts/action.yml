@@ -1,0 +1,13 @@
+name: Prepare artwork test fonts
+description: Install and select the native canvas font used by Linux artwork tests.
+runs:
+  using: composite
+  steps:
+    - name: Install fonts for artwork rendering tests
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes fontconfig fonts-dejavu-core fonts-liberation
+        fc-cache -f
+        echo "SKARIX_TEST_FONT=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf" >> "$GITHUB_ENV"
