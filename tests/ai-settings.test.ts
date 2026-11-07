@@ -52,16 +52,19 @@ test('MCP remembers Start across quit and window closure, while Stop persists ac
     const first = open();
     await first.call('ready');
     assert.equal((await first.call('status')).running, false);
-    await first.call('start');
+    assert.equal((await first.call('status')).enabled, false);
+    assert.equal((await first.call('start')).enabled, true);
     const config = first.config();
     const oldConnection = JSON.parse(await readFile(connection, 'utf8'));
     await first.bridge.stop(); // App quit preserves enabled preference.
+    assert.equal((await first.call('status')).enabled, true);
     assert.deepEqual(JSON.parse(await readFile(settings, 'utf8')), { enabled: true });
     await assert.rejects(readFile(connection), { code: 'ENOENT' });
 
     const second = open();
     const restoring = second.call('ready');
     assert.equal((await second.call('status')).running, true, 'status waits for restoration');
+    assert.equal((await second.call('status')).enabled, true);
     await restoring;
     assert.equal(second.config(), config, 'client configuration is reusable');
     assert.notEqual(JSON.parse(await readFile(connection, 'utf8')).token, oldConnection.token);
@@ -69,7 +72,7 @@ test('MCP remembers Start across quit and window closure, while Stop persists ac
     await assert.rejects(readFile(connection), { code: 'ENOENT' });
     await second.call('ready'); // macOS can reopen a window without quitting.
     assert.equal((await second.call('status')).running, true);
-    await second.call('stop');
+    assert.equal((await second.call('stop')).enabled, false);
     await second.call('ready'); // Re-registering a renderer listener must not undo Stop.
     assert.equal((await second.call('status')).running, false);
     assert.deepEqual(JSON.parse(await readFile(settings, 'utf8')), { enabled: false });
@@ -78,6 +81,7 @@ test('MCP remembers Start across quit and window closure, while Stop persists ac
     const third = open();
     await third.call('ready');
     assert.equal((await third.call('status')).running, false);
+    assert.equal((await third.call('status')).enabled, false);
   } finally {
     for (const s of sessions) await s.bridge.stop();
     await rm(directory, { recursive: true, force: true });
@@ -118,6 +122,7 @@ test('MCP restore reports an occupied connection without replacing the owner or 
     await second.call('ready');
     const state = await second.call('status');
     assert.equal(state.running, false);
+    assert.equal(state.enabled, true);
     assert.match(state.error, /Could not restore.*Another Skarix/);
     await assert.rejects(second.call('start'), /Another Skarix/);
     assert.equal(await readFile(connection, 'utf8'), original);
@@ -135,6 +140,60 @@ test('MCP restore reports an occupied connection without replacing the owner or 
   }
 });
 
+test('Stop disables future MCP restoration after an occupied-connection failure without stopping the owner', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'skarix-ai-disable-restore-'));
+  const owner = session(directory),
+    blocked = session(directory, 2),
+    reopened = session(directory, 3);
+  const connection = join(directory, 'ai-design-connection.json');
+  try {
+    await owner.call('start');
+    const original = await readFile(connection, 'utf8');
+    await blocked.call('ready');
+    const failed = await blocked.call('status');
+    assert.equal(failed.running, false);
+    assert.equal(failed.enabled, true);
+    assert.match(failed.error, /Could not restore.*Another Skarix/);
+    await assert.rejects(blocked.call('start'), /Another Skarix/);
+    assert.equal((await blocked.call('status')).enabled, true);
+
+    const stopped = await blocked.call('stop');
+    assert.equal(stopped.running, false);
+    assert.equal(stopped.enabled, false);
+    assert.equal(stopped.error, '');
+    assert.equal(await readFile(connection, 'utf8'), original);
+    assert.equal((await owner.call('status')).running, true);
+    // Exercise the same local-only, redirect-blocking relay used by MCP clients.
+    const input = new PassThrough(),
+      output = new PassThrough();
+    input.end(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) + '\n');
+    await relay({ connectionFile: connection, input, output });
+    assert.deepEqual(
+      JSON.parse(output.read().toString()),
+      { jsonrpc: '2.0', id: 1, result: {} },
+      'the owner still serves authenticated MCP requests through the validated relay',
+    );
+    assert.deepEqual(
+      JSON.parse(await readFile(join(directory, 'ai-design-settings.json'), 'utf8')),
+      { enabled: false },
+    );
+
+    await blocked.call('ready');
+    await blocked.call('stop'); // Repeated ready/Stop must not restore the preference.
+    await reopened.call('ready');
+    const nextLaunch = await reopened.call('status');
+    assert.equal(nextLaunch.enabled, false);
+    assert.equal(nextLaunch.running, false);
+    assert.equal(nextLaunch.error, '', 'no automatic retry against the occupied connection');
+    assert.equal(await readFile(connection, 'utf8'), original);
+  } finally {
+    await reopened.bridge.stop();
+    await blocked.bridge.stop();
+    await owner.bridge.stop();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('missing, malformed and non-boolean MCP preferences do not auto-enable access', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skarix-ai-settings-invalid-'));
   try {
@@ -145,6 +204,7 @@ test('missing, malformed and non-boolean MCP preferences do not auto-enable acce
       try {
         await s.call('ready');
         assert.equal((await s.call('status')).running, false);
+        assert.equal((await s.call('status')).enabled, false);
       } finally {
         await s.bridge.stop();
       }

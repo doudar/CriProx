@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 export default function AiDesignSettings() {
   const api = window.skarix?.ai;
-  const [state, setState] = useState<{ running: boolean; url: string }>({
+  const [state, setState] = useState<{ enabled: boolean; running: boolean; url: string }>({
+      enabled: false,
       running: false,
       url: '',
     }),
@@ -43,17 +44,32 @@ export default function AiDesignSettings() {
       {api ? (
         <>
           <p role="status">
-            {state.running ? 'AI design access is on' : 'AI design access is off'}
+            {state.running
+              ? 'AI design access is on'
+              : state.enabled
+                ? 'AI design access is not running. Automatic starts are still enabled.'
+                : 'AI design access is off'}
           </p>
           {state.running && <p className="hint">Local endpoint: {state.url}</p>}
           <div className="sticker-actions">
-            <button
-              className={state.running ? 'secondary' : 'primary'}
-              disabled={busy}
-              onClick={() => void action(() => (state.running ? api.stop() : api.start()))}
-            >
-              {state.running ? 'Stop AI design access' : 'Start AI design access'}
-            </button>
+            {!state.running && (
+              <button
+                className="primary"
+                disabled={busy}
+                onClick={() => void action(() => api.start())}
+              >
+                Start AI design access
+              </button>
+            )}
+            {(state.running || state.enabled) && (
+              <button
+                className="secondary"
+                disabled={busy}
+                onClick={() => void action(() => api.stop())}
+              >
+                Stop AI design access
+              </button>
+            )}
             <button
               className="secondary"
               disabled={busy || !state.running}
