@@ -1,13 +1,15 @@
 # AI design with MCP
 
-Skarix includes an optional local MCP server for editable artwork and sheet layouts. It starts off each launch.
+Skarix includes an optional local MCP server for editable artwork and sheet layouts. It defaults off until you start it, then remembers your choice across sessions. Leaving access on restores it automatically when the editor opens next time.
 
 1. Open **Settings → AI design**.
 2. Choose **Start AI design access**, then **Copy MCP configuration**.
 3. Add it to your MCP client and keep Skarix open.
-4. Stop access from the same page when finished.
+4. Choose **Stop AI design access** to turn it off for this session and future launches.
 
-The configuration contains a local token. Keep it private and use trusted clients. The server is bound to loopback.
+Copy the configuration once: it uses a stable local connection-file path and remains reusable across sessions. The private token and loopback port rotate whenever the server starts; the relay reads the current connection for each request, including after an app restart. Keep the connection file private and use trusted clients. The server is bound to loopback.
+
+Closing Skarix stops the server and removes its temporary connection file without clearing your saved preference. Startup failures appear in **Settings → AI design**, where you can retry Start or choose Stop to disable future automatic starts. If another Skarix instance already owns the connection, it keeps control.
 
 The design tools cover capabilities, workspace inspection, project creation/loading/export, design creation/editing/duplication/deletion, SVG import, cut paths, fitting cuts, layout, sheet settings, previews and undo/redo. Use `workspace: "stickers"`; this identifier is retained for compatibility.
 

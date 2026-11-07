@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld(
           await ipcRenderer.invoke('ai-design-response', { id: request.id, ...result });
         };
         ipcRenderer.on('ai-design-request', listener);
+        void ipcRenderer.invoke('ai-design-ready').catch((error) => console.error(error));
         return () => ipcRenderer.removeListener('ai-design-request', listener);
       },
     }),

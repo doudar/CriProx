@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import './fixtures/test-font';
 import assert from 'node:assert/strict';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import {

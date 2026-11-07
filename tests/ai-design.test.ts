@@ -292,7 +292,7 @@ test('another app instance cannot replace or remove an active design connection'
     await rm(directory, { recursive: true, force: true });
   }
 });
-test('desktop MCP access starts off and client configuration is restricted to the owning main frame', async () => {
+test('desktop MCP access defaults off and client configuration is restricted to the owning main frame', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'skarix-ai-ipc-')),
     handlers = new Map<string, Function>();
   let copied = '';
@@ -314,7 +314,7 @@ test('desktop MCP access starts off and client configuration is restricted to th
     },
   });
   try {
-    assert.equal(handlers.get('ai-design-status')!(event).running, false);
+    assert.equal((await handlers.get('ai-design-status')!(event)).running, false);
     assert.throws(() => handlers.get('ai-design-copy-config')!(event), /Start AI/);
     await handlers.get('ai-design-start')!(event);
     handlers.get('ai-design-copy-config')!(event);
@@ -325,7 +325,7 @@ test('desktop MCP access starts off and client configuration is restricted to th
     );
     assert(!handlers.has('print') && !handlers.has('cutSheet'));
     await handlers.get('ai-design-stop')!(event);
-    assert.equal(handlers.get('ai-design-status')!(event).running, false);
+    assert.equal((await handlers.get('ai-design-status')!(event)).running, false);
   } finally {
     await bridge.stop();
     await rm(directory, { recursive: true, force: true });
